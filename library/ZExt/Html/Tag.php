@@ -515,6 +515,10 @@ class Tag {
 		return $this->render();
 	}
 	
+	public function __invoke($html = null) {
+		return $this->render($html);
+	}
+	
 	public function __set($name, $value) {
 		$this->setAttr($name, $value);
 	}
