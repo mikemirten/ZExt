@@ -51,10 +51,10 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	 * @param array $elements
 	 * @param array $attrs
 	 */
-	public function __construct(array $elements = array(), $attrs = null) {
+	public function __construct(array $elements = null, $attrs = null) {
 		parent::__construct(null, null, $attrs);
 		
-		if (! empty($elements)) {
+		if ($elements !== null) {
 			$this->addElements($elements);
 		}
 	}
