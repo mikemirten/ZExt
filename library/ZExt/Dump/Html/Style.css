@@ -1,0 +1,61 @@
+.zDumpContainer {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size:   90%;
+	color:       #000;
+	background:  #fff;
+	border:      2px solid #c00;
+	margin:      0.25em;
+	padding:     0.25em;
+	overflow-x:  auto;
+}
+
+.zDumpInteger {
+	color: #e00;
+}
+
+.zDumpString {
+	color: #080;
+}
+
+.zDumpClass {
+	color: #04c;
+}
+
+.zDumpTitle {
+	margin-top:       0.33em;
+	padding:          0.1em 0.4em;
+	background-color: #e0e3ec;
+}
+
+.zDumpEncoding {
+	color:      #c50;
+	font-style: italic;
+}
+
+.zDumpBoolean {
+	color: #808;
+}
+
+.zDumpBlock {
+	padding:     0.2em 0.4em 0.1em;
+	border-left: 3px solid #e0e3ec;
+}
+
+.zDumpArrayTable {
+	border-collapse: collapse;
+	font-size:       small;
+	border-left:     3px solid #e0e3ec;
+}
+
+.zDumpArrayTable td {
+	vertical-align: top;
+	padding:        0.25em 0.35em;
+}
+
+.zDumpArrayTable tr {
+	border-top: 1px #ddd dashed;
+}
+
+.zDumpArrayTable tr:first-child {
+	border-top: none;
+}

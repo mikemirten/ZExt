@@ -1,0 +1,192 @@
+/**
+ * ZExt Framework (http://z-ext.com)
+ *
+ * @copyright (c) 2012, Mike.Mirten
+ * @license   http://www.gnu.org/licenses/gpl.html GPL License
+ * @category  ZExt
+ * @version   1.0
+ */
+
+.debug-main {
+	position: fixed;
+	bottom:   0;
+	left:     0;
+	right:    0;
+	font:     small/150% sans-serif;
+	color:    #000;
+	z-index:  65535;
+}
+
+.debug-main p {
+	margin: 5px 0;
+} 
+
+.debug-bar-wrapper {
+	background: #e5ebee;
+	background: linear-gradient(#f6f8f9, #c1c8cd);
+	background: -webkit-linear-gradient(#f6f8f9, #c1c8cd);
+	box-shadow: 0 0 10px rgba(127, 127, 127, 0.5);
+}
+
+.debug-bar {
+	white-space: nowrap;
+	display:     inline-block;
+	margin:      0;
+	padding:     0;
+	list-style:  none;
+}
+
+.debug-bar .debug-tab {
+	cursor:       default;
+	display:      inline-block;
+	border-right: 1px solid #c1c8cd;
+	border-left:  1px solid #f6f8f9;
+	padding:      0.45em;
+	margin:       0;
+	line-height:  140%;
+}
+
+.debug-bar .debug-tab.hasicon {
+	padding:             0.45em 0.3em 0.45em 18px;
+	background-position: 2px center;
+	background-repeat:   no-repeat;
+}
+
+.debug-bar .debug-info-holder {
+	padding:       1px 0.75em;
+	border-radius: 1em;
+	background:    rgba(32, 32, 40, 0.75);
+	background:    linear-gradient(rgba(0, 0, 8, 0.75), rgba(96, 96, 104, 0.75));
+	background:    -webkit-linear-gradient(rgba(0, 0, 8, 0.75), rgba(96, 96, 104, 0.75));
+	box-shadow:    inset 1px 1px 4px #000;
+	color:         #fff;
+	text-shadow:   1px 1px 1px #000;
+}
+
+.debug-bar .debug-tab.clickable:hover {
+	cursor:           pointer;
+	background-color: rgba(255, 255, 255, 0.85);
+	box-shadow:       0 4px 6px rgba(107, 111, 113, 0.85);
+}
+
+.debug-bar .debug-tab.clickable:hover + .debug-tab {
+	border-left-color: transparent;
+}
+
+.debug-bar .debug-tab.clickable:active,
+.debug-bar .debug-tab.active {
+	border-left-color:  rgba(107, 111, 113, 0.5) !important;
+	box-shadow:         inset 2px 2px 3px rgba(107, 111, 113, 0.5) !important;
+	background-color:   rgba(255, 255, 255, 1);
+}
+
+.debug-bar .debug-tab.clickable:active + .debug-tab,
+.debug-bar .debug-tab.active + .debug-tab {
+	border-left-color: #c1c8cd !important;
+}
+
+.debug-bar .debug-tab.minimized {
+	background-position: center;
+	padding-left:        0;
+	padding-right:       0;
+	width:               32px;
+}
+
+.debug-bar .debug-tab.minimized .debug-info-holder {
+	opacity: 0;
+}
+
+.debug-panel-wrapper {
+	display:    none;
+	background: #d7dee3;
+}
+
+.debug-panel-wrapper h4 {
+	margin:      0;
+	padding:     0.2em 0.5em;
+	font-size:   small;
+	text-shadow: 1px 1px 2px #fff;
+}
+
+.debug-panel {
+	overflow:   auto;
+	max-height: 36em;
+	padding:    0.35em;
+}
+
+.debug-panel p {
+	margin: 0.35em;
+}
+
+.debug-panel h1,
+.debug-panel h2,
+.debug-panel h3,
+.debug-panel h4 {
+	margin: 0.5em;
+}
+
+.debug-panel ul,
+.debug-panel ol {
+	margin:     0;
+	padding:    0;
+	background: #eee;
+}
+
+.debug-panel ul ul,
+.debug-panel ul ol,
+.debug-panel ol ul,
+.debug-panel ol ol {
+	padding-left: 3em;
+}
+
+.debug-panel li {
+	margin-left: 3em;
+	padding:     0.1em 0;
+}
+
+.debug-panel li .debug-info-holder {
+	padding:       1px 0.75em;
+	margin:        0 1em;
+	border:        1px solid #c1c8cd;
+	border-radius: 1em;
+}
+
+.debug-panel .list-rows > li {
+	padding:       0.2em 0.75em;
+	border-bottom: 1px dashed #ccc;
+	background:    #fff;
+}
+
+.debug-panel .list-rows > li:last-child {
+	border-bottom: none;
+}
+
+.debug-panel .list-simple {
+	list-style:  none;
+	margin-left: 0;
+}
+
+.debug-panel .list-simple li {
+	margin-left: 0;
+}
+
+.debug-panel .list-simple p {
+	margin-left: 0;
+}
+
+.debug-keyword {
+	color:       #823;
+	font-weight: bold;
+}
+
+.debug-string {
+	color: #292;
+}
+
+.debug-string2 {
+	color: #229;
+}
+
+.debug-line {
+	color: #283;
+}
