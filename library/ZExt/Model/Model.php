@@ -35,9 +35,11 @@ use IteratorAggregate, ArrayIterator;
  * @package    Model
  * @subpackage Model
  * @author     Mike.Mirten
- * @version    2.0.2
+ * @version    2.1
  */
 class Model extends ModelAbstract implements IteratorAggregate {
+	
+	const INIT_POSTFIX = 'Init';
 	
 	const SOURCE_METHOD  = 'method';
 	const SOURCE_MODE    = 'mode';
@@ -69,7 +71,7 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	protected $_parentCollection;
 	
 	/**
-	 * Models' factory
+	 * Items' factory
 	 * 
 	 * @param  array $data
 	 * @return Model
@@ -79,7 +81,7 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	}
 	
 	/**
-	 * Model's constructor
+	 * Items's constructor
 	 * 
 	 * @param array $data
 	 */
@@ -105,7 +107,7 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	/**
 	 * Merge data of an object into this object
 	 * 
-	 * @param  Model $object
+	 * @param  Item $object
 	 * @return Model
 	 */
 	public function merge(Model $object) {
@@ -169,6 +171,17 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	public function hasCollection() {
 		return $this->_parentCollection !== null;
 	}
+	
+	/**
+	 * Unlink the parental collection
+	 * 
+	 * @return Model
+	 */
+	public function unlinkCollection() {
+		$this->_parentCollection = null;
+		
+		return $this;
+	}
 
 	/**
 	 * Get a name of a model
@@ -197,6 +210,17 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 * @return Model
 	 */
 	public function initialize($property = null) {
+		// By method
+		$initMethod = lcfirst($property) . self::INIT_POSTFIX;
+		
+		if (method_exists($this, $initMethod)) {
+			$this->_data[$property]        = $this->$initMethod();
+			$this->_initialized[$property] = true;
+			
+			return $this;
+		}
+		
+		// By source definition
 		if ($this->_sources === null) {
 			return $this;
 		}
@@ -397,10 +421,22 @@ class Model extends ModelAbstract implements IteratorAggregate {
 		return count($this->_data);
 	}
 	
+	/**
+	 * Set the value of the property
+	 * 
+	 * @param string $name
+	 * @param mixed  $value
+	 */
 	public function __set($name, $value) {
 		$this->_data[$name] = $value;
 	}
 	
+	/**
+	 * Get the value of the property
+	 * 
+	 * @param type $name
+	 * @return type
+	 */
 	public function __get($name) {
 		if (isset($this->_data[$name])) {
 			return $this->_data[$name];
@@ -414,10 +450,36 @@ class Model extends ModelAbstract implements IteratorAggregate {
 		}
 	}
 	
+	/**
+	 * Is the property exists
+	 * 
+	 * @param  string $name
+	 * @return bool
+	 */
 	public function __isset($name) {
-		return isset($this->_data[$name]);
+		// Property exists
+		if (isset($this->_data[$name])) {
+			return true;
+		}
+		
+		// Init method exists
+		if (method_exists($this, lcfirst($name) . self::INIT_POSTFIX)) {
+			return true;
+		}
+		
+		// Init source exists
+		if (! empty($this->_sources[$name])) {
+			return true;
+		}
+		
+		return false;
 	}
 	
+	/**
+	 * Unset the property
+	 * 
+	 * @param type $name
+	 */
 	public function __unset($name) {
 		unset($this->_data[$name]);
 	}
