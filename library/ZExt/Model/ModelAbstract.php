@@ -21,7 +21,7 @@
  * @copyright (c) 2012, Mike.Mirten
  * @license   http://www.gnu.org/licenses/gpl.html GPL License
  * @category  ZExt
- * @version   1.1
+ * @version   1.0
  */
 
 namespace ZExt\Model;
@@ -34,8 +34,6 @@ use ZExt\Log\LoggerAwareInterface,
 
 use ZExt\Events\EventsManagerAwareInterface,
     ZExt\Events\EventsManagerAwareTrait;
-
-use ZExt\Dump\Html as DumpDecorator;
 
 /**
  * Models' abstract class
@@ -66,13 +64,6 @@ abstract class ModelAbstract implements ModelInterface, LocatorAwareInterface, L
 	 * @var Model
 	 */
 	protected $_meta;
-	
-	/**
-	 * Dump decorator
-	 *
-	 * @var object
-	 */
-	protected $_dumpDecorator;
 	
 	/**
 	 * For extensions
@@ -162,40 +153,19 @@ abstract class ModelAbstract implements ModelInterface, LocatorAwareInterface, L
 	}
 	
 	/**
-	 * Get a dump decorator
-	 * 
-	 * @return object
-	 */
-	public function getDumpDecorator() {
-		if ($this->_dumpDecorator === null) {
-			if ($this->hasLocator() && $this->getLocator()->has('modelsDumpDecorator')) {
-				$this->_dumpDecorator = $this->getLocator()->get('modelsDumpDecorator');
-			} else {
-				$this->_dumpDecorator = new DumpDecorator();
-			}
-		}
-		
-		return $this->_dumpDecorator;
-	}
-	
-	/**
-	 * Set a dump decorator
-	 * 
-	 * @param  object $decorator
-	 * @return ModelAbstract
-	 */
-	public function setDumpDecorator() {
-		
-	}
-	
-	/**
 	 * Get the dump of the model's condition and the data
 	 * 
 	 * @param  int $recursion
 	 * @return mixed
 	 */
 	public function dump($recursion = 4) {
-		return $this->getDumpDecorator()->dump($this, $recursion);
+		if ($this->hasLocator() && $this->getLocator()->has('modelsDumpDecorator')) {
+			$decorator = $this->getLocator()->get('modelsDumpDecorator');
+		} else {
+			throw new Exception('Dump\'s decorator wasn\'t supplied');
+		}
+		
+		return $decorator->dump($this, $recursion);
 	}
 	
 	public function __sleep() {
