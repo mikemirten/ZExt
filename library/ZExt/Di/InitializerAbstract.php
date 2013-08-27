@@ -33,7 +33,7 @@ namespace ZExt\Di;
  * @package    Di
  * @subpackage Initializer
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
 abstract class InitializerAbstract implements InitializerInterface, LocatorAwareInterface {
 	
@@ -42,11 +42,18 @@ abstract class InitializerAbstract implements InitializerInterface, LocatorAware
 	const INIT_METHOD_POSTFIX = 'Init';
 	
 	/**
-	 * Local cache of an initialized services
+	 * Initialized services
 	 *
-	 * @var array 
+	 * @var array
 	 */
-	private $_services;
+	private $_services = [];
+	
+	/**
+	 * Initialized with args services
+	 *
+	 * @var array
+	 */
+	private $_servicesArgs = [];
 	
 	/**
 	 * Constructor
@@ -97,11 +104,17 @@ abstract class InitializerAbstract implements InitializerInterface, LocatorAware
 	 * Check for a service has been initialized
 	 * 
 	 * @param  string $id
+	 * @param  array  $arguments
 	 * @return boolean
 	 */
-	protected function hasInitialized($id) {
-		if (isset($this->_services[$id])) {
-			return true;
+	protected function hasInitialized($id, $arguments = null) {
+		if ($arguments === null) {
+			return isset($this->_services[$id]);
+		} else {
+			if (isset($this->_servicesArgs[$id])) {
+				$argsId = $this->argumentsHashFunction($arguments);
+				return isset($this->_servicesArgs[$id][$argsId]);
+			}
 		}
 		
 		if ($this->_locator !== null) {
@@ -113,41 +126,74 @@ abstract class InitializerAbstract implements InitializerInterface, LocatorAware
 	 * Initialize a service
 	 * 
 	 * @param  string $id
+	 * @param  array  $arguments
 	 * @return mixed
 	 */
-	public function initialize($id) {
-		if (isset($this->_services[$id])) {
-			return $this->_services[$id];
+	public function initialize($id, $arguments = null) {
+		if ($arguments === null) {
+			if (isset($this->_services[$id])) {
+				return $this->_services[$id];
+			}
+		} else {
+			$arguments = array_values((array) $arguments);
+			$argsId    = md5(serialize($arguments));
+			
+			if (isset($this->_services[$id][$argsId])) {
+				return $this->_services[$id][$argsId];
+			}
 		}
 		
 		$method = lcfirst($id) . self::INIT_METHOD_POSTFIX;
 		
 		if (method_exists($this, $method)) {
-			$service = $this->$method();
+			if ($arguments === null) {
+				$service = $this->$method();
+				
+				$this->_services[$id] = $service;
+			} else {
+				if (count($arguments) > 1) {
+					$service = call_user_method_array($method, $this, $arguments);
+				} else {
+					$service = $this->$method($arguments[0]);
+				}
+				
+				$this->_services[$id][$argsId] = $service;
+			}
 			
-			$this->_services[$id] = $service;
 			return $service;
 		}
 	}
 	
 	/**
-	 * Is service available
+	 * Is the service available
 	 * 
 	 * @param  string $id
 	 * @return boolean
 	 */
 	public function isAvailable($id) {
-		if (isset($this->_services[$id])) {
+		if (isset($this->_services[$id]) || isset($this->_servicesArgs[$id])) {
 			return true;
 		}
 		
 		return method_exists($this, lcfirst($id) . self::INIT_METHOD_POSTFIX);
 	}
 	
+	/**
+	 * Is the service available
+	 * 
+	 * @param  string $id
+	 * @return boolean
+	 */
 	public function __get($name) {
 		return $this->get($name);
 	}
 	
+	/**
+	 * Initialize the service
+	 * 
+	 * @param  string $id
+	 * @return mixed
+	 */
 	public function __isset($name) {
 		return $this->has($name);
 	}

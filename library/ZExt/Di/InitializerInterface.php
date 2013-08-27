@@ -32,9 +32,10 @@ interface InitializerInterface {
 	 * Initialize a service
 	 * 
 	 * @param  string $id
+	 * @param  array  $arguments
 	 * @return mixed
 	 */
-	public function initialize($id);
+	public function initialize($id, $arguments = null);
 	
 	/**
 	 * Is service available
