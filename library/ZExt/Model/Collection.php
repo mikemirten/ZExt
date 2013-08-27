@@ -38,7 +38,7 @@ use ArrayAccess,
  * @package    Model
  * @subpackage Collection
  * @author     Mike.Mirten
- * @version    2.2.4
+ * @version    2.2.5
  */
 class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator {
 	
@@ -800,14 +800,15 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	}
 	
 	/**
-	 * Set list of values to data
+	 * Set the list of a values to the data
 	 * 
-	 * @param   string $property
-	 * @param   mixed  $data
-	 * @primary mixed  $primary
-	 * @return  Collection
+	 * @param  string $property
+	 * @param  mixed  $data
+	 * @param  mixed  $primary
+	 * @param  bool   $overwrite
+	 * @return Collection
 	 */
-	public function setList($property, $data, $primary = null) {
+	public function setList($property, $data, $primary = null, $overwrite = true) {
 		if ($primary !== true && (is_array($data) || $data instanceof Collection)) {
 			if ($primary === null) {
 				$primary = $this->getPrimary();
@@ -816,15 +817,31 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 					throw new Exception('Unable to determine a primary property');
 				}
 			}
-
-			foreach ($this->_data as &$item) {
-				if (isset($data[$item[$primary]])) {
-					$item[$property] = $data[$item[$primary]];
+			
+			if ($overwrite) {
+				foreach ($this->_data as &$item) {
+					if (isset($data[$item[$primary]])) {
+						$item[$property] = $data[$item[$primary]];
+					}
+				}
+			} else {
+				foreach ($this->_data as &$item) {
+					if (isset($data[$item[$primary]]) && ! isset($item[$property])) {
+						$item[$property] = $data[$item[$primary]];
+					}
 				}
 			}
 		} else {
-			foreach ($this->_data as &$item) {
-				$item[$property] = $data;
+			if ($overwrite) {
+				foreach ($this->_data as &$item) {
+					$item[$property] = $data;
+				}
+			} else {
+				foreach ($this->_data as &$item) {
+					if (! isset($item[$property])) {
+						$item[$property] = $data;
+					}
+				}
 			}
 		}
 		
