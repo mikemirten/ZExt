@@ -26,7 +26,7 @@
 
 namespace ZExt\Html;
 
-use Countable, ArrayAccess;
+use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
 
 /**
  * Html multi elements tags' abstraction
@@ -36,7 +36,7 @@ use Countable, ArrayAccess;
  * @author     Mike.Mirten
  * @version    1.0
  */
-abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAccess {
+abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAccess, IteratorAggregate {
 	
 	/**
 	 * Elements of the multielements structure
@@ -248,6 +248,39 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
+	 * Replace the existing element with the new element with the new name, preserving the order
+	 * 
+	 * @param  string | int $targetName
+	 * @param  mixed $element
+	 * @param  string | int $name
+	 * @return MultiElementsAbstract
+	 */
+	public function setElementInsteadOf($targetName, $element, $name = null) {
+		if (! isset($this->_elements[$targetName])) {
+			return $this;
+		}
+		
+		$elements = [];
+		
+		foreach ($this->_elements as $existsName => $existsElement) {
+			
+			if ($targetName === $existsName) {
+				if ($name === null) {
+					$elements[] = $element;
+				} else {
+					$elements[$name] = $element;
+				}
+			} else {
+				$elements[$existsName] = $existsElement;
+			}
+		}
+		
+		$this->_elements = $elements;
+		
+		return $this;
+	}
+	
+	/**
 	 * The list is empty
 	 * 
 	 * @return bool
@@ -263,6 +296,15 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	 */
 	public function count() {
 		return count($this->_elements);
+	}
+	
+	/**
+	 * Iterator aggregation
+	 * 
+	 * @return ArrayIterator
+	 */
+	public function getIterator() {
+		return new ArrayIterator($this->getElements());
 	}
 	
 	// Array access interface:
