@@ -38,7 +38,7 @@ use ArrayAccess,
  * @package    Model
  * @subpackage Collection
  * @author     Mike.Mirten
- * @version    2.2.5
+ * @version    2.2.6
  */
 class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator {
 	
@@ -758,7 +758,13 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 			$primary = $item->getCollection()->getPrimary();
 		}
 		
-		return new self($list, $model, $primary);
+		$collection = new self($list, $model, $primary);
+		
+		if ($this->hasLocator()) {
+			$collection->setLocator($this->getLocator());
+		}
+		
+		return $collection;
 	}
 	
 	/**
