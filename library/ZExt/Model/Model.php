@@ -26,6 +26,9 @@
 
 namespace ZExt\Model;
 
+use ZExt\Validator\ValidatorInterface;
+use ZExt\Di\LocatorByArgumentsInterface;
+
 use IteratorAggregate, ArrayIterator;
 
 /**
@@ -35,7 +38,7 @@ use IteratorAggregate, ArrayIterator;
  * @package    Model
  * @subpackage Model
  * @author     Mike.Mirten
- * @version    2.1
+ * @version    2.2
  */
 class Model extends ModelAbstract implements IteratorAggregate {
 	
@@ -55,6 +58,27 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 * @var array
 	 */
 	private $_sources;
+	
+	/**
+	 * Validators
+	 *
+	 * @var array
+	 */
+	private $_validators;
+	
+	/**
+	 * Validators' locator
+	 *
+	 * @var LocatorByArgumentsInterface 
+	 */
+	private $_validatorsLocator;
+	
+	/**
+	 * Validators messages after the validation end
+	 *
+	 * @var array
+	 */
+	private $_validatorsMessages;
 	
 	/**
 	 * Names of a resources which been initialized
@@ -402,6 +426,195 @@ class Model extends ModelAbstract implements IteratorAggregate {
 			throw new Exception('Data must be represented as a collection');
 		}
 	}
+	
+	/**
+	 * Is data valid
+	 * 
+	 * @param  string | array $property
+	 * @return boolean
+	 */
+	public function isValid($property = null) {
+		$validators = $this->getValidators();
+		
+		if ($validators === null) {
+			return true;
+		}
+		
+		if ($property === null) {
+			$data = &$this->_data;
+		} else if (is_array($property)) {
+			$data = array_intersect_key(array_flip($property), $this->_data);
+			
+			if (empty($data)) {
+				throw new Exception('Specified properties are absent');
+			}
+		} else {
+			if (! isset($this->_data[$property])) {
+				throw new Exception('Specified property is absent');
+			}
+			
+			$data = [$property => $this->_data[$property]];
+		}
+		
+		$valid    = true;
+		$messages = [];
+		
+		foreach ($data as $name => $value) {
+			if (! isset($validators[$name])) {
+				continue;
+			}
+			
+			foreach ($validators[$name] as $validator) {
+				if ($validator->isValid($value)) {
+					continue;
+				}
+				
+				if (isset($messages[$name])) {
+					$messages[$name] = array_merge($messages[$name], $validator->getMessages());
+				} else {
+					$messages[$name] = $validator->getMessages();
+				}
+
+				$valid = false;
+				
+			}
+			
+		}
+		
+		$this->_validatorsMessages = $messages;
+		
+		return $valid;
+	}
+	
+	/**
+	 * Get the validation messages
+	 * 
+	 * 
+	 * @param  string | array $property
+	 * @return array  | null
+	 */
+	public function getValidationMessages($property = null) {
+		if ($this->_validatorsMessages === null) {
+			return;
+		}
+		
+		if ($property === null) {
+			return $this->_validatorsMessages;
+		}
+		
+		if (isset($this->_validatorsMessages[$property])) {
+			return $this->_validatorsMessages[$property];
+		}
+	}
+	
+	/**
+	 * Get the data validators
+	 * 
+	 * @return array
+	 * @throws Exception
+	 */
+	public function getValidators() {
+		if ($this->_validators === false) {
+			return;
+		}
+		
+		if ($this->_validators === null) {
+			$definition = $this->getValidationDefinition();
+			
+			if ($definition === null) {
+				$this->_validators = false;
+				return;
+			}
+			
+			$validators = [];
+			
+			foreach ($definition as $propName => $propValidators) {
+				$propValidators = (array) $propValidators;
+				
+				if (! isset($validators[$propName])) {
+					$validators[$propName] = [];
+				}
+				
+				foreach ($propValidators as $name => $validatorDefinition) {
+					if ($validatorDefinition instanceof ValidatorInterface) {
+						$validators[$propName][$name] = $validatorDefinition;
+					}
+					else if (is_string($validatorDefinition)) {
+						$validator = $this->getValidatorsLocator()->get($validatorDefinition);
+						
+						if (! $validator instanceof ValidatorInterface) {
+							throw new Exception('Validator must implements "ValidatorInterface" interface');
+						}
+						
+						$validators[$propName][$name] = $validator;
+					}
+					else if (is_array($validatorDefinition)) {
+						if (! isset($validatorDefinition[0]) || ! is_string($validatorDefinition[0])) {
+							throw new Exception('Invalid validator definition for the "' . $propName . '" property');
+						}
+						
+						$validatorName = $validatorDefinition[0];
+						unset($validatorDefinition[0]);
+						
+						$validator = $this->getValidatorsLocator()->getByArguments($validatorName, [$validatorDefinition]);
+						
+						if (! $validator instanceof ValidatorInterface) {
+							throw new Exception('Validator must implements "ValidatorInterface" interface');
+						}
+						
+						$validators[$propName][$name] = $validator;
+					}
+					else {
+						throw new Exception('Invalid validator definition for the "' . $propName . '" property');
+					}
+				}
+			}
+			
+			$this->_validators = $validators;
+		}
+		
+		return $this->_validators;
+	}
+	
+	/**
+	 * Set validators' locator
+	 * 
+	 * @param  LocatorByArgumentsInterface $locator
+	 * @return Model
+	 */
+	public function setValidatorsLocator(LocatorByArgumentsInterface $locator) {
+		$this->_validatorsLocator = $locator;
+		
+		return $this;
+	}
+	
+	/**
+	 * Get validators' locator
+	 * 
+	 * @return LocatorByArgumentsInterface
+	 */
+	public function getValidatorsLocator() {
+		if ($this->_validatorsLocator === null) {
+			if ($this->hasLocator()) {
+				$this->_validatorsLocator = $this->getLocator()->get('validatorsLocator');
+				
+				if (! $this->_validatorsLocator instanceof LocatorByArgumentsInterface) {
+					throw new Exception('Validators\' locator must implements "LocatorByArgumentsInterface" interface');
+				}
+			} else {
+				throw new Exception('Unable to provide validators\' locator');
+			}
+		}
+		
+		return $this->_validatorsLocator;
+	}
+	
+	/**
+	 * Get the validation definition
+	 * 
+	 * @return array
+	 */
+	public function getValidationDefinition(){}
 	
 	/**
 	 * Get the data iterator
