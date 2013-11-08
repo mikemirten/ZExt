@@ -443,8 +443,8 @@ class Model extends ModelAbstract implements IteratorAggregate {
 		if ($property === null) {
 			$data = &$this->_data;
 		} else if (is_array($property)) {
-			$data = array_intersect_key(array_flip($property), $this->_data);
-			
+			$data = array_intersect_key($this->_data, array_flip($property));
+
 			if (empty($data)) {
 				throw new Exception('Specified properties are absent');
 			}
