@@ -152,7 +152,7 @@ abstract class InitializerAbstract implements InitializerInterface, LocatorAware
 				$this->_services[$id] = $service;
 			} else {
 				if (count($arguments) > 1) {
-					$service = call_user_method_array($method, $this, $arguments);
+					$service = call_user_func_array([$this, $method], $arguments);
 				} else {
 					$service = $this->$method($arguments[0]);
 				}
