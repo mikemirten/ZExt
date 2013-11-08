@@ -617,6 +617,42 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	public function getValidationDefinition(){}
 	
 	/**
+	 * Increase a value of the property
+	 * Property will be created if not exists
+	 * 
+	 * @param  string $property
+	 * @param  int    $value
+	 * @return int
+	 */
+	public function inc($property, $value = 1) {
+		if (isset($this->_data[$property])) {
+			$this->_data[$property] += $value;
+		} else {
+			$this->_data[$property] = $value;
+		}
+		
+		return $this->_data[$property];
+	}
+	
+	/**
+	 * Decrease a value of the property
+	 * Property will be created if not exists
+	 * 
+	 * @param  string $property
+	 * @param  int    $value
+	 * @return int
+	 */
+	public function dec($property, $value = 1) {
+		if (isset($this->_data[$property])) {
+			$this->_data[$property] -= $value;
+		} else {
+			$this->_data[$property] =- $value;
+		}
+		
+		return $this->_data[$property];
+	}
+	
+	/**
 	 * Get the data iterator
 	 * 
 	 * @return ArrayIterator
