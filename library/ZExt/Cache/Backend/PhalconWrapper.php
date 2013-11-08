@@ -1,4 +1,29 @@
 <?php
+/**
+ * ZExt Framework (http://z-ext.com)
+ * Copyright (C) 2012 Mike.Mirten
+ * 
+ * LICENSE
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * @copyright (c) 2012, Mike.Mirten
+ * @license   http://www.gnu.org/licenses/gpl.html GPL License
+ * @category  ZExt
+ * @version   1.0
+ */
+
 namespace ZExt\Cache\Backend;
 
 use Phalcon\Cache\BackendInterface as PhalconBackendInterface;
@@ -13,6 +38,15 @@ use ZExt\Profiler\ProfileInterface;
 use ZExt\Cache\Backend\Exceptions\NoBackend;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 
+/**
+ * Phalcon cache backend adapter
+ * 
+ * @category   ZExt
+ * @package    Cache
+ * @subpackage Backend
+ * @author     Mike.Mirten
+ * @version    1.0beta
+ */
 class PhalconWrapper implements BackendInterface, ProfileableInterface {
 	
 	use OptionsTrait;
@@ -37,7 +71,7 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 	 *
 	 * @var bool 
 	 */
-	protected $operationsExceptions = true;
+	protected $operationsExceptions = false;
 	
 	/**
 	 * Constructor
@@ -314,7 +348,60 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 			}
 		}
 		
-		$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		if ($this->_profilerEnabled) {
+			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Remove the many the data from the cache
+	 * 
+	 * @param  array $id
+	 * @return bool
+	 * @throws OperationFailed
+	 */
+	public function removeMany(array $ids) {
+		$backend = $this->getBackend();
+		$ids     = array_map([$this, 'prepareId'], $ids);
+		
+		if ($this->_profilerEnabled) {
+			$idLog   = implode(', ', $ids);
+			$profile = $this->getProfiler()->startEvent('Remove (' . count($ids) . '): ' . $idLog, ProfileInterface::TYPE_DELETE);
+		}
+		
+		try {
+			foreach ($ids as $id) {
+				$result = $backend->delete($id);
+				
+				if ($result === false) {
+					if ($this->_profilerEnabled) {
+						$profile->stop(ProfileInterface::STATUS_ERROR);
+					}
+
+					if ($this->operationsExceptions) {
+						throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
+					} else {
+						return false;
+					}
+				}
+			}
+		} catch (PhalconCacheException $exception) {
+			if ($this->_profilerEnabled) {
+				$profile->stop(ProfileInterface::STATUS_ERROR);
+			}
+			
+			if ($this->operationsExceptions) {
+				throw new OperationFailed('Removing of the data from the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
+			} else {
+				return false;
+			}
+		}
+		
+		if ($this->_profilerEnabled) {
+			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		}
 		
 		return true;
 	}
@@ -391,7 +478,9 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 			}
 		}
 		
-		$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		if ($this->_profilerEnabled) {
+			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		}
 		
 		return $newValue;
 	}
@@ -468,7 +557,9 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 			}
 		}
 		
-		$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		if ($this->_profilerEnabled) {
+			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		}
 		
 		return $newValue;
 	}

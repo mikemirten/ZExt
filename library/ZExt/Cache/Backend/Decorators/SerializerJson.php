@@ -24,26 +24,32 @@
  * @version   1.0
  */
 
-namespace ZExt\Cache\Backend;
+namespace ZExt\Cache\Backend\Decorators;
 
 /**
- * Backend adapter interface
+ * Tags supporting ability decorator
  * 
  * @category   ZExt
  * @package    Cache
- * @subpackage Backend
+ * @subpackage Decorators
  * @author     Mike.Mirten
  * @version    1.0
  */
-interface BackendInterface {
+class SerializerJson extends DecoratorAbstract {
 	
 	/**
 	 * Fetch the data from the cache
 	 * 
 	 * @param  string $id
-	 * @return mixed | null if no data
+	 * @return mixed
 	 */
-	public function get($id);
+	public function get($id) {
+		$result = $this->getBackend()->get($id);
+		
+		if ($result !== null) {
+			return json_decode($result);
+		}
+	}
 	
 	/**
 	 * Fetch the many of the data from the cache
@@ -51,7 +57,15 @@ interface BackendInterface {
 	 * @param  array $id
 	 * @return array
 	 */
-	public function getMany(array $ids);
+	public function getMany(array $ids) {
+		$result = $this->getBackend()->getMany($ids);
+		
+		if (! empty($result)) {
+			return array_map('json_decode', $result);
+		}
+		
+		return $result;
+	}
 	
 	/**
 	 * Store the data into the cache
@@ -61,7 +75,9 @@ interface BackendInterface {
 	 * @param  int    $lifetime Lifetime in seconds
 	 * @return bool
 	 */
-	public function set($id, $data, $lifetime = 0);
+	public function set($id, $data, $lifetime = 0) {
+		return $this->getBackend()->set($id, json_encode($data), $lifetime);
+	}
 	
 	/**
 	 * Store the many of the date into the cache
@@ -70,7 +86,9 @@ interface BackendInterface {
 	 * @param  int   $lifetime
 	 * @return bool
 	 */
-	public function setMany(array $data, $lifetime = 0);
+	public function setMany(array $data, $lifetime = 0) {
+		return $this->getBackend()->setMany(array_map('json_encode', $data), $lifetime);
+	}
 	
 	/**
 	 * Check whether the data exists in the cache
@@ -78,7 +96,9 @@ interface BackendInterface {
 	 * @param  string $id
 	 * @return bool
 	 */
-	public function has($id);
+	public function has($id) {
+		return $this->getBackend()->has($id);
+	}
 	
 	/**
 	 * Remove the data from the cache
@@ -86,7 +106,9 @@ interface BackendInterface {
 	 * @param  string $id
 	 * @return bool
 	 */
-	public function remove($id);
+	public function remove($id) {
+		return $this->getBackend()->remove($id);
+	}
 	
 	/**
 	 * Remove the many the data from the cache
@@ -94,7 +116,9 @@ interface BackendInterface {
 	 * @param  array $id
 	 * @return bool
 	 */
-	public function removeMany(array $ids);
+	public function removeMany(array $ids) {
+		return $this->getBackend()->removeMany($ids);
+	}
 	
 	/**
 	 * Increment the numeric data in the cache
@@ -103,7 +127,9 @@ interface BackendInterface {
 	 * @param  int    $value
 	 * @return int | bool
 	 */
-	public function inc($id, $value = 1);
+	public function inc($id, $value = 1) {
+		return $this->getBackend()->inc($id, $value);
+	}
 	
 	/**
 	 * Decrement the numeric data in the cache
@@ -112,6 +138,8 @@ interface BackendInterface {
 	 * @param  int    $value
 	 * @return int | bool
 	 */
-	public function dec($id, $value = 1);
+	public function dec($id, $value = 1) {
+		return $this->getBackend()->dec($id, $value);
+	}
 	
 }

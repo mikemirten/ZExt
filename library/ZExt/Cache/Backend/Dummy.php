@@ -27,7 +27,7 @@
 namespace ZExt\Cache\Backend;
 
 /**
- * Backend adapter interface
+ * Dummy (Null) backend adapter
  * 
  * @category   ZExt
  * @package    Cache
@@ -35,15 +35,17 @@ namespace ZExt\Cache\Backend;
  * @author     Mike.Mirten
  * @version    1.0
  */
-interface BackendInterface {
+class Dummy implements TaggableInterface {
 	
 	/**
 	 * Fetch the data from the cache
 	 * 
 	 * @param  string $id
-	 * @return mixed | null if no data
+	 * @return mixed
 	 */
-	public function get($id);
+	public function get($id) {
+		return null;
+	}
 	
 	/**
 	 * Fetch the many of the data from the cache
@@ -51,26 +53,45 @@ interface BackendInterface {
 	 * @param  array $id
 	 * @return array
 	 */
-	public function getMany(array $ids);
+	public function getMany(array $id) {
+		return [];
+	}
+	
+	/**
+	 * Fetch a data from the cache by the tag(s)
+	 * 
+	 * @param  string | array $tag
+	 * @param  bool           $byIntersect
+	 * @return array
+	 */
+	public function getByTag($tags, $byIntersect = false) {
+		return [];
+	}
 	
 	/**
 	 * Store the data into the cache
 	 * 
-	 * @param  string $id       ID of the stored data
-	 * @param  mixed  $data     Stored data
-	 * @param  int    $lifetime Lifetime in seconds
+	 * @param  string         $id       ID of the stored data
+	 * @param  mixed          $data     Stored data
+	 * @param  int            $lifetime Lifetime in seconds
+	 * @param  string | array $tag
 	 * @return bool
 	 */
-	public function set($id, $data, $lifetime = 0);
+	public function set($id, $data, $lifetime = 0, $tags = null) {
+		return true;
+	}
 	
 	/**
 	 * Store the many of the date into the cache
 	 * 
-	 * @param  array $data
-	 * @param  int   $lifetime
+	 * @param  array          $data
+	 * @param  int            $lifetime
+	 * @param  string | array $tag
 	 * @return bool
 	 */
-	public function setMany(array $data, $lifetime = 0);
+	public function setMany(array $data, $lifetime = 0, $tags = null) {
+		return true;
+	}
 	
 	/**
 	 * Check whether the data exists in the cache
@@ -78,7 +99,9 @@ interface BackendInterface {
 	 * @param  string $id
 	 * @return bool
 	 */
-	public function has($id);
+	public function remove($id) {
+		return true;
+	}
 	
 	/**
 	 * Remove the data from the cache
@@ -86,7 +109,20 @@ interface BackendInterface {
 	 * @param  string $id
 	 * @return bool
 	 */
-	public function remove($id);
+	public function removeMany(array $ids) {
+		return true;
+	}
+	
+	/**
+	 * Remove a data from the cache by the tag(s)
+	 * 
+	 * @param  string | array $tag
+	 * @param  bool           $byIntersect
+	 * @return bool
+	 */
+	public function removeByTag($tags, $byIntersect = false) {
+		return true;
+	}
 	
 	/**
 	 * Remove the many the data from the cache
@@ -94,7 +130,9 @@ interface BackendInterface {
 	 * @param  array $id
 	 * @return bool
 	 */
-	public function removeMany(array $ids);
+	public function has($id) {
+		return false;
+	}
 	
 	/**
 	 * Increment the numeric data in the cache
@@ -103,7 +141,9 @@ interface BackendInterface {
 	 * @param  int    $value
 	 * @return int | bool
 	 */
-	public function inc($id, $value = 1);
+	public function inc($id, $value = 1) {
+		return 0;
+	}
 	
 	/**
 	 * Decrement the numeric data in the cache
@@ -112,6 +152,8 @@ interface BackendInterface {
 	 * @param  int    $value
 	 * @return int | bool
 	 */
-	public function dec($id, $value = 1);
+	public function dec($id, $value = 1) {
+		return 0;
+	}
 	
 }

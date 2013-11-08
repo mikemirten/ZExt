@@ -34,6 +34,7 @@ use ZExt\Profiler\ProfileableInterface;
 use ZExt\Profiler\ProfileableTrait;
 use ZExt\Profiler\ProfileInterface;
 
+use ZExt\Cache\Backend\Exceptions\NoPhpExtension;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 use ZExt\Cache\Backend\Exceptions\ServerParamsError;
 
@@ -42,9 +43,9 @@ use ZExt\Cache\Backend\Exceptions\ServerParamsError;
  * 
  * @category   ZExt
  * @package    Cache
- * @subpackage Memcache
+ * @subpackage Backend
  * @author     Mike.Mirten
- * @version    1.0rc1
+ * @version    1.0rc2
  */
 class Memcache implements BackendInterface, ProfileableInterface {
 	
@@ -90,7 +91,7 @@ class Memcache implements BackendInterface, ProfileableInterface {
 	];
 	
 	/**
-	 * Parameters to argumrnts conversion list
+	 * Parameters to arguments conversion list
 	 *
 	 * @var array
 	 */
@@ -129,7 +130,7 @@ class Memcache implements BackendInterface, ProfileableInterface {
 	 *
 	 * @var bool 
 	 */
-	protected $operationsExceptions = true;
+	protected $operationsExceptions = false;
 	
 	/**
 	 * Has at least one server in the connection pool
@@ -141,11 +142,16 @@ class Memcache implements BackendInterface, ProfileableInterface {
 	/**
 	 * Constructor
 	 * 
-	 * @param array | Traversable $options
+	 * @param  array | Traversable $options
+	 * @throws NoPhpExtension
 	 */
 	public function __construct($options = null) {
+		if (! extension_loaded('memcache')) {
+			throw new NoPhpExtension('The memcache php extension required for the backend');
+		}
+		
 		if ($options !== null) {
-			$this->setOptions($options);
+			$this->setOptions($options, false, false);
 		}
 	}
 	
@@ -375,7 +381,52 @@ class Memcache implements BackendInterface, ProfileableInterface {
 			}
 		}
 		
-		$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		if ($this->_profilerEnabled) {
+			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Remove the many the data from the cache
+	 * 
+	 * @param  array $id
+	 * @return bool
+	 * @throws OperationFailed
+	 */
+	public function removeMany(array $ids) {
+		if (! $this->connectionCheckStatus) {
+			$this->addServer();
+		}
+		
+		$client = $this->getClient();
+		$ids    = array_map([$this, 'prepareId'], $ids);
+		
+		if ($this->_profilerEnabled) {
+			$idLog   = implode(', ', $ids);
+			$profile = $this->getProfiler()->startEvent('Remove (' . count($ids) . '): ' . $idLog, ProfileInterface::TYPE_DELETE);
+		}
+		
+		foreach ($ids as $id) {
+			$result = $client->delete($id);
+		
+			if ($result === false) {
+				if ($this->_profilerEnabled) {
+					$profile->stop(ProfileInterface::STATUS_ERROR);
+				}
+
+				if ($this->operationsExceptions) {
+					throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
+				} else {
+					return false;
+				}
+			}
+		}
+		
+		if ($this->_profilerEnabled) {
+			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		}
 		
 		return true;
 	}
@@ -413,7 +464,9 @@ class Memcache implements BackendInterface, ProfileableInterface {
 			}
 		}
 		
-		$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		if ($this->_profilerEnabled) {
+			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		}
 		
 		return $result;
 	}
@@ -451,7 +504,9 @@ class Memcache implements BackendInterface, ProfileableInterface {
 			}
 		}
 		
-		$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		if ($this->_profilerEnabled) {
+			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		}
 		
 		return $result;
 	}
@@ -569,7 +624,7 @@ class Memcache implements BackendInterface, ProfileableInterface {
 		} else {
 			$args = $argsRaw + self::$defaultServerArgs;
 		}
-
+		
 		$result = call_user_func_array([$this->getClient(), 'addServer'], $args);
 		
 		if ($result === false) {
