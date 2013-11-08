@@ -44,12 +44,12 @@ use Closure, ReflectionClass;
  * @package    Di
  * @subpackage Initializer
  * @author     Mike.Mirten
- * @version    1.1
+ * @version    1.2
  */
 class InitializerNamespace
 
 	implements InitializerInterface,
-	           LocatorInterface,
+	           LocatorByArgumentsInterface,
 	           LocatorAwareInterface,
 	           LoggerAwareInterface,
 	           ConfigAwareInterface {
@@ -328,7 +328,7 @@ class InitializerNamespace
 	 */
 	protected function loadService($id, $onlyCheck = false, $arguments = null) {
 		if (empty($this->_namespaces)) {
-			throw new NoNamespaces('Wasn\'t a namespaces registered');
+			throw new NoNamespaces('Weren\'t a namespaces registered');
 		}
 		
 		set_error_handler(function() {
@@ -408,6 +408,26 @@ class InitializerNamespace
 	}
 	
 	/**
+	 * Get the service with the custom arguments set
+	 * 
+	 * @param  string $id            An id of a service
+	 * @param  mixed  $args          Argument or an arguments set
+	 * @param  int    $failBehaviour On a service locate fail behaviour
+	 * @return mixed
+	 */
+	public function getByArguments($id, $args, $failBehaviour = self::BEHAVIOUR_FAIL_EXCEPTION) {
+		if ($failBehaviour === self::BEHAVIOUR_FAIL_NULL) {
+			try {
+				return $this->initialize($id, $args);
+			} catch (NoService $e) {
+				return;
+			}
+		} else {
+			return $this->initialize($id, $args);
+		}
+	}
+	
+	/**
 	 * Has the service
 	 * 
 	 * @param  string $name An id of a service
@@ -421,22 +441,28 @@ class InitializerNamespace
 	 * Check for a service has been initialized
 	 * 
 	 * @param  string $name An id of a service
-	 * @param  array  $arguments
 	 * @return boolean
 	 */
-	public function hasInitialized($id, $arguments = null) {
-		if ($arguments === null) {
-			return isset($this->_services[$id]);
-		} else {
-			if (isset($this->_servicesArgs[$id])) {
-				$argsId = $this->argumentsHashFunction($arguments);
-				return isset($this->_servicesArgs[$id][$argsId]);
-			}
-			
-			return false;
-		}
+	public function hasInitialized($id) {
+		return isset($this->_services[$id]);
 	}
 	
+	/**
+	 * Check for a service has been initialized with the arguments set
+	 * 
+	 * @param  string $name An id of a service
+	 * @param  mixed  $args Argument or an arguments set
+	 * @return boolean
+	 */
+	public function hasInitializedByArguments($id, $args) {
+		if (isset($this->_servicesArgs[$id])) {
+			$argsId = $this->argumentsHashFunction($args);
+			return isset($this->_servicesArgs[$id][$argsId]);
+		}
+			
+		return false;
+	}
+
 	/**
 	 * Argument hashing function
 	 * 
