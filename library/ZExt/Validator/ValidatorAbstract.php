@@ -72,10 +72,16 @@ abstract class ValidatorAbstract implements ValidatorInterface, LocatorAwareInte
 	 * @param mixed  $argN
 	 */
 	protected function addMessage($message) {
+		$hash = crc32(json_encode(func_get_args()));
+		
+		if (isset($this->_messages[$hash])) {
+			return;
+		}
+		
 		if (func_num_args() > 1) {
-			$this->_messages[] = call_user_func_array('sprintf', func_get_args());
+			$this->_messages[$hash] = call_user_func_array('sprintf', func_get_args());
 		} else {
-			$this->_messages[] = (string) $message;
+			$this->_messages[$hash] = (string) $message;
 		}
 	}
 	
@@ -85,7 +91,7 @@ abstract class ValidatorAbstract implements ValidatorInterface, LocatorAwareInte
 	 * @return array
 	 */
 	public function getMessages() {
-		return $this->_messages;
+		return array_values($this->_messages);
 	}
 	
 	/**
