@@ -26,6 +26,8 @@
 
 namespace ZExt\Validator;
 
+use ZExt\Validator\Exceptions\ValidationFailure;
+
 /**
  * String length validator
  * 
@@ -43,6 +45,13 @@ class StringLength extends ValidatorAbstract {
 	 * @var int
 	 */
 	protected $lengthMin, $lengthMax;
+	
+	/**
+	 * String encoding
+	 *
+	 * @var string
+	 */
+	protected $encoding;
 	
 	/**
 	 * Set the minimum length
@@ -63,6 +72,15 @@ class StringLength extends ValidatorAbstract {
 	}
 	
 	/**
+	 * Set the encoding
+	 * 
+	 * @param string $encoding
+	 */
+	public function setEncoding($encoding) {
+		$this->encoding = (string) $encoding;
+	}
+	
+	/**
 	 * Is the value valid
 	 * 
 	 * @param  mixed $value
@@ -75,7 +93,15 @@ class StringLength extends ValidatorAbstract {
 			return false;
 		}
 		
-		$length = mb_strlen($value);
+		if ($this->lengthMin !== null && $this->lengthMax !== null && $this->lengthMin >= $this->lengthMax) {
+			throw new ValidationFailure('Min length cannot be equal or greater than max length');
+		}
+		
+		if ($this->encoding === null) {
+			$length = mb_strlen($value);
+		} else {
+			$length = mb_strlen($value, $this->encoding);
+		}
 		
 		if ($this->lengthMin !== null && $length < $this->lengthMin) {
 			$this->addMessage('Must be not less than %s symbols', $this->lengthMin);
