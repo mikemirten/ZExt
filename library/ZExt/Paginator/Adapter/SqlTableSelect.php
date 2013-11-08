@@ -1,65 +1,74 @@
 <?php
 namespace ZExt\Paginator\Adapter;
-use ZExt\Datagate\SqlTableAbstract;
 
-class SqlTableSelect extends \Zend_Paginator_Adapter_DbTableSelect {
+use ZExt\Datagate\SqlTableAbstract;
+use Zend_Db_Select as Select;
+use PDO;
+
+class SqlTableSelect implements AdapterInterface {
 	
 	/**
 	 * Datagate
 	 * 
 	 * @var SqlTableAbstract 
 	 */
-	protected $_datagate;
+	protected $datagate;
+	
+	/**
+	 * Zend db select
+	 *
+	 * @var Select
+	 */
+	protected $select;
+	
+	/**
+	 * Number of the items
+	 *
+	 * @var int
+	 */
+	protected $count;
 	
 	/**
 	 * Constructor
 	 * 
-	 * @param \Zend_Db_Select $select
+	 * @param Select           $select
 	 * @param SqlTableAbstract $datagate
 	 */
-	public function __construct(\Zend_Db_Select $select, SqlTableAbstract $datagate = null) {
-		parent::__construct($select);
-		
-		if ($datagate) $this->setDatagate($datagate);
+	public function __construct(Select $select, SqlTableAbstract $datagate = null) {
+		$this->select   = $select;
+		$this->datagate = $datagate;
 	}
 	
 	/**
-     * Returns a Collection of Objects for a page.
+	 * Get an items of the page
 	 * 
-	 * @see \ZExt\Model\Collection
-	 * @see \ZExt\Model\Object
-     *
-     * @param  integer $offset Page offset
-     * @param  integer $itemCountPerPage Number of items per page
-     * @return \ZExt\Model\Object[]
-     */
-	public function getItems($offset, $itemCountPerPage) {
-		$data = parent::getItems($offset, $itemCountPerPage);
-		
-		$datagate = $this->getDatagate();
-		if (! $datagate) return $data;
-		
-		$datagate->dataTypeConvertArray($data);
-		
-		return $datagate->createCollection($data);
-	}
-	
-	/**
-	 * Set the datagate
-	 * 
-	 * @param SqlTableAbstract $datagate
+	 * @param  int $offset
+	 * @param  int $limit
+	 * @return \Traversable
 	 */
-	public function setDatagate(SqlTableAbstract $datagate) {
-		$this->_datagate = $datagate;
+	public function getItems($offset, $limit) {
+		$this->select->limit($limit, $offset);
+		
+		return $this->datagate->fetchAll($this->select);
 	}
 	
 	/**
-	 * Get the datagate
+	 * Get the number of the all items
 	 * 
-	 * @return SqlTableAbstract
+	 * @return int
 	 */
-	public function getDatagate() {
-		return $this->_datagate;
+	public function count() {
+		if ($this->count === null) {
+			$select = clone $this->select;
+			$select->reset(Select::COLUMNS)
+				   ->reset(Select::LIMIT_OFFSET)
+				   ->reset(Select::LIMIT_COUNT)
+				   ->columns(['count' => 'count(*)']);
+
+			$this->count = $select->query(PDO::FETCH_OBJ)->fetch()->count;
+		}
+		
+		return $this->count;
 	}
 	
 }
