@@ -1,6 +1,40 @@
 <?php
+/**
+ * ZExt Framework (http://z-ext.com)
+ * Copyright (C) 2012 Mike.Mirten
+ * 
+ * LICENSE
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * @copyright (c) 2012, Mike.Mirten
+ * @license   http://www.gnu.org/licenses/gpl.html GPL License
+ * @category  ZExt
+ * @version   1.0
+ */
+
 namespace ZExt\Profiler;
 
+/**
+ * Profile interface
+ * 
+ * @category   ZExt
+ * @package    Profiler
+ * @subpackage Profile
+ * @author     Mike.Mirten
+ * @version    1.1
+ */
 interface ProfileInterface {
 	
 	// Base types of events
@@ -9,9 +43,6 @@ interface ProfileInterface {
 	const TYPE_WRITE  = 3;
 	const TYPE_INSERT = 4;
 	const TYPE_DELETE = 5;
-	const TYPE_INC    = 6;
-	const TYPE_DEC    = 7;
-	const TYPE_COUNT  = 8;
 	
 	// Base types of events' statuses
 	const STATUS_SUCCESS = 1;
@@ -29,18 +60,36 @@ interface ProfileInterface {
 	public function __construct($message, $type = self::TYPE_INFO, array $options = null);
 	
 	/**
-	 * Start an event
-	 * 
-	 * @param int $type Type of an event
+	 * Start the event
 	 */
 	public function start();
 	
 	/**
-	 * Stop an event
+	 * Stop the event
 	 * 
 	 * @param int $type Status of event end
 	 */
 	public function stop($type = self::STATUS_SUCCESS);
+	
+	/**
+	 * Stop the event with the success status
+	 */
+	public function stopSuccess();
+	
+	/**
+	 * Stop the event with the notice status
+	 */
+	public function stopNotice();
+	
+	/**
+	 * Stop the event with the warning status
+	 */
+	public function stopWarning();
+	
+	/**
+	 * Stop the event with the error status
+	 */
+	public function stopError();
 	
 	/**
 	 * Has an event ended

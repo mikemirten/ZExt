@@ -1,14 +1,51 @@
 <?php
+/**
+ * ZExt Framework (http://z-ext.com)
+ * Copyright (C) 2012 Mike.Mirten
+ * 
+ * LICENSE
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * @copyright (c) 2012, Mike.Mirten
+ * @license   http://www.gnu.org/licenses/gpl.html GPL License
+ * @category  ZExt
+ * @version   1.0
+ */
+
 namespace ZExt\Profiler;
 
-class Profiler implements ProfilerInterface, ProfilerExtendedInterface {
+use ArrayIterator;
+
+
+/**
+ * Profiler interface
+ * 
+ * @category   ZExt
+ * @package    Profiler
+ * @subpackage Profiler
+ * @author     Mike.Mirten
+ * @version    1.1
+ */
+class Profiler implements ProfilerExtendedInterface {
 	
 	/**
 	 * Profiles
 	 * 
 	 * @var ProfileInterface[] 
 	 */
-	protected $_profiles = array();
+	protected $_profiles = [];
 	
 	/**
 	 * Name of a profiling object
@@ -57,6 +94,61 @@ class Profiler implements ProfilerInterface, ProfilerExtendedInterface {
 	}
 	
 	/**
+	 * Start an info event
+	 * 
+	 * @param  string $title
+	 * @param  array  $options
+	 * @return ProfileInterface
+	 */
+	public function startInfo($message, array $options = null) {
+		return $this->startEvent($message, ProfileInterface::TYPE_INFO, $options);
+	}
+	
+	/**
+	 * Start a read event
+	 * 
+	 * @param  string $title
+	 * @param  array  $options
+	 * @return ProfileInterface
+	 */
+	public function startRead($message, array $options = null) {
+		return $this->startEvent($message, ProfileInterface::TYPE_READ, $options);
+	}
+	
+	/**
+	 * Start a write event
+	 * 
+	 * @param  string $title
+	 * @param  array  $options
+	 * @return ProfileInterface
+	 */
+	public function startWrite($message, array $options = null) {
+		return $this->startEvent($message, ProfileInterface::TYPE_WRITE, $options);
+	}
+	
+	/**
+	 * Start an isert event
+	 * 
+	 * @param  string $title
+	 * @param  array  $options
+	 * @return ProfileInterface
+	 */
+	public function startInsert($message, array $options = null) {
+		return $this->startEvent($message, ProfileInterface::TYPE_INSERT, $options);
+	}
+	
+	/**
+	 * Start a delete event
+	 * 
+	 * @param  string $title
+	 * @param  array  $options
+	 * @return ProfileInterface
+	 */
+	public function startDelete($message, array $options = null) {
+		return $this->startEvent($message, ProfileInterface::TYPE_DELETE, $options);
+	}
+	
+	/**
 	 * Stop a last event
 	 * 
 	 * @return Profiler
@@ -64,10 +156,54 @@ class Profiler implements ProfilerInterface, ProfilerExtendedInterface {
 	 */
 	public function stopEvent($status = ProfileInterface::STATUS_SUCCESS) {
 		if ($this->_lastProfile === null) {
-			throw new Exception('No one event hasn\'t been start');
+			throw new Exception('No one event has been started');
 		}
 		
 		$this->_lastProfile->stop($status);
+		
+		return $this;
+	}
+	
+	/**
+	 * Stop a last event with success status
+	 * 
+	 * @return Profiler
+	 */
+	public function stopSuccess() {
+		$this->stopEvent(ProfileInterface::STATUS_SUCCESS);
+		
+		return $this;
+	}
+	
+	/**
+	 * Stop a last event with notice status
+	 * 
+	 * @return Profiler
+	 */
+	public function stopNotice() {
+		$this->stopEvent(ProfileInterface::STATUS_NOTICE);
+		
+		return $this;
+	}
+	
+	/**
+	 * Stop a last event with warning status
+	 * 
+	 * @return Profiler
+	 */
+	public function stopWarning() {
+		$this->stopEvent(ProfileInterface::STATUS_WARNING);
+		
+		return $this;
+	}
+	
+	/**
+	 * Stop a last event with error status
+	 * 
+	 * @return Profiler
+	 */
+	public function stopError() {
+		$this->stopEvent(ProfileInterface::STATUS_ERROR);
 		
 		return $this;
 	}
@@ -97,7 +233,7 @@ class Profiler implements ProfilerInterface, ProfilerExtendedInterface {
 	}
 	
 	/**
-	 * Get total events has occurred
+	 * Get the total events number
 	 * 
 	 * @return int
 	 */
@@ -106,7 +242,7 @@ class Profiler implements ProfilerInterface, ProfilerExtendedInterface {
 	}
 	
 	/**
-	 * Get icon of a profiling object
+	 * Get the icon of a profiling object
 	 * 
 	 * @return string
 	 */
@@ -115,7 +251,7 @@ class Profiler implements ProfilerInterface, ProfilerExtendedInterface {
 	}
 	
 	/**
-	 * Get icon of a profiling object
+	 * Set the icon of a profiling object
 	 * 
 	 * @param  string $image
 	 * @return Profiler
@@ -169,7 +305,16 @@ class Profiler implements ProfilerInterface, ProfilerExtendedInterface {
 	}
 	
 	/**
-	 * Render results as a text
+	 * Get the last event
+	 * 
+	 * @return ProfileInterface | null
+	 */
+	public function getLastEvent() {
+		return $this->_lastProfile;
+	}
+	
+	/**
+	 * Render the results as a formatted text
 	 * 
 	 * @return string
 	 */
@@ -208,7 +353,7 @@ class Profiler implements ProfilerInterface, ProfilerExtendedInterface {
 			$text .= 'Events:' . PHP_EOL;
 			
 			foreach ($profiles as $profile) {
-				$text .= $nm++ . '. ';
+				$text .= $nm ++ . '. ';
 				$text .= $profile->getMessage() . ':';
 				$text .= ' ' . round($profile->getElapsedTime(), 4) . 's';
 				$text .= ' ' . $profile->getUsedMemory() . 'b';
@@ -219,6 +364,29 @@ class Profiler implements ProfilerInterface, ProfilerExtendedInterface {
 		return $text;
 	}
 	
+	/**
+	 * Get the total events number
+	 * 
+	 * @return int
+	 */
+	public function count() {
+		return $this->getTotalEvents();
+	}
+	
+	/**
+	 * Get the events iterator
+	 * 
+	 * @return ArrayIterator
+	 */
+	public function getIterator() {
+		return new ArrayIterator($this->getProfiles());
+	}
+	
+	/**
+	 * Get the results as a formatted text
+	 * 
+	 * @return string
+	 */
 	public function __toString() {
 		return $this->render();
 	}
