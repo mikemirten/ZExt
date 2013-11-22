@@ -6,8 +6,8 @@ PHP 5.4 or later
 
 ###Installation
 
-1. Copy the ZExt dir from the library dir to a your project's library dir.
-2. Add the ZExt namespace to a autoloader of a your project.
+1. Copy the ZExt dir from the library dir to an your project's library dir.
+2. Add the ZExt namespace to an autoloader of an your project.
 
 ## Modules
 
