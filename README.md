@@ -1,22 +1,22 @@
 ##ZExt framework 1.0
 
-###Requirements:
+###Requirements
 
 PHP 5.4 or later
 
-###Installation:
+###Installation
 
 1. Copy the ZExt dir from the library dir to a your project's library dir.
 2. Add the ZExt namespace to a autoloader of a your project.
 
-## Modules:
+## Modules
 
-###Cache:
+###Cache
 
 Working with a cache storages, namespaces, tags, backend/frontend architecture.
 Memcache, Filesystem, Phalcon supporting.
 
-###Config:
+###Config
 
 Configuration parameters for a project.
 Ini with a sections, sections' inheritance, nested parameters, Json. 
