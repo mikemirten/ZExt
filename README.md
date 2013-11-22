@@ -30,11 +30,11 @@ Phalcon supporting.
 
 ###Debug panel
 
-PHP and a extensions versions, errors collectiong, memory usage, execution time, profiler aggregation.
+PHP and an extensions versions, errors collectiong, memory usage, execution time, profiler aggregation.
 
 ###Profiler
 
-Multipurpose profiler. Can be used with modules like a databases adapters.
+Multipurpose profiler. Can be used with a modules like a databases adapters.
 
 ###Helper
 
@@ -42,7 +42,7 @@ Helpers system for a modules like view or controller. Provides the helpers' brok
 
 ###Validator
 
-Validation module with package of an often used validators: alpha, alphanum, string length...
+Validation module with the package of an often used validators: alpha, alphanum, string length...
 
 ###Model
 
