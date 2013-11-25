@@ -23,49 +23,28 @@
  * @category  ZExt
  * @version   1.0
  */
-
-namespace ZExt\Config;
+namespace ZExt\Config\Reader;
 
 /**
- * Configuration holder's factory interface
+ * Json config reader
  * 
  * @category   ZExt
  * @package    Config
- * @subpackage ConfigFactory
+ * @subpackage Reader
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.0rc1
  */
-interface FactoryInterface {
-	
+class Json implements ReaderInterface {
+
 	/**
-	 * Create a config from the file
+	 * Parse the source config into array
 	 * 
-	 * @param string $path    Path of a config
-	 * @param array  $options Options for a reader
-	 * 
-	 * @return ConfigInterface
+	 * @param  string $source
+	 * @param  array  $options
+	 * @return array
 	 */
-	public static function createFromFile($path, array $options = []);
-	
-	/**
-	 * Create a config from the source
-	 * 
-	 * @param string $source   Source of a config
-	 * @param string $type     Type of a config
-	 * @param array  $options  Options for a reader
-	 * 
-	 * @return ConfigInterface
-	 */
-	public static function createFromSource($source, $type, array $options = []);
-	
-	/**
-	 * Create a config from an array
-	 * 
-	 * @param  array $source   Source of a config
-	 * @param  bool  $readOnly Lock a created config
-	 * 
-	 * @return ConfigInterface
-	 */
-	public static function create(array $source = null, $readOnly = true);
+	public function parse($source, array $options = null) {
+		return json_decode($source);
+	}
 	
 }

@@ -125,20 +125,7 @@ trait ConfigAwareTrait {
 				$this->_configLocal = $configsFactory->create($localConfigSrc);
 			}
 			else if (is_string($localConfigSrc)) {
-				$extension = pathinfo($localConfigSrc, PATHINFO_EXTENSION);
-
-				switch ($extension) {
-					case 'ini':
-						$this->_configLocal = $configsFactory->createFromIniFile($localConfigSrc, null, false);
-						break;
-
-					case 'json':
-						$this->_configLocal = $configsFactory->createFromJsonFile($localConfigSrc, false);
-						break;
-
-					default:
-						throw new NoConfig('Invalid extension of the config file "' . $extension . '"');
-				}
+				$this->_configLocal = $configsFactory->createFromFile($localConfigSrc);
 			}
 			else {
 				throw new NoConfig('Type of a local config\'s source must be an array or a string');

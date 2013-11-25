@@ -23,49 +23,28 @@
  * @category  ZExt
  * @version   1.0
  */
+namespace ZExt\Config\Writer;
 
-namespace ZExt\Config;
+use Traversable;
 
 /**
- * Configuration holder's factory interface
+ * Config writer interface
  * 
  * @category   ZExt
  * @package    Config
- * @subpackage ConfigFactory
+ * @subpackage Writer
  * @author     Mike.Mirten
  * @version    1.0
  */
-interface FactoryInterface {
+interface WriterInterface {
 	
 	/**
-	 * Create a config from the file
+	 * Assemble the config
 	 * 
-	 * @param string $path    Path of a config
-	 * @param array  $options Options for a reader
-	 * 
-	 * @return ConfigInterface
+	 * @param  Traversable $config Source traversable config
+	 * @param  array $options      Assembling options
+	 * @return string
 	 */
-	public static function createFromFile($path, array $options = []);
-	
-	/**
-	 * Create a config from the source
-	 * 
-	 * @param string $source   Source of a config
-	 * @param string $type     Type of a config
-	 * @param array  $options  Options for a reader
-	 * 
-	 * @return ConfigInterface
-	 */
-	public static function createFromSource($source, $type, array $options = []);
-	
-	/**
-	 * Create a config from an array
-	 * 
-	 * @param  array $source   Source of a config
-	 * @param  bool  $readOnly Lock a created config
-	 * 
-	 * @return ConfigInterface
-	 */
-	public static function create(array $source = null, $readOnly = true);
+	public function assemble(Traversable $config, array $options = []);
 	
 }

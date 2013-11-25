@@ -23,49 +23,68 @@
  * @category  ZExt
  * @version   1.0
  */
+namespace ZExt\Config\Writer;
 
-namespace ZExt\Config;
+use Traversable;
 
 /**
- * Configuration holder's factory interface
+ * Jsonconfig writer
  * 
  * @category   ZExt
  * @package    Config
- * @subpackage ConfigFactory
+ * @subpackage Writer
  * @author     Mike.Mirten
  * @version    1.0
  */
-interface FactoryInterface {
+class Json implements WriterInterface {
+	
+	const OPTION_PRETTY = 'pretty';
 	
 	/**
-	 * Create a config from the file
-	 * 
-	 * @param string $path    Path of a config
-	 * @param array  $options Options for a reader
-	 * 
-	 * @return ConfigInterface
+	 * Default options
+	 *
+	 * @var array
 	 */
-	public static function createFromFile($path, array $options = []);
+	protected $defaultOptions = [
+		self::OPTION_PRETTY => true
+	];
 	
 	/**
-	 * Create a config from the source
+	 * Assemble the config
 	 * 
-	 * @param string $source   Source of a config
-	 * @param string $type     Type of a config
-	 * @param array  $options  Options for a reader
-	 * 
-	 * @return ConfigInterface
+	 * @param  Traversable $config
+	 * @param  array $options
+	 * @return string
 	 */
-	public static function createFromSource($source, $type, array $options = []);
+	public function assemble(Traversable $config, array $options = []) {
+		$jsonOptions = 0;
+		
+		$options += $this->defaultOptions;
+		
+		if ($options[self::OPTION_PRETTY] === true) {
+			$jsonOptions += JSON_PRETTY_PRINT;
+		}
+		
+		return json_encode($this->iteratoToArray($config), $jsonOptions);
+	}
 	
 	/**
-	 * Create a config from an array
+	 * Recursive iterator to array
 	 * 
-	 * @param  array $source   Source of a config
-	 * @param  bool  $readOnly Lock a created config
-	 * 
-	 * @return ConfigInterface
+	 * @param  Traversable $config
+	 * @return array
 	 */
-	public static function create(array $source = null, $readOnly = true);
+	protected function iteratoToArray(Traversable $config) {
+		$config = iterator_to_array($config);
+		
+		foreach ($config as &$value) {
+			if ($value instanceof Traversable) {
+				$value = $this->iteratoToArray($value);
+			}
+		}
+		unset($value);
+		
+		return $config;
+	}
 	
 }

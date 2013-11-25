@@ -26,9 +26,9 @@
 
 namespace ZExt\Config;
 
-use ZExt\Config\Exceptions\UnableToRead,
-    ZExt\Config\Exceptions\InvalidIniSection,
-    ZExt\Config\Exceptions\InvalidIniKey;
+use ZExt\Config\Reader\ReaderInterface;
+use ZExt\Config\Exceptions\UnableToRead;
+use ZExt\Config\Exceptions\InvalidReader;
 
 /**
  * Configuration holder's factory
@@ -41,68 +41,76 @@ use ZExt\Config\Exceptions\UnableToRead,
  */
 class Factory implements FactoryInterface {
 	
+	const READERS_NAMESPACE = 'ZExt\Config\Reader';
+	
+	const OPTION_READONLY = 'readonly';
+	const OPTION_TYPE     = 'type';
+	
+	protected static $readers = [];
+	
 	/**
-	 * Create config from json file
+	 * Create a config from the file
 	 * 
-	 * @param  string $path
-	 * @param  bool  $readOnly
-	 * @return ConfigInterface | Bare config instance with chained properties
+	 * @param string $path    Path of a config
+	 * @param bool   $readOnly Created config must be locked to a read only
+	 * @param array  $options Options for a reader
+	 * 
+	 * @return ConfigInterface
 	 */
-	public static function createFromJsonFile($path, $readOnly = true) {
-		$json   = static::readFile($path);
-		$config = static::parseJson($json);
+	public static function createFromFile($path, array $options = []) {
+		// Config's type resolve
+		if (isset($options[self::OPTION_TYPE])) {
+			$type = (string) $options[self::OPTION_TYPE];
+			unset($options[self::OPTION_TYPE]);
+		} else {
+			$type = pathinfo($path, PATHINFO_EXTENSION);
+		}
 		
-		return static::create($config, $readOnly);
+		return self::createFromSource(self::readFile($path), $type, $options);
 	}
 	
 	/**
-	 * Create config from ini file
+	 * Create a config from the source
 	 * 
-	 * @param  string         $path
-	 * @param  string | array $section
-	 * @param  bool           $readOnly
-	 * @return ConfigInterface | Bare config instance with chained properties
+	 * @param string $source   Source of a config
+	 * @param string $type     Type of a config
+	 * @param bool   $readOnly Created config must be locked to a read only
+	 * @param array  $options  Options for a reader
+	 * 
+	 * @return ConfigInterface
 	 */
-	public static function createFromIniFile($path, $section = null, $readOnly = true) {
-		$source = static::readFile($path);
-		$config = static::parseIni($source, $section);
+	public static function createFromSource($source, $type, array $options = []) {
+		if (isset(self::$readers[$type])) {
+			$reader = self::$readers[$type];
+		} else {
+			$class  = self::READERS_NAMESPACE . '\\' . ucfirst($type);
+			$reader = new $class();
+
+			if (! $reader instanceof ReaderInterface) {
+				throw new InvalidReader('Reader must implement the "ReaderInterface"');
+			}
+			
+			self::$readers[$type] = $reader;
+		}
 		
-		return static::create($config, $readOnly);
+		// Read only lock resolve
+		if (isset($options[self::OPTION_READONLY])) {
+			$readOnly = (bool) $options[self::OPTION_READONLY];
+			unset($options[self::OPTION_READONLY]);
+		} else {
+			$readOnly = true;
+		}
+		
+		return self::create($reader->parse($source, $options), $readOnly);
 	}
 	
 	/**
-	 * Create config from json string
+	 * Create a config from an array
 	 * 
-	 * @param  string $source
-	 * @param  bool  $readOnly
-	 * @return ConfigInterface | Bare config instance with chained properties
-	 */
-	public static function createFromJson($json, $readOnly = true) {
-		$config = static::parseJson($json);
-		
-		return static::create($config, $readOnly);
-	}
-	
-	/**
-	 * Create config from ini string
+	 * @param  array $source   Source of a config
+	 * @param  bool  $readOnly Lock a created config
 	 * 
-	 * @param  string         $source
-	 * @param  string | array $section
-	 * @param  bool           $readOnly
-	 * @return ConfigInterface | Bare config instance with chained properties
-	 */
-	public static function createFromIni($source, $section = null, $readOnly = true) {
-		$config = static::parseIni($source, $section);
-		
-		return static::create($config, $readOnly);
-	}
-	
-	/**
-	 * Create a config's instance
-	 * 
-	 * @param  array $source
-	 * @param  bool  $readOnly
-	 * @return ConfigInterface | Bare config instance with chained properties
+	 * @return ConfigInterface
 	 */
 	public static function create(array $source = null, $readOnly = true) {
 		return new Config($source, $readOnly);
@@ -129,139 +137,6 @@ class Factory implements FactoryInterface {
 		}
 		
 		return $content;
-	}
-	
-	/**
-	 * Parse json source
-	 * 
-	 * @param  string $source
-	 * @return array
-	 */
-	public static function parseJson($source) {
-		return json_decode($source);
-	}
-	
-	/**
-	 * Parse ini source
-	 * 
-	 * @param  string         $source
-	 * @param  string | array $section
-	 * @return array
-	 */
-	public static function parseIni($source, $section = null) {
-		// No section(s) was specified
-		if ($section === null) {
-			$dataRaw = parse_ini_string($source);
-		} else {
-			$sections = parse_ini_string($source, true);
-			
-			// Many of sections
-			if (is_array($section)) {
-				$data = [];
-				
-				foreach ($section as $part) {
-					$dataRaw = static::getIniSection($sections, $part);
-					$data[]  = static::parseIniData($dataRaw);
-				}
-				
-				return call_user_func_array('array_replace_recursive', $data);
-			}
-			// Single section
-			else {
-				$dataRaw = static::getIniSection($sections, $section);
-			}
-		}
-		
-		return static::parseIniData($dataRaw);
-	}
-	
-	/**
-	 * Get the section of a section's set
-	 * 
-	 * @param  array  $sections
-	 * @param  string $section
-	 * @return array
-	 * @throws InvalidIniSection
-	 */
-	protected static function getIniSection($sections, $section) {
-		if (isset($sections[$section])) {
-			return $sections[$section];
-		}
-		
-		foreach (array_keys($sections) as $part) {
-			$colon = strpos($part, ':');
-
-			if ($colon === false) continue;
-
-			$successor = trim(substr($part, 0, $colon));
-			$parent    = trim(substr($part, $colon + 1));
-
-			if (! isset($successor[0], $parent[0])) {
-				throw new InvalidIniSection('Invalid definition of the section "' . $part . '"');
-			}
-			
-			if ($successor !== $section) continue;
-			
-			return array_replace(self::getIniSection($sections, $parent), $sections[$part]);
-		}
-		
-		throw new InvalidIniSection('Section "' . $section . '" wasn\'t found');
-	}
-	
-	/**
-	 * Parse a raw ini data
-	 * 
-	 * @param  array $dataRaw
-	 * @return array
-	 */
-	protected static function parseIniData($dataRaw) {
-		$data = [];
-		
-		foreach ($dataRaw as $key => $value) {
-			$data = array_replace_recursive($data, static::parseIniKey($key, $value));
-		}
-		
-		return $data;
-	}
-	
-	/**
-	 * Parse a key of an ini key-value pair
-	 * 
-	 * @param  string $key
-	 * @param  string $value
-	 * @return mixed
-	 * @throws InvalidIniKey
-	 */
-	protected static function parseIniKey($key, $value) {
-		$point = strpos($key, '.');
-		
-		if ($point === false) {
-			if (is_numeric($value)) {
-				$valueOrigin = trim($value);
-				
-				if (strpos($value, '.') === false) {
-					$value = (int) $value;
-				} else {
-					$value = (float) $value;
-				}
-				
-				// Overflow checking
-				if ($valueOrigin !== (string) $value) {
-					$value = $valueOrigin;
-				}
-			}
-			
-			return [$key => $value];
-		} else {
-			$keyCurrent = trim(substr($key, 0, $point));
-			$keyRemains = trim(substr($key, $point + 1));
-			
-			if (! isset($keyCurrent[0], $keyRemains[0])) {
-				throw new InvalidIniKey('Invalid definition of the key "' . $key . '"');
-			}
-			
-			return [$keyCurrent => self::parseIniKey($keyRemains, $value)];
-		}
 	}
 	
 }
