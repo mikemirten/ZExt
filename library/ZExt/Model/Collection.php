@@ -349,11 +349,6 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 			$item = $modelClass::factory($this->_data[$key]);
 			$item->setCollection($this);
 			
-			$service = $this->getParentService();
-			if ($service !== null) {
-				$item->setParentService($service);
-			}
-			
 			$datagate = $this->getParentDatagate();
 			if ($datagate !== null) {
 				$item->setParentDatagate($datagate);
@@ -1183,11 +1178,6 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	 */
 	public function createClone($data = array()) {
 		$collection = static::factory($data, $this->getModel(), $this->getPrimary());
-		
-		$service = $this->getParentService();
-		if ($service !== null) {
-			$collection->setParentService($service);
-		}
 
 		$datagate = $this->getParentDatagate();
 		if ($datagate !== null) {

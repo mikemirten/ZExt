@@ -26,16 +26,9 @@
 
 namespace ZExt\Model;
 
-use ZExt\Datagate\CrudInterface;
+use ZExt\Datagate\DatagateInterface;
 
 trait ParentsAwareTrait {
-	
-	/**
-	 * Parental service
-	 * 
-	 * @var string
-	 */
-	protected $_parentService;
 	
 	/**
 	 * Parental datagate
@@ -52,33 +45,12 @@ trait ParentsAwareTrait {
 	protected $_forceInsert = false;
 	
 	/**
-	 * Set the parental service
-	 * 
-	 * @param  object $sevice
-	 * @return ModelAbstract
-	 */
-	public function setParentService($sevice) {
-		$this->_parentService = $sevice;
-		
-		return $this;
-	}
-	
-	/**
-	 * Get athe parent service
-	 * 
-	 * @return object
-	 */
-	public function getParentService() {
-		return $this->_parentService;
-	}
-	
-	/**
 	 * Set the parental datagate
 	 *  
 	 * @param  object $datagateName
 	 * @return ModelAbstract
 	 */
-	public function setParentDatagate($datagate) {
+	public function setParentDatagate(DatagateInterface $datagate) {
 		$this->_parentDatagate = $datagate;
 		
 		return $this;
@@ -158,7 +130,7 @@ trait ParentsAwareTrait {
 	/**
 	 * Get datagate for "CRUD" actions
 	 * 
-	 * @return CrudInterface
+	 * @return DatagateInterface
 	 * @throws Exception
 	 */
 	protected function _getDatagateCrud() {
@@ -166,10 +138,6 @@ trait ParentsAwareTrait {
 		
 		if ($datagate === null) {
 			throw new Exception('Model isn\'t linked to a datagate');
-		}
-		
-		if (! $datagate instanceof CrudInterface) {
-			throw new Exception('Datagate "' . get_class($datagate) . '" hasn\'t "CRUD" methods');
 		}
 		
 		return $datagate;
@@ -183,18 +151,6 @@ trait ParentsAwareTrait {
 	 */
 	protected function getService($id) {
 		return $this->getLocator()->get($id);
-	}
-	
-	// Model to a parental service proxy
-	public function __call($method, $arguments = array()) {
-		$service = $this->getParentService();
-		
-		if ($service === null){
-			throw new Exception('Proxying to a parental service isn\'t available (called method: "' . $method . '")');
-		}	
-		
-		array_unshift($arguments, $this);
-		return call_user_func_array(array($service, $method), $arguments);
 	}
 	
 }

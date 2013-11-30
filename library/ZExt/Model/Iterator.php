@@ -166,11 +166,6 @@ class Iterator implements IteratorInterface, CountableInterface, LocatorAwareInt
 			
 		$model = $modelClass::factory($data);
 
-		$service = $this->getParentService();
-		if ($service !== null) {
-			$model->setParentService($service);
-		}
-
 		$datagate = $this->getParentDatagate();
 		if ($datagate !== null) {
 			$model->setParentDatagate($datagate);
@@ -222,11 +217,6 @@ class Iterator implements IteratorInterface, CountableInterface, LocatorAwareInt
 		$model = $this->getModel();
 		
 		$collection = new Collection($data, $model);
-		
-		$service = $this->getParentService();
-		if ($service !== null) {
-			$collection->setParentService($service);
-		}
 
 		$datagate = $this->getParentDatagate();
 		if ($datagate !== null) {

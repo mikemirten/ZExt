@@ -225,12 +225,10 @@ class Html {
 		$info .= $dataTitle->render('Info:');
 		
 		$datagate = $model->getParentDatagate();
-		$service  = $model->getParentService();
 		
 		$partsList = new Table([], 'zDumpArrayTable');
 				
 		$partsList[] = ['Parent datagate', ':', ($datagate === null) ? 'No datagate' : $classTag->render(get_class($datagate))];
-		$partsList[] = ['Parent service', ':', ($service === null) ? 'No service' : $classTag->render(get_class($service))];
 		
 		if ($model instanceof LocatorAwareInterface) {
 			$partsList[] = ['Has a services\' locator', ':', $model->hasLocator() ? 'Yes' : 'No'];

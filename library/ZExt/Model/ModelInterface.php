@@ -27,6 +27,7 @@
 namespace ZExt\Model;
 
 use Countable;
+use ZExt\Datagate\DatagateInterface;
 
 /**
  * Models' interface
@@ -90,25 +91,11 @@ interface ModelInterface extends Countable {
 	public function isEmpty();
 	
 	/**
-	 * Set the name of a parent service
-	 * 
-	 * @param string | bool $seviceName 
-	 */
-	public function setParentService($seviceName);
-	
-	/**
-	 * Get the name of a parent service
-	 * 
-	 * @return string
-	 */
-	public function getParentService();
-	
-	/**
 	 * Set a name of a parental datagate
 	 *  
 	 * @param string $datagateName
 	 */
-	public function setParentDatagate($datagateName);
+	public function setParentDatagate(DatagateInterface $datagateName);
 	
 	/**
 	 * Get a name of a parental datagate
