@@ -27,11 +27,11 @@
 namespace ZExt\Datagate;
 
 use ZExt\Di\LocatorAwareInterface,
-	ZExt\Di\LocatorAwareTrait,
-	ZExt\Di\LocatorInterface;
+    ZExt\Di\LocatorAwareTrait,
+    ZExt\Di\LocatorInterface;
 
 use ZExt\Cache\CacheAwareInterface,
-	ZExt\Cache\CacheAwareTrait;
+    ZExt\Cache\CacheAwareTrait;
 
 use ZExt\Components\OptionsTrait;
 use ZExt\Model\Iterator;
@@ -52,8 +52,8 @@ use ZExt\Datagate\Exceptions\InvalidResultType;
 abstract class DatagateAbstract
 
 	implements DatagateInterface,
-			   LocatorAwareInterface,
-			   CacheAwareInterface {
+	           LocatorAwareInterface,
+	           CacheAwareInterface {
 
 	use OptionsTrait;
 	use LocatorAwareTrait;
