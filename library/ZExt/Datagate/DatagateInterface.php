@@ -39,17 +39,17 @@ use ZExt\Model\Collection;
  * @version    1.0 
  */
 interface DatagateInterface {
-	
+
 	// Types of an item of a data
 	const RESULT_OBJECT = 1;
 	const RESULT_MODEL  = 2;
 	const RESULT_ARRAY  = 4;
-	
+
 	// Types of a resultset of a data
 	const RESULTSET_ITERATOR   = 8;
 	const RESULTSET_COLLECTION = 16;
 	const RESULTSET_ARRAY      = 32;
-	
+
 	/**
 	 * Find a record or a dataset by the id or an array of the ids
 	 * 
@@ -57,7 +57,7 @@ interface DatagateInterface {
 	 * @return ModelInterface | Collection | Iterator
 	 */
 	public function find($id);
-	
+
 	/**
 	 * Find a first record
 	 * 
@@ -65,7 +65,7 @@ interface DatagateInterface {
 	 * @return ModelInterface
 	 */
 	public function findFirst($criteria = null);
-	
+
 	/**
 	 * Find all records of a data
 	 * 
@@ -73,21 +73,21 @@ interface DatagateInterface {
 	 * @return Collection | Iterator
 	 */
 	public function findAll($criteria = null);
-	
+
 	/**
 	 * Save the model or the collection of the models
 	 * 
 	 * @param ModelInterface | Collection $model
 	 */
 	public function save(ModelInterface $model);
-	
+
 	/**
 	 * Remove the record or the many of records by the model or the collection of the models
 	 * 
 	 * @param ModelInterface | Collection $model
 	 */
 	public function remove(ModelInterface $model);
-	
+
 	/**
 	 * Create a new model, empty or with the supplied data
 	 * 
@@ -95,7 +95,7 @@ interface DatagateInterface {
 	 * @return ModelInterface
 	 */
 	public function create(array &$data = null);
-	
+
 	/**
 	 * Create a new collection, empty or with the supplied data
 	 * 
@@ -103,35 +103,35 @@ interface DatagateInterface {
 	 * @return Collection
 	 */
 	public function createCollection(array &$data = null);
-	
+
 	/**
 	 * Set the model's class
 	 * 
 	 * @param string $name
 	 */
 	public function setModelClass($class);
-	
+
 	/**
 	 * Get model's class
 	 * 
 	 * @return string
 	 */
 	public function getModelClass();
-	
+
 	/**
 	 * Set the collection's class
 	 * 
 	 * @param string $name
 	 */
 	public function setCollectionClass($class);
-	
+
 	/**
 	 * Get collection's class
 	 * 
 	 * @return string
 	 */
 	public function getCollectionClass();
-	
+
 	/**
 	 * Set the type of an item of a data
 	 * See the RESULT_* & RESULTSET_* constants of the interface
@@ -139,12 +139,12 @@ interface DatagateInterface {
 	 * @param int $type
 	 */
 	public function setResultType($type);
-	
+
 	/**
 	 * Get the type of an item of a data
 	 * 
 	 * @return int $type
 	 */
 	public function getResultType();
-	
+
 }
