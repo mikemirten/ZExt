@@ -133,6 +133,20 @@ interface DatagateInterface {
 	public function getCollectionClass();
 
 	/**
+	 * Set the name of the table or collection
+	 * 
+	 * @param string $name
+	 */
+	public function setTableName($name);
+
+	/**
+	 * Get the name of the table or collection
+	 * 
+	 * @return string
+	 */
+	public function getTableName();
+	
+	/**
 	 * Set the type of an item of a data
 	 * See the RESULT_* & RESULTSET_* constants of the interface
 	 * 

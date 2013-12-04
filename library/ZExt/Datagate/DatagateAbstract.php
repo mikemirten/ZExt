@@ -376,13 +376,22 @@ abstract class DatagateAbstract
 	public function getCollectionClass() {
 		return $this->collection;
 	}
+	
+	/**
+	 * Set the name of the table or collection
+	 * 
+	 * @param string $name
+	 */
+	public function setTableName($name) {
+		$this->name = (string) $name;
+	}
 
 	/**
 	 * Get the name of the table or collection
 	 * 
 	 * @return string
 	 */
-	protected function getTableName() {
+	public function getTableName() {
 		if ($this->name === null) {
 			$this->name = $this->getIntrospectiveData()->name;
 		}

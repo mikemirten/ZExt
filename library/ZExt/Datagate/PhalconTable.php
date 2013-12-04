@@ -34,6 +34,7 @@ use Phalcon\Mvc\Model\Manager          as ModelsManager;
 use Phalcon\Mvc\Model\Metadata\Memory  as MetaData;
 use Phalcon\Mvc\Model\Resultset\Simple as ResultsetSimple;
 
+use ZExt\Datagate\Criteria\PhalconCriteria as Criteria;
 use ZExt\Datagate\Phalcon\Model;
 use ZExt\Model\ModelInterface;
 
@@ -138,6 +139,10 @@ class PhalconTable extends DatagateAbstract {
 	 * @return ModelInterface
 	 */
 	public function findFirst($criteria = null) {
+		if ($criteria instanceof Criteria) {
+			$criteria = $criteria->getInnerCriteria();
+		}
+		
 		$result = $this->getTableModel()->findFirst($criteria);
 		
 		if ($result === false) {
@@ -154,6 +159,10 @@ class PhalconTable extends DatagateAbstract {
 	 * @return Collection | Iterator
 	 */
 	public function findAll($criteria = null) {
+		if ($criteria instanceof Criteria) {
+			$criteria = $criteria->getInnerCriteria();
+		}
+
 		$result = $this->getTableModel()->find($criteria);
 		
 		if ($result->count() === 0) {
@@ -171,7 +180,9 @@ class PhalconTable extends DatagateAbstract {
 	 * @param ModelInterface | Collection $model
 	 */
 	public function save(ModelInterface $model) {
-		
+		/**
+		 * @todo write a save code
+		 */
 	}
 	
 	/**
@@ -180,7 +191,46 @@ class PhalconTable extends DatagateAbstract {
 	 * @param ModelInterface | Collection $model
 	 */
 	public function remove(ModelInterface $model) {
+		/**
+		 * @todo write a remove code
+		 */
+	}
+	
+	/**
+	 * Get the paginator
+	 * 
+	 * @param  Criteria $criteria
+	 * @return Paginator
+	 */
+	public function getPaginator(Criteria $criteria = null) {
+		if ($criteria === null) {
+			$criteria = $this->query();
+		}
 		
+		/**
+		 * @todo write a paginator
+		 */
+	}
+	
+	/**
+	 * Get the query criteria
+	 * 
+	 * @return Criteria
+	 */
+	protected function query() {
+		$criteria = $this->getTableModel()->query();
+		
+		return new Criteria($criteria, $this);
+		
+	}
+	
+	/**
+	 * Get the query criteria (alias to the query())
+	 * 
+	 * @return Criteria
+	 */
+	protected function select() {
+		return $this->query();
 	}
 	
 	/**
@@ -244,7 +294,7 @@ class PhalconTable extends DatagateAbstract {
 	protected function getTableModel() {
 		if ($this->_model === null) {
 			$model = new Model($this->getTableModelDi());
-			$model->setTableName($this->getTableName());
+			$model->setDatagate($this);
 			
 			$this->_model = $model;
 		}

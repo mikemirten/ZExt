@@ -28,6 +28,9 @@ namespace ZExt\Datagate\Phalcon;
 
 use Phalcon\Mvc\Model as ModelAbstract;
 
+use ZExt\Datagate\DatagateInterface;
+use ZExt\Datagate\Phalcon\Exceptions\NoDatagate;
+
 /**
  * Phalcon model extension
  * 
@@ -40,12 +43,33 @@ use Phalcon\Mvc\Model as ModelAbstract;
 class Model extends ModelAbstract {
 	
 	/**
-	 * Set the table name
-	 * 
-	 * @param string $name
+	 * Parent datagate
+	 *
+	 * @var DatagateInterface 
 	 */
-	public function setTableName($name) {
-		$this->setSource($name);
+	private $_datagate;
+	
+	/**
+	 * Set the parent datagate
+	 * 
+	 * @param DatagateInterface $datagate
+	 */
+	public function setDatagate(DatagateInterface $datagate) {
+		$this->setSource($datagate->getTableName());
+		$this->_datagate = $datagate;
+	}
+	
+	/**
+	 * Return the parent datagate
+	 * 
+	 * @return DatagateInterface
+	 */
+	public function getDatagate() {
+		if ($this->_datagate === null) {
+			throw new NoDatagate('Datagate must be supplied');
+		}
+		
+		return $this->_datagate;
 	}
 	
 }
