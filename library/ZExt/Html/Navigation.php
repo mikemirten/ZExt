@@ -91,7 +91,7 @@ class Navigation extends ListUnordered {
 	/**
 	 * Set an element to inactive
 	 * 
-	 * @param type $name
+	 * @param  string $name
 	 * @return Navigation
 	 */
 	public function setInactive($name) {
@@ -122,7 +122,7 @@ class Navigation extends ListUnordered {
 	/**
 	 * Trigger the active element
 	 * 
-	 * @param string $name
+	 * @param  string $name
 	 * @return Navigation
 	 */
 	public function triggerActive($name) {
