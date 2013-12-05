@@ -60,7 +60,7 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Add an elements
+	 * Add the elements
 	 * 
 	 * @param  array $elements
 	 * @return MultiElementsAbstract
@@ -78,7 +78,7 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Add an element
+	 * Add the element
 	 * 
 	 * @param  mixed  $element
 	 * @param  string $name
@@ -95,7 +95,7 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Get an elements
+	 * Get the elements
 	 * 
 	 * @return Tag[]
 	 */
@@ -104,9 +104,9 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Get an element
+	 * Get the element
 	 * 
-	 * @param  string $name
+	 * @param  string | int $name
 	 * @return Tag | null
 	 */
 	public function getElement($name) {		
@@ -116,9 +116,9 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Remove an element
+	 * Remove the element
 	 * 
-	 * @param  string $name
+	 * @param  string | int $name
 	 * @return MultiElementsAbstract
 	 */
 	public function removeElement($name) {
@@ -128,9 +128,9 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Has an element
+	 * Has the element
 	 * 
-	 * @param  string $name
+	 * @param  string | int $name
 	 * @return bool
 	 */
 	public function hasElement($name) {
@@ -150,7 +150,7 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Set an attribute for each element
+	 * Set the attribute for each element
 	 * 
 	 * @param  string $attr
 	 * @param  string $value
@@ -167,7 +167,7 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Remove an attribute from each element
+	 * Remove the attribute from each element
 	 * 
 	 * @param  string $attr
 	 * @return MultiElementsAbstract
@@ -183,7 +183,7 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Add a class for each element
+	 * Add the class for each element
 	 * 
 	 * @param  string $class
 	 * @return MultiElementsAbstract
@@ -199,7 +199,7 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Remove a class from each element
+	 * Remove the class from each element
 	 * 
 	 * @param  string $class
 	 * @return MultiElementsAbstract
@@ -215,7 +215,7 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Add style for each element
+	 * Add the style for each element
 	 * 
 	 * @param  string $param
 	 * @param  string $value
@@ -281,6 +281,17 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
+	 * Remove all the elements
+	 * 
+	 * @return MultiElementsAbstract
+	 */
+	public function removeElements() {
+		$this->_elements = [];
+		
+		return $this;
+	}
+	
+	/**
 	 * The list is empty
 	 * 
 	 * @return bool
@@ -290,7 +301,7 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Count an elements
+	 * Count the elements
 	 * 
 	 * @return int
 	 */
@@ -299,7 +310,7 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	}
 	
 	/**
-	 * Iterator aggregation
+	 * Get the iterator of the elements list
 	 * 
 	 * @return ArrayIterator
 	 */
@@ -307,20 +318,41 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 		return new ArrayIterator($this->getElements());
 	}
 	
-	// Array access interface:
-	
+	/**
+	 * Is the element exists ?
+	 * 
+	 * @param  string | int $offset
+	 * @return bool
+	 */
 	public function offsetExists($offset) {
 		return $this->hasElement($offset);
 	}
 	
+	/**
+	 * Get the element
+	 * 
+	 * @param  string | int $offset
+	 * @return Tag | null
+	 */
 	public function offsetGet($offset) {
 		return $this->getElement($offset);
 	}
 	
+	/**
+	 * Set the element
+	 * 
+	 * @param string | int $offset
+	 * @param mixed        $value
+	 */
 	public function offsetSet($offset, $value) {
 		$this->addElement($value, $offset);
 	}
 	
+	/**
+	 * Remove the element
+	 * 
+	 * @param string | int $offset
+	 */
 	public function offsetUnset($offset) {
 		$this->removeElement($offset);
 	}
