@@ -76,7 +76,7 @@ class Tag {
 	protected $_classes = array();
 	
 	/**
-	 * Tag's parts of a style
+	 * Tag's parts of the style
 	 *
 	 * @var string[]
 	 */
@@ -94,7 +94,7 @@ class Tag {
 	 * 
 	 * @param string         $tag
 	 * @param string         $html
-	 * @param array | string $attrs Attributes of the tag. Or a class if  is a string
+	 * @param array | string $attrs Attributes of the tag. Or a class if a string is passed
 	 */
 	public function __construct($tag = null, $html = null, $attrs = null) {
 		if ($tag !== null) {
@@ -137,7 +137,7 @@ class Tag {
 	protected function init(){}
 	
 	/**
-	 * Set a separator of a tags 
+	 * Set the separator of a tags 
 	 * For extensions use
 	 * 
 	 * @return string
@@ -147,7 +147,7 @@ class Tag {
 	}
 	
 	/**
-	 * Get a separator of a tags 
+	 * Get the separator of a tags 
 	 * For extensions use
 	 * 
 	 * @return string
@@ -157,7 +157,7 @@ class Tag {
 	}
 	
 	/**
-	 * Set a tag's name
+	 * Set the tag's name
 	 * 
 	 * @param  string $tag
 	 * @return Tag
@@ -169,7 +169,7 @@ class Tag {
 	}
 	
 	/**
-	 * Get a tag's name
+	 * Get the tag's name
 	 * 
 	 * @return string
 	 */
@@ -178,7 +178,7 @@ class Tag {
 	}
 	
 	/**
-	 * Set a tag closed or not
+	 * Set the tag is closed or not
 	 * 
 	 * @param  bool $flag
 	 * @return Tag
@@ -190,7 +190,7 @@ class Tag {
 	}
 	
 	/**
-	 * Get a tag closet or not flag
+	 * Is the tag is closed ?
 	 * 
 	 * @return bool
 	 */
@@ -199,7 +199,7 @@ class Tag {
 	}
 	
 	/**
-	 * Set a tag's inner html
+	 * Set the tag's inner html
 	 * 
 	 * @param  mixed $html
 	 * @return Tag
@@ -211,7 +211,7 @@ class Tag {
 	}
 	
 	/**
-	 * Get tag's inner html
+	 * Get the tag's inner html
 	 * 
 	 * @return string
 	 */
@@ -220,7 +220,7 @@ class Tag {
 	}
 	
 	/**
-	 * Set a tag's attributes
+	 * Set the tag's attributes
 	 * 
 	 * @param  array $attrs
 	 * @return Tag
@@ -234,7 +234,7 @@ class Tag {
 	}
 	
 	/**
-	 * Set a tag's attribute
+	 * Set the tag's attribute
 	 * 
 	 * @param  string $attr
 	 * @param  string $value
@@ -247,7 +247,7 @@ class Tag {
 	}
 	
 	/**
-	 * Get an attributes of a tag
+	 * Get the attributes of the tag
 	 * 
 	 * @return array
 	 */
@@ -256,7 +256,7 @@ class Tag {
 	}
 	
 	/**
-	 * Get a tag's attribute
+	 * Get the tag's attribute
 	 * 
 	 * @param  string $attr
 	 * @return string | null
@@ -268,7 +268,7 @@ class Tag {
 	}
 	
 	/**
-	 * Remove a tag's attribute
+	 * Remove the tag's attribute
 	 * 
 	 * @param  string $attr
 	 * @return Tag
@@ -280,7 +280,7 @@ class Tag {
 	}
 	
 	/**
-	 * Has a tag's attr
+	 * Has the tag's attr
 	 * 
 	 * @param  string $attr
 	 * @return bool
@@ -290,7 +290,7 @@ class Tag {
 	}
 	
 	/**
-	 * Add a classes to a tag
+	 * Add the classes to the tag
 	 * 
 	 * @param  array $classes
 	 * @return Tag
@@ -304,7 +304,7 @@ class Tag {
 	}
 	
 	/**
-	 * Get a classes of a tag
+	 * Get the classes of the tag
 	 * 
 	 * @return array
 	 */
@@ -313,8 +313,8 @@ class Tag {
 	}
 	
 	/**
-	 * Add a class to a tag 
-	 * Will overwrite the "class" attribute
+	 * Add the class to the tag 
+	 * Overrides the "class" attribute
 	 * 
 	 * @param  string $class
 	 * @return Tag
@@ -333,7 +333,7 @@ class Tag {
 	}
 	
 	/**
-	 * Remove a class from a tag
+	 * Remove the class from the tag
 	 * 
 	 * @param  string $class
 	 * @return Tag
@@ -349,7 +349,7 @@ class Tag {
 	}
 	
 	/**
-	 * Has a tag's class
+	 * Has the tag's class
 	 * 
 	 * @param  string $class
 	 * @return bool
@@ -359,7 +359,7 @@ class Tag {
 	}
 	
 	/**
-	 * Add a styles to a tag
+	 * Add the styles to the tag
 	 * 
 	 * @param  array $styles
 	 * @return Tag
@@ -373,7 +373,7 @@ class Tag {
 	}
 	
 	/**
-	 * Get a styles of a tag
+	 * Get the styles of the tag
 	 * 
 	 * @return array
 	 */
@@ -382,8 +382,8 @@ class Tag {
 	}
 	
 	/**
-	 * Add style element to a tag 
-	 * Will owervritw the "style" attribute
+	 * Add the style element to the tag 
+	 * Owerrides the "style" attribute
 	 * 
 	 * @param  string $param
 	 * @param  string $value
@@ -396,7 +396,7 @@ class Tag {
 	}
 	
 	/**
-	 * Get a tag's style element
+	 * Get the tag's style element
 	 * 
 	 * @param  string $param
 	 * @return string | null
@@ -408,7 +408,7 @@ class Tag {
 	}
 	
 	/**
-	 * Remove a tag's style element
+	 * Remove the tag's style element
 	 * 
 	 * @param  string $param
 	 * @return Tag
@@ -420,7 +420,7 @@ class Tag {
 	}
 	
 	/**
-	 * Has a tag's style element
+	 * Has the tag's style element
 	 * 
 	 * @return bool
 	 */
@@ -429,7 +429,7 @@ class Tag {
 	}
 	
 	/**
-	 * Render a tag
+	 * Render the tag
 	 * 
 	 * @param  string $html
 	 * @return string
@@ -466,7 +466,7 @@ class Tag {
 	}
 	
 	/**
-	 * Render an attributes
+	 * Render the attributes
 	 * 
 	 * @return string
 	 */
@@ -511,26 +511,60 @@ class Tag {
 		return implode(' ', $styleStr);
 	}
 	
+	/**
+	 * Render the tag
+	 * 
+	 * @return string
+	 */
 	public function __toString() {
 		return $this->render();
 	}
 	
+	/**
+	 * Render the tag
+	 * 
+	 * @param  string $html
+	 * @return string
+	 */
 	public function __invoke($html = null) {
 		return $this->render($html);
 	}
 	
+	/**
+	 * Set the attr
+	 * 
+	 * @param string $name
+	 * @param string $value
+	 */
 	public function __set($name, $value) {
 		$this->setAttr($name, $value);
 	}
 	
+	/**
+	 * Get the attr
+	 * 
+	 * @param  string $name
+	 * @return string | null
+	 */
 	public function __get($name) {
 		return $this->getAttr($name);
 	}
 	
+	/**
+	 * Is the attr exists ?
+	 * 
+	 * @param  string $name
+	 * @return bool
+	 */
 	public function __isset($name) {
 		return $this->hasAttr($name);
 	}
 	
+	/**
+	 * Remove the attr
+	 * 
+	 * @param string $name
+	 */
 	public function __unset($name) {
 		$this->removeAttr($name);
 	}
