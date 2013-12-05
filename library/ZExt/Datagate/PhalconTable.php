@@ -30,15 +30,23 @@ use Phalcon\Db\AdapterInterface;
 use Phalcon\DiInterface;
 use Phalcon\Di;
 
+use Phalcon\Mvc\Model\Criteria         as PhalconCriteria;
 use Phalcon\Mvc\Model\Manager          as ModelsManager;
 use Phalcon\Mvc\Model\Metadata\Memory  as MetaData;
 use Phalcon\Mvc\Model\Resultset\Simple as ResultsetSimple;
+use Phalcon\Mvc\Model\Row;
 
 use ZExt\Datagate\Criteria\PhalconCriteria as Criteria;
-use ZExt\Datagate\Phalcon\Model;
+use ZExt\Datagate\Phalcon\Model            as PhalconModel;
 use ZExt\Model\ModelInterface;
+use ZExt\Model\Collection;
+use ZExt\Model\Model;
+
+use ZExt\Paginator\Paginator;
+use ZExt\Paginator\Adapter\SqlTableCriteria as AdapterCriteria;
 
 use ZExt\Datagate\Exceptions\NoAdapter;
+use ZExt\Datagate\Exceptions\InvalidCriteria;
 
 /**
  * Phalcon model based datagate
@@ -80,7 +88,7 @@ class PhalconTable extends DatagateAbstract {
 	/**
 	 * Phalcon DB table model
 	 *
-	 * @var Model 
+	 * @var PhalconModel 
 	 */
 	private $_model;
 	
@@ -136,20 +144,23 @@ class PhalconTable extends DatagateAbstract {
 	 * Find a first record
 	 * 
 	 * @param  mixed $criteria Query criteria
-	 * @return ModelInterface
+	 * @return Model
 	 */
 	public function findFirst($criteria = null) {
-		if ($criteria instanceof Criteria) {
-			$criteria = $criteria->getInnerCriteria();
-		}
-		
-		$result = $this->getTableModel()->findFirst($criteria);
+		$criteria = $this->normalizeCriteria($criteria);
+		$result   = $this->getTableModel()->findFirst($criteria);
 		
 		if ($result === false) {
 			return;
 		}
 		
-		return $this->createResult($result->toArray());
+		if ($result instanceof Row) {
+			$result = (array) $result;
+		} else {
+			$result = $result->toArray();
+		}
+		
+		return $this->createResult($result);
 	}
 
 	/**
@@ -159,11 +170,8 @@ class PhalconTable extends DatagateAbstract {
 	 * @return Collection | Iterator
 	 */
 	public function findAll($criteria = null) {
-		if ($criteria instanceof Criteria) {
-			$criteria = $criteria->getInnerCriteria();
-		}
-
-		$result = $this->getTableModel()->find($criteria);
+		$criteria = $this->normalizeCriteria($criteria);
+		$result   = $this->getTableModel()->find($criteria);
 		
 		if ($result->count() === 0) {
 			return;
@@ -172,6 +180,29 @@ class PhalconTable extends DatagateAbstract {
 		$result->setHydrateMode(ResultsetSimple::HYDRATE_ARRAYS);
 		
 		return $this->createResultset($result);
+	}
+	
+	/**
+	 * Normalize the type of a criteria
+	 * 
+	 * @param  mixed $criteria
+	 * @return array | string | int
+	 * @throws InvalidCriteria
+	 */
+	protected function normalizeCriteria($criteria) {
+		if ($criteria instanceof Criteria) {
+			return $criteria->getInnerCriteria()->getParams();
+		}
+		
+		if ($criteria instanceof PhalconCriteria) {
+			return $criteria->getParams();
+		}
+		
+		if (is_array($criteria) || is_string($criteria) || is_int($criteria)) {
+			return $criteria;
+		}
+		
+		throw new InvalidCriteria('Invalid type of the criteria: "' . gettype($criteria) . '"');
 	}
 
 	/**
@@ -207,9 +238,7 @@ class PhalconTable extends DatagateAbstract {
 			$criteria = $this->query();
 		}
 		
-		/**
-		 * @todo write a paginator
-		 */
+		return new Paginator(new AdapterCriteria($criteria));
 	}
 	
 	/**
@@ -289,11 +318,11 @@ class PhalconTable extends DatagateAbstract {
 	/**
 	 * Get the phalcon model instance
 	 * 
-	 * @return Model
+	 * @return PhalconModel
 	 */
 	protected function getTableModel() {
 		if ($this->_model === null) {
-			$model = new Model($this->getTableModelDi());
+			$model = new PhalconModel($this->getTableModelDi());
 			$model->setDatagate($this);
 			
 			$this->_model = $model;
