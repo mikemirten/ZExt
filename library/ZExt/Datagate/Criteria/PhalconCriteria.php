@@ -124,7 +124,7 @@ class PhalconCriteria implements CriteriaInterface {
 	 * @return PhalconCriteria
 	 */
 	public function orWhere($condition, $value = null, $type = null) {
-		$this->_criteria->orWhere();
+		$this->_criteria->orWhere($condition);
 		
 		return $this;
 	}
@@ -201,6 +201,13 @@ class PhalconCriteria implements CriteriaInterface {
 	 */
 	public function getInnerCriteria() {
 		return $this->_criteria;
+	}
+	
+	/**
+	 * Clone the inner criteria
+	 */
+	public function __clone() {
+		$this->_criteria = clone $this->_criteria;
 	}
 	
 }
