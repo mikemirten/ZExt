@@ -26,7 +26,8 @@
 
 namespace ZExt\Html;
 
-use ZExt\Html\Table\TableRow;
+use ZExt\Html\Table\TablePart;
+use ZExt\Html\Table\TableColgroup;
 
 /**
  * Html table's abstraction
@@ -34,39 +35,132 @@ use ZExt\Html\Table\TableRow;
  * @package    Html
  * @subpackage Table
  * @author     Mike.Mirten
- * @version    1.0
- * 
- * @method Table      addElements(array $elements) Add an elements
- * @method TableRow[] getElements()                Get an elements
- * @method TableRow   getElement(string $name)     Get an element
- * @method Table      removeElement(string $name)  Remove an element
+ * @version    2.0
  */
-class Table extends MultiElementsAbstract {
+class Table extends Tag {
+	
+	const TAG_TABLE = 'table';
+	const TAG_HEAD  = 'thead';
+	const TAG_BODY  = 'tbody';
+	const TAG_FOOT  = 'tfoot';
 	
 	/**
 	 * Tag's name
 	 *
 	 * @var string 
 	 */
-	protected $_tag = 'table';
+	protected $_tag = self::TAG_TABLE;
 	
 	/**
-	 * Add a row to a table
-	 * 
-	 * @param  array | TableRow $element
-	 * @param  string           $name
-	 * @return Table
-	 * @throws Exception
+	 * The table's colgroup
+	 *
+	 * @var TableColgroup
 	 */
-	public function addElement($row, $name = null, $attrs = null) {
-		if (is_array($row)) {
-			$row = new TableRow($row, $attrs);
+	protected $_colgroup;
+	
+	/**
+	 * The table's head
+	 *
+	 * @var TablePart 
+	 */
+	protected $_head;
+	
+	/**
+	 * The table's body
+	 *
+	 * @var TablePart 
+	 */
+	protected $_body;
+	
+	/**
+	 * The table's foot
+	 *
+	 * @var TablePart 
+	 */
+	protected $_foot;
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param array $elements
+	 * @param array $attrs
+	 */
+	public function __construct(array $elements = null, $attrs = null) {
+		parent::__construct(null, null, $attrs);
+		
+		if ($elements !== null) {
+			$this->getBody()->addElements($elements);
 		}
-		else if (! $row instanceof TableRow) {
-			throw new Exception('Element must be an instance of the TableRow or an array');
+	}
+	
+	/**
+	 * Get the table's head
+	 * 
+	 * @return TablePart;
+	 */
+	public function getHead() {
+		if ($this->_head === null) {
+			$this->_head = new TablePart();
+			$this->_head->setTag(self::TAG_HEAD);
 		}
 		
-		return parent::addElement($row, $name);
+		return $this->_head;
+	}
+	
+	/**
+	 * Get the table's body
+	 * 
+	 * @return TablePart;
+	 */
+	public function getBody() {
+		if ($this->_body === null) {
+			$this->_body = new TablePart();
+			$this->_body->setTag(self::TAG_BODY);
+		}
+		
+		return $this->_body;
+	}
+	
+	/**
+	 * Get the table's foot
+	 * 
+	 * @return TablePart;
+	 */
+	public function getFoot() {
+		if ($this->_foot === null) {
+			$this->_foot = new TablePart();
+			$this->_foot->setTag(self::TAG_FOOT);
+		}
+		
+		return $this->_foot;
+	}
+	
+	/**
+	 * Render the table
+	 * 
+	 * @param  string $html
+	 * @return string
+	 */
+	public function render($html = null) {
+		$parts = [];
+		
+		if ($this->_colgroup !== null) {
+			$parts[] = $this->_colgroup->render();
+		}
+		
+		if ($this->_head !== null) {
+			$parts[] = $this->_head->render();
+		}
+		
+		if ($this->_body !== null) {
+			$parts[] = $this->_body->render();
+		}
+		
+		if ($this->_foot !== null) {
+			$parts[] = $this->_foot->render();
+		}
+		
+		return parent::render(implode($this->getSeparator(), $parts));
 	}
 	
 }

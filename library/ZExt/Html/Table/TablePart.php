@@ -26,21 +26,47 @@
 
 namespace ZExt\Html\Table;
 
+use ZExt\Html\MultiElementsAbstract;
+
 /**
- * Html table header's cell's abstraction
+ * Part of a table (thead / tbody / tfoot)
  * 
  * @package    Html
  * @subpackage Table
  * @author     Mike.Mirten
  * @version    1.0
+ * 
+ * @method Table      addElements(array $elements) Add an elements
+ * @method TableRow[] getElements()                Get an elements
+ * @method TableRow   getElement(string $name)     Get an element
+ * @method Table      removeElement(string $name)  Remove an element
  */
-class TableHeaderCell extends TableCell {
+class TablePart extends MultiElementsAbstract {
 	
 	/**
 	 * Tag's name
 	 *
 	 * @var string 
 	 */
-	protected $_tag = 'th';
+	protected $_tag = 'tbody';
+	
+	/**
+	 * Add a row to a table
+	 * 
+	 * @param  array | TableRow $element
+	 * @param  string           $name
+	 * @return Table
+	 * @throws Exception
+	 */
+	public function addElement($row, $name = null, $attrs = null) {
+		if (is_array($row)) {
+			$row = new TableRow($row, $attrs);
+		}
+		else if (! $row instanceof TableRow) {
+			throw new Exception('Element must be an instance of the TableRow or an array');
+		}
+		
+		return parent::addElement($row, $name);
+	}
 	
 }

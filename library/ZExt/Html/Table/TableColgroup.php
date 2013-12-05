@@ -30,72 +30,47 @@ use ZExt\Html\MultiElementsAbstract;
 use ZExt\Html\Exception;
 
 /**
- * Html table row's abstraction
+ * Html table colgroup's abstraction
  * 
  * @package    Html
  * @subpackage Table
  * @author     Mike.Mirten
  * @version    1.0
- * 
- * @method TableRow    addElements(array $elements) Add an elements
- * @method TableCell[] getElements()                Get an elements
- * @method TableCell   getElement(string $name)     Get an element
- * @method TableRow    removeElement(string $name)  Remove an element
  */
-class TableRow extends MultiElementsAbstract {
+class TableColgroup extends MultiElementsAbstract {
+	
+	const ATTR_WIDTH = 'width';
 	
 	/**
 	 * Tag's name
 	 *
 	 * @var string 
 	 */
-	protected $_tag = 'tr';
-	
-	/**
-	 * Is the head row
-	 *
-	 * @var bool
-	 */
-	protected $_headRow = false;
-	
-	/**
-	 * Set the head row
-	 * 
-	 * @param bool $option
-	 */
-	public function setHeadRow($option = true) {
-		$this->_headRow = (bool) $option;
-	}
-	
-	/**
-	 * Is the head row ?
-	 * 
-	 * @return bool
-	 */
-	public function isHeadRow() {
-		return $this->_headRow;
-	}
+	protected $_tag = 'colgroup';
 	
 	/**
 	 * Add a cell to a row
 	 * 
-	 * @param  array | TableCell $element
-	 * @param  string            $name
+	 * @param  array | TableCol $element Instance of the TableCol or an array of attributes
+	 * @param  string           $name
 	 * @return TableRow
 	 * @throws Exception
 	 */
-	public function addElement($cell, $name = null, $attrs = null) {
-		if (is_scalar($cell)) {
-			if ($this->_headRow) {
-				$cell = new TableHeadCell($cell, $attrs);
-			} else {
-				$cell = new TableCell($cell, $attrs);
-			}
-		} else if (! $cell instanceof TableCell) {
-			throw new Exception('Element must be an instance of the TableCell or a scalar');
+	public function addElement($col, $name = null) {
+		// Width
+		if (is_int($col)) {
+			$col = new TableCol([self::ATTR_WIDTH => $col . '%']);
+		}
+		// Attributes or class
+		else if (is_array($col) || is_string($col)) {
+			$col = new TableCol($col);
+		}
+		// Instance
+		else if (! $col instanceof TableCol) {
+			throw new Exception('Element must be an instance of the TableCol or a array or a string');
 		}
 		
-		return parent::addElement($cell, $name);
+		return parent::addElement($col, $name);
 	}
 	
 }
