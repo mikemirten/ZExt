@@ -29,6 +29,8 @@ namespace ZExt\Html;
 use ZExt\Html\Table\TablePart;
 use ZExt\Html\Table\TableColgroup;
 
+use ArrayAccess, Countable, IteratorAggregate;
+
 /**
  * Html table's abstraction
  * 
@@ -37,7 +39,7 @@ use ZExt\Html\Table\TableColgroup;
  * @author     Mike.Mirten
  * @version    2.0
  */
-class Table extends Tag {
+class Table extends Tag implements ArrayAccess, Countable, IteratorAggregate {
 	
 	const TAG_TABLE = 'table';
 	const TAG_HEAD  = 'thead';
@@ -91,6 +93,19 @@ class Table extends Tag {
 		if ($elements !== null) {
 			$this->getBody()->addElements($elements);
 		}
+	}
+	
+	/**
+	 * Get the table's colgroup
+	 * 
+	 * @return TableColgroup
+	 */
+	public function getColgroup() {
+		if ($this->_colgroup === null) {
+			$this->_colgroup = new TableColgroup();
+		}
+		
+		return $this->_colgroup;
 	}
 	
 	/**
@@ -161,6 +176,63 @@ class Table extends Tag {
 		}
 		
 		return parent::render(implode($this->getSeparator(), $parts));
+	}
+	
+	/**
+	 * Add the row
+	 * 
+	 * @param mixed        $row
+	 * @param string | int $name
+	 */
+	public function offsetSet($name, $row) {
+		$this->getBody()->addElement($row, $name);
+	}
+	
+	/**
+	 * Get the row
+	 * 
+	 * @param  string | int $name
+	 * @return Table\TableRow
+	 */
+	public function offsetGet($name) {
+		return $this->getBody()->getElement($name);
+	}
+	
+	/**
+	 * Is the row exists ?
+	 * 
+	 * @param  string | int $offset
+	 * @return bool
+	 */
+	public function offsetExists($name) {
+		return $this->getBody()->hasElement($name);
+	}
+	
+	/**
+	 * Remove the row
+	 * 
+	 * @param string | int $offset
+	 */
+	public function offsetUnset($name) {
+		$this->getBody()->removeElement($name);
+	}
+	
+	/**
+	 * Count the element number
+	 * 
+	 * @return int
+	 */
+	public function count() {
+		return $this->getBody()->count();
+	}
+	
+	/**
+	 * Get the elements iterator
+	 * 
+	 * @return \Traversable
+	 */
+	public function getIterator() {
+		return $this->getBody()->getIterator();
 	}
 	
 }

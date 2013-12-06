@@ -27,6 +27,7 @@
 namespace ZExt\Html\Table;
 
 use ZExt\Html\MultiElementsAbstract;
+use ZExt\Html\Exception;
 
 /**
  * Part of a table (thead / tbody / tfoot)
@@ -48,7 +49,7 @@ class TablePart extends MultiElementsAbstract {
 	 *
 	 * @var string 
 	 */
-	protected $_tag = 'tbody';
+	protected $_tag = 'table';
 	
 	/**
 	 * Add a row to a table
