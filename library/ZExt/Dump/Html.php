@@ -225,10 +225,12 @@ class Html {
 		$info .= $dataTitle->render('Info:');
 		
 		$datagate = $model->getParentDatagate();
+		$service  = $model->getParentService();
 		
 		$partsList = new Table([], 'zDumpArrayTable');
 				
 		$partsList[] = ['Parent datagate', ':', ($datagate === null) ? 'No datagate' : $classTag->render(get_class($datagate))];
+		$partsList[] = ['Parent service', ':', ($service === null) ? 'No service' : $classTag->render(get_class($service))];
 		
 		if ($model instanceof LocatorAwareInterface) {
 			$partsList[] = ['Has a services\' locator', ':', $model->hasLocator() ? 'Yes' : 'No'];
@@ -307,7 +309,7 @@ class Html {
 		$typeTagStr = new Tag('span', null, 'zDumpString');
 		$classTag   = new Tag('span', null, 'zDumpClass');
 		$dataTitle  = new Tag('div', null, 'zDumpTitle');
-		$blockTag = new Tag('div', null, 'zDumpBlock');
+		$blockTag   = new Tag('div', null, 'zDumpBlock');
 		
 		$info  = $classTag->render(get_class($exception));
 		$info .= ' (code: ' . $typeTagInt->render($exception->getCode()) . ')';
@@ -336,53 +338,57 @@ class Html {
 			if (isset($part['file'])) {
 				$fileInfo = $part['file'];
 				$lineInfo = $typeTagStr->render($part['line']);
-				$callInfo = '';
-				
-				if (isset($part['class'])) {
-					$callInfo .= $classTag->render($part['class']);
-					$callInfo .= $part['type'];
-				}
-				
-				$callInfo .= $part['function'] . '(';
-				
-				if (! empty($part['args'])) {
-					$argsInfo = [];
-					
-					foreach ($part['args'] as $arg) {
-						switch (gettype($arg)) {
-							case 'NULL':
-								$argInfo = 'Null';
-								break;
-							
-							case 'object':
-								$argInfo = $classTag->render(get_class($arg));
-								break;
-							
-							case 'array':
-								$argInfo = 'Array(' . $typeTagInt->render(count($arg)) . ' items)';
-								break;
-							
-							default:
-								$argsCount = count($part['args']);
-								$maxLength = (int) round(160 / $argsCount);
-
-								if ($maxLength < 16) {
-									$maxLength = 16;
-								}
-
-								$argInfo = self::_dump($arg, 0, $maxLength)[1];
-						}
-						
-						$argsInfo[] = $argInfo;
-					}
-					
-					$callInfo .= implode(', ', $argsInfo);
-				}
-				
-				$callInfo .= ')';
-				
-				$traceList[] = [$fileInfo, $lineInfo, ':', $callInfo];
+			} else {
+				$fileInfo = 'Internal function';
+				$lineInfo = '';
 			}
+			
+			$callInfo = '';
+
+			if (isset($part['class'])) {
+				$callInfo .= $classTag->render($part['class']);
+				$callInfo .= $part['type'];
+			}
+
+			$callInfo .= $part['function'] . '(';
+
+			if (! empty($part['args'])) {
+				$argsInfo = [];
+
+				foreach ($part['args'] as $arg) {
+					switch (gettype($arg)) {
+						case 'NULL':
+							$argInfo = 'Null';
+							break;
+
+						case 'object':
+							$argInfo = $classTag->render(get_class($arg));
+							break;
+
+						case 'array':
+							$argInfo = 'Array(' . $typeTagInt->render(count($arg)) . ' items)';
+							break;
+
+						default:
+							$argsCount = count($part['args']);
+							$maxLength = (int) round(160 / $argsCount);
+
+							if ($maxLength < 16) {
+								$maxLength = 16;
+							}
+
+							$argInfo = self::_dump($arg, 0, $maxLength)[1];
+					}
+
+					$argsInfo[] = $argInfo;
+				}
+
+				$callInfo .= implode(', ', $argsInfo);
+			}
+
+			$callInfo .= ')';
+
+			$traceList[] = [$fileInfo, $lineInfo, ':', $callInfo];
 			
 		}
 		
