@@ -43,14 +43,14 @@ use ZExt\Log\Exceptions\NoAdapter;
  * @package    Logger
  * @subpackage Logger
  * @author     Mike.Mirten
- * @version    1.0rc1
+ * @version    1.1
  */
 class Logger implements LoggerInterface, LocatorAwareInterface, EventsManagerAwareInterface {
 	
 	use LocatorAwareTrait;
 	use EventsManagerAwareTrait;
 	
-	const DEFAULT_LOGGER_ADAPTER = 'defaultLoggerAdapter';
+	const DEFAULT_LOGGER_ADAPTER = 'loggerAdapter';
 	
 	/**
 	 * Logger's adapter
@@ -71,13 +71,26 @@ class Logger implements LoggerInterface, LocatorAwareInterface, EventsManagerAwa
 	}
 	
 	/**
+	 * Log an event
+	 * 
+	 * @param  string $message
+	 * @param  int    $code
+	 * @return Logger
+	 */
+	public function log($message, $code = self::INFO) {
+		$this->getAdapter()->log($message, $code);
+		
+		return $this;
+	}
+	
+	/**
 	 * Log an info
 	 * 
 	 * @param  string $message
 	 * @return Logger
 	 */
 	public function info($message) {
-		$this->getAdapter()->log($message, self::TYPE_INFO);
+		$this->getAdapter()->log($message, self::INFO);
 		
 		return $this;
 	}
@@ -89,7 +102,7 @@ class Logger implements LoggerInterface, LocatorAwareInterface, EventsManagerAwa
 	 * @return Logger
 	 */
 	public function notice($message) {
-		$this->getAdapter()->log($message, self::TYPE_NOTICE);
+		$this->getAdapter()->log($message, self::NOTICE);
 		
 		return $this;
 	}
@@ -101,7 +114,7 @@ class Logger implements LoggerInterface, LocatorAwareInterface, EventsManagerAwa
 	 * @return Logger
 	 */
 	public function warning($message) {
-		$this->getAdapter()->log($message, self::TYPE_WARNING);
+		$this->getAdapter()->log($message, self::WARNING);
 		
 		return $this;
 	}
@@ -113,7 +126,7 @@ class Logger implements LoggerInterface, LocatorAwareInterface, EventsManagerAwa
 	 * @return Logger
 	 */
 	public function error($message) {
-		$this->getAdapter()->log($message, self::TYPE_ERROR);
+		$this->getAdapter()->log($message, self::ERROR);
 		
 		return $this;
 	}
@@ -125,7 +138,7 @@ class Logger implements LoggerInterface, LocatorAwareInterface, EventsManagerAwa
 	 * @return Logger
 	 */
 	public function alert($message) {
-		$this->getAdapter()->log($message, self::TYPE_ALERT);
+		$this->getAdapter()->log($message, self::ALERT);
 		
 		return $this;
 	}
@@ -137,7 +150,7 @@ class Logger implements LoggerInterface, LocatorAwareInterface, EventsManagerAwa
 	 * @return Logger
 	 */
 	public function emergency($message) {
-		$this->getAdapter()->log($message, self::TYPE_EMERGENCY);
+		$this->getAdapter()->log($message, self::EMERGENCY);
 		
 		return $this;
 	}
@@ -149,7 +162,7 @@ class Logger implements LoggerInterface, LocatorAwareInterface, EventsManagerAwa
 	 * @return Logger
 	 */
 	public function critical($message) {
-		$this->getAdapter()->log($message, self::TYPE_CRITICAL);
+		$this->getAdapter()->log($message, self::CRITICAL);
 		
 		return $this;
 	}
@@ -161,7 +174,7 @@ class Logger implements LoggerInterface, LocatorAwareInterface, EventsManagerAwa
 	 * @return Logger
 	 */
 	public function debug($message) {
-		$this->getAdapter()->log($message, self::TYPE_DEBUG);
+		$this->getAdapter()->log($message, self::DEBUG);
 		
 		return $this;
 	}

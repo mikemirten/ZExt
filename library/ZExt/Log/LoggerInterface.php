@@ -33,18 +33,27 @@ namespace ZExt\Log;
  * @package    Logger
  * @subpackage Logger
  * @author     Mike.Mirten
- * @version    1.0rc1
+ * @version    1.1
  */
 interface LoggerInterface {
 	
-	const TYPE_DEBUG     = 0;
-	const TYPE_INFO      = 1;
-	const TYPE_NOTICE    = 2;
-	const TYPE_WARNING   = 3;
-	const TYPE_ERROR     = 4;
-	const TYPE_ALERT     = 5;
-	const TYPE_EMERGENCY = 6;
-	const TYPE_CRITICAL  = 7;
+	// RFC5424
+	const EMERGENCY = 0;
+	const ALERT     = 1;
+	const CRITICAL  = 2;
+	const ERROR     = 3;
+	const WARNING   = 4;
+	const NOTICE    = 5;
+	const INFO      = 6;
+	const DEBUG     = 7;
+	
+	/**
+	 * Log an event
+	 * 
+	 * @param string $message
+	 * @param int    $code
+	 */
+	public function log($message, $code = self::INFO);
 	
 	/**
 	 * Log an info

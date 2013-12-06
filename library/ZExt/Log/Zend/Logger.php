@@ -30,31 +30,15 @@ use ZExt\Log\LoggerInterface;
 use Zend_Log;
 
 /**
- * Logger based on the Zend_Log
+ * Logger based on Zend_Log
  * 
  * @category   ZExt
  * @package    Logger
  * @subpackage Logger
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
 class Logger implements LoggerInterface {
-	
-	/**
-	 * Logger to Zend_Log type map
-	 *
-	 * @var array
-	 */
-	protected static $typesMap = [
-		self::TYPE_DEBUG     => Zend_Log::DEBUG,
-		self::TYPE_INFO      => Zend_Log::INFO,
-		self::TYPE_NOTICE    => Zend_Log::NOTICE,
-		self::TYPE_WARNING   => Zend_Log::WARN,
-		self::TYPE_ERROR     => Zend_Log::ERR,
-		self::TYPE_ALERT     => Zend_Log::ALERT,
-		self::TYPE_EMERGENCY => Zend_Log::EMERG,
-		self::TYPE_CRITICAL  => Zend_Log::CRIT
-	];
 	
 	/**
 	 * Zend_Log instance
@@ -70,6 +54,16 @@ class Logger implements LoggerInterface {
 	 */
 	public function __construct(Zend_Log $logger) {
 		$this->logger = $logger;
+	}
+	
+	/**
+	 * Log an event
+	 * 
+	 * @param string $message
+	 * @param int    $code
+	 */
+	public function log($message, $code = self::INFO) {
+		$this->logger->log($message, $code);
 	}
 	
 	/**

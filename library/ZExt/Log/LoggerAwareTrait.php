@@ -40,7 +40,7 @@ use Exception;
  * @package    Logger
  * @subpackage Logger
  * @author     Mike.Mirten
- * @version    1.1
+ * @version    1.1.1
  */
 trait LoggerAwareTrait {
 	
