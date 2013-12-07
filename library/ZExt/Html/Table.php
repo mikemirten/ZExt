@@ -46,6 +46,11 @@ class Table extends Tag implements ArrayAccess, Countable, IteratorAggregate {
 	const TAG_BODY  = 'tbody';
 	const TAG_FOOT  = 'tfoot';
 	
+	const SPECIAL_CLASS    = '_class_';
+	const SPECIAL_ATTRS    = '_attrs_';
+	const SPECIAL_STYLE    = '_style_';
+	const SPECIAL_COLGROUP = '_colgroup_';
+	
 	/**
 	 * Tag's name
 	 *
@@ -91,6 +96,33 @@ class Table extends Tag implements ArrayAccess, Countable, IteratorAggregate {
 		parent::__construct(null, null, $attrs);
 		
 		if ($elements !== null) {
+			// Class
+			if (isset($elements[self::SPECIAL_CLASS])) {
+				is_array($elements[self::SPECIAL_CLASS])
+					? $this->addClasses($elements[self::SPECIAL_CLASS])
+					: $this->addClass($elements[self::SPECIAL_CLASS]);
+				
+				unset($elements[self::SPECIAL_CLASS]);
+			}
+			
+			// Attributes
+			if (isset($elements[self::SPECIAL_ATTRS])) {
+				$this->setAttrs($elements[self::SPECIAL_ATTRS]);
+				unset($elements[self::SPECIAL_ATTRS]);
+			}
+			
+			// Styles
+			if (isset($elements[self::SPECIAL_STYLE])) {
+				$this->addStyles($elements[self::SPECIAL_STYLE]);
+				unset($elements[self::SPECIAL_STYLE]);
+			}
+			
+			// Colgroup
+			if (isset($elements[self::SPECIAL_COLGROUP])) {
+				$this->getColgroup()->addElements($elements[self::SPECIAL_COLGROUP]);
+				unset($elements[self::SPECIAL_COLGROUP]);
+			}
+			
 			$this->getBody()->addElements($elements);
 		}
 	}

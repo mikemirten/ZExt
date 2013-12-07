@@ -38,6 +38,10 @@ use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
  */
 abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAccess, IteratorAggregate {
 	
+	const SPECIAL_CLASS = '_class_';
+	const SPECIAL_ATTRS = '_attrs_';
+	const SPECIAL_STYLE = '_style_';
+	
 	/**
 	 * Elements of the multielements structure
 	 * 
@@ -55,6 +59,27 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 		parent::__construct(null, null, $attrs);
 		
 		if ($elements !== null) {
+			// Class
+			if (isset($elements[self::SPECIAL_CLASS])) {
+				is_array($elements[self::SPECIAL_CLASS])
+					? $this->addClasses($elements[self::SPECIAL_CLASS])
+					: $this->addClass($elements[self::SPECIAL_CLASS]);
+				
+				unset($elements[self::SPECIAL_CLASS]);
+			}
+			
+			// Attributes
+			if (isset($elements[self::SPECIAL_ATTRS])) {
+				$this->setAttrs($elements[self::SPECIAL_ATTRS]);
+				unset($elements[self::SPECIAL_ATTRS]);
+			}
+			
+			// Styles
+			if (isset($elements[self::SPECIAL_STYLE])) {
+				$this->addStyles($elements[self::SPECIAL_STYLE]);
+				unset($elements[self::SPECIAL_STYLE]);
+			}
+			
 			$this->addElements($elements);
 		}
 	}
