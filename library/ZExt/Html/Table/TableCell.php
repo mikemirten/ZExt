@@ -27,6 +27,7 @@
 namespace ZExt\Html\Table;
 
 use ZExt\Html\Tag;
+use ZExt\Html\Table;
 
 /**
  * Html table cell's abstraction
@@ -52,6 +53,10 @@ class TableCell extends Tag {
 	 * @param string | array $attrs
 	 */
 	public function __construct($content = null, $attrs = null) {
+		if (is_array($content)) {
+			$content = new Table($content);
+		}
+		
 		parent::__construct(null, $content, $attrs);
 	}
 	

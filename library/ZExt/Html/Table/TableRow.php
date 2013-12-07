@@ -27,7 +27,6 @@
 namespace ZExt\Html\Table;
 
 use ZExt\Html\MultiElementsAbstract;
-use ZExt\Html\Exception;
 
 /**
  * Html table row's abstraction
@@ -85,14 +84,12 @@ class TableRow extends MultiElementsAbstract {
 	 * @throws Exception
 	 */
 	public function addElement($cell, $name = null, $attrs = null) {
-		if (is_scalar($cell)) {
+		if (! $cell instanceof TableCell) {
 			if ($this->_headRow) {
 				$cell = new TableHeadCell($cell, $attrs);
 			} else {
 				$cell = new TableCell($cell, $attrs);
 			}
-		} else if (! $cell instanceof TableCell) {
-			throw new Exception('Element must be an instance of the TableCell or a scalar');
 		}
 		
 		return parent::addElement($cell, $name);
