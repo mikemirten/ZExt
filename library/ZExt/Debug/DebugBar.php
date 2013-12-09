@@ -97,7 +97,9 @@ class DebugBar {
 			$this->setParameters($params);
 		}
 		
-		register_shutdown_function(array($this, 'shutdownHandler'));
+		register_shutdown_function(function() {
+			$this->shutdownHandler();
+		});
 	}
 	
 	/**
@@ -295,7 +297,7 @@ class DebugBar {
 	 * @return ModuleInterface
 	 */
 	protected function loadModule($moduleName, array $params = null) {
-		$class = self::NAMESPACE_MODULES . '\\' . $moduleName;
+		$class = self::NAMESPACE_MODULES . '\\' . ucfirst($moduleName);
 		
 		return new $class($params);
 	}
@@ -437,7 +439,7 @@ class DebugBar {
 	/**
 	 * Shutdown handler
 	 */
-	public function shutdownHandler() {
+	protected function shutdownHandler() {
 		if ($this->_onShutdownCallback !== null) {
 			$this->_onShutdownCallback->__invoke($this);
 		}
@@ -450,7 +452,8 @@ class DebugBar {
 			}
 			
 			if (! isset($module)) {
-				$this->addModule('Error');
+				$module = new Errors();
+				$this->addModule($module);
 			}
 			
 			$module->errorHandler($error['type'], $error['message'], $error['file'], $error['line']);
