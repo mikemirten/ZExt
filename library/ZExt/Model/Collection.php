@@ -38,7 +38,7 @@ use ArrayAccess,
  * @package    Model
  * @subpackage Collection
  * @author     Mike.Mirten
- * @version    2.2.6
+ * @version    2.3
  */
 class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator {
 	
@@ -329,10 +329,21 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	}
 	
 	/**
-	 * Get an item
+	 * Get a first item
+	 * 
+	 * @return Model | null
+	 */
+	public function getFirst() {
+		if (isset($this->_map[0])) {
+			return $this->getItem($this->_map[0]);
+		}
+	}
+	
+	/**
+	 * Get the item
 	 * 
 	 * @param  int | string $key
-	 * @return Model
+	 * @return Model | null
 	 */
 	public function getItem($key) {
 		if (is_array($key)) {
@@ -349,9 +360,8 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 			$item = $modelClass::factory($this->_data[$key]);
 			$item->setCollection($this);
 			
-			$datagate = $this->getParentDatagate();
-			if ($datagate !== null) {
-				$item->setParentDatagate($datagate);
+			if ($this->hasDatagate()) {
+				$item->setDatagate($this->getDatagate());
 			}
 			
 			if ($this->hasLocator()) {
@@ -507,7 +517,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	 * @param  Closure $callback callback
 	 * @return Collection
 	 */
-	public function map(Closure $callback) {
+	public function walk(Closure $callback) {
 		foreach($this->_data as &$data) {
 			$data = $callback($data);
 		}
@@ -1178,10 +1188,9 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	 */
 	public function createClone($data = array()) {
 		$collection = static::factory($data, $this->getModel(), $this->getPrimary());
-
-		$datagate = $this->getParentDatagate();
-		if ($datagate !== null) {
-			$collection->setParentDatagate($datagate);
+		
+		if ($this->hasDatagate()) {
+			$collection->setDatagate($this->getDatagate());
 		}
 		
 		if ($this->hasLocator()) {
@@ -1227,10 +1236,33 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	/**
 	 * Count number of items
 	 * 
+	 * @param  int | array count by property(ies)
 	 * @return int
 	 */
-	public function count() {
-		return count($this->_map);
+	public function count($property = null) {
+		if ($property === null) {
+			return count($this->_map);
+		}
+		
+		if (is_array($property)) {
+			$reduceFunction = function(&$result, &$item) use($property) {
+				foreach ($property as $part) {
+					if (! isset($item[$part])) {
+						return;
+					}
+				}
+				
+				return $result + 1;
+			};
+		} else {
+			$reduceFunction = function(&$result, &$item) use($property) {
+				if (isset($item[$property])) {
+					return $result + 1;
+				};
+			};
+		}
+		
+		return (int) array_reduce($this->_data, $reduceFunction, 0);
 	}
 	
 	/**
