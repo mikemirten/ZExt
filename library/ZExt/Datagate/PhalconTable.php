@@ -30,10 +30,11 @@ use Phalcon\Db\AdapterInterface;
 use Phalcon\DiInterface;
 use Phalcon\Di;
 
-use Phalcon\Mvc\Model\Criteria         as PhalconCriteria;
-use Phalcon\Mvc\Model\Manager          as ModelsManager;
-use Phalcon\Mvc\Model\Metadata\Memory  as MetaData;
-use Phalcon\Mvc\Model\Resultset\Simple as ResultsetSimple;
+use Phalcon\Mvc\Model\Criteria            as PhalconCriteria;
+use Phalcon\Mvc\Model\Manager             as ModelsManager;
+use Phalcon\Mvc\Model\Transaction\Manager as TransactionsManager;
+use Phalcon\Mvc\Model\Metadata\Memory     as MetaData;
+use Phalcon\Mvc\Model\Resultset\Simple    as ResultsetSimple;
 use Phalcon\Mvc\Model\Row;
 
 use ZExt\Datagate\Criteria\PhalconCriteria as Criteria;
@@ -55,14 +56,15 @@ use ZExt\Datagate\Exceptions\InvalidCriteria;
  * @package    Datagate
  * @subpackage Datagate
  * @author     Mike.Mirten
- * @version    1.0dev
+ * @version    1.0beta
  */
 class PhalconTable extends DatagateAbstract {
 	
 	// Phalcon dependencies names
-	const PHSRV_ADAPTER = 'db';
-	const PHSRV_MANAGER = 'modelsManager';
-	const PHSRV_META    = 'modelsMetadata';
+	const PHSRV_ADAPTER      = 'db';
+	const PHSRV_TRANSACTIONS = 'transactionsManager';
+	const PHSRV_MANAGER      = 'modelsManager';
+	const PHSRV_META         = 'modelsMetadata';
 	
 	/**
 	 * Shared table models DI option
@@ -98,6 +100,12 @@ class PhalconTable extends DatagateAbstract {
 	 * @var DiInterface
 	 */
 	private $_modelDi;
+	
+	/**
+	 *
+	 * @var type 
+	 */
+	private $_transactionsManager;
 	
 	/**
 	 * Set the "Shared phalcon table models DI" option
@@ -177,7 +185,11 @@ class PhalconTable extends DatagateAbstract {
 			return;
 		}
 		
-		$result->setHydrateMode(ResultsetSimple::HYDRATE_ARRAYS);
+		if ($this->getResultType() & self::RESULT_OBJECT) {
+			$result->setHydrateMode(ResultsetSimple::HYDRATE_OBJECTS);
+		} else {
+			$result->setHydrateMode(ResultsetSimple::HYDRATE_ARRAYS);
+		}
 		
 		return $this->createResultset($result);
 	}
@@ -208,23 +220,127 @@ class PhalconTable extends DatagateAbstract {
 	/**
 	 * Save the model or the collection of the models
 	 * 
-	 * @param ModelInterface | Collection $model
+	 * @param  ModelInterface | Collection $model
+	 * @return bool True if succeeded
 	 */
 	public function save(ModelInterface $model) {
-		/**
-		 * @todo write a save code
-		 */
+		if ($model instanceof Model) {
+			$phalconModel = $this->createTableModel();
+			$phalconModel->assign($model->toSave());
+			
+			return $this->_save($model, $phalconModel);
+		}
+		else if ($model instanceof Collection) {
+			if ($model->isEmpty()) {
+				return true;
+			}
+			
+			if ($model->count() === 1) {
+				return $this->save($model->getFirst());
+			}
+			
+			$isInsert    = $model->isInsertForced();
+			$transaction = $this->getTransactionsManager()->get(true);
+			
+			foreach ($model as $item) {
+				if ($isInsert) {
+					$item->forceInsert();
+				}
+				
+				$phalconModel = $this->createTableModel();
+				$phalconModel->setTransaction($transaction);
+				$phalconModel->assign($item->toSave());
+				
+				if (! $this->_save($item, $phalconModel)) {
+					$transaction->rollback();
+				}
+			}
+			
+			$transaction->commit();
+			return true;
+		}
+	}
+	
+	/**
+	 * Save the model
+	 * 
+	 * @param  Model $model
+	 * @param  mixed $primary
+	 * @return bool  True if succeeded
+	 */
+	private function _save(Model $model, PhalconModel $phalconModel) {
+		$primary = $this->getPrimaryName();
+		
+		// If the primary is unresolvable, let's phalcon try it
+		if ($primary === null) {
+			return $phalconModel->save();
+		}
+
+		// Insert or Update resolving
+		$isInsert = $model->isInsertForced();
+
+		if (is_array($primary)) {
+			foreach ($primary as $part) {
+				if (! isset($model->$part)) {
+					$isInsert = false;
+				}
+			}
+		} else if (is_string($primary) && ! isset($model->$primary)) {
+			$isInsert = true;
+		}
+
+		// Do the insert
+		if ($isInsert) {
+			$result = $phalconModel->create();
+			$model->unforceInsert();
+
+			// Put the primary data into the model after inserting
+			if (is_array($primary)) {
+				foreach ($primary as $part) {
+					if (isset($phalconModel->$part)) {
+						$model->$part = $phalconModel->$part;
+					}
+				}
+			} else if (isset($phalconModel->$primary)) {
+				$model->$primary = $phalconModel->$primary;
+			}
+
+			return $result;
+		}
+
+		// Do the update
+		return $phalconModel->update();
 	}
 	
 	/**
 	 * Remove the record or the many of records by the model or the collection of the models
 	 * 
-	 * @param ModelInterface | Collection $model
+	 * @param  ModelInterface | Collection $model
+	 * @return bool True if succeeded
 	 */
 	public function remove(ModelInterface $model) {
-		/**
-		 * @todo write a remove code
-		 */
+		if ($model instanceof Model) {
+			$phalconModel = $this->createTableModel();
+			$phalconModel->assign($model->toSave());
+			
+			return $phalconModel->delete();
+		}
+		else if ($model instanceof Collection) {
+			$transaction = $this->getTransactionsManager()->get(true);
+			
+			foreach ($model as $item) {
+				$phalconModel = $this->createTableModel();
+				$phalconModel->setTransaction($transaction);
+				$phalconModel->assign($item->toSave());
+				
+				if (! $phalconModel->delete()) {
+					$transaction->rollback();
+				}
+			}
+			
+			$transaction->commit();
+			return true;
+		}
 	}
 	
 	/**
@@ -316,19 +432,62 @@ class PhalconTable extends DatagateAbstract {
 	}
 	
 	/**
+	 * Set the transactions manager
+	 * 
+	 * @param TransactionsManager $manager
+	 */
+	public function setTransactionsNamager(TransactionsManager $manager) {
+		$this->_transactionsManager = $manager;
+	}
+	
+	/**
+	 * Get the transactions manager
+	 * 
+	 * @return TransactionsManager
+	 */
+	public function getTransactionsManager() {
+		if ($this->_transactionsManager === null) {
+			if ($this->hasLocator()) {
+				$locator = $this->getLocator();
+
+				if ($locator->has(self::PHSRV_TRANSACTIONS)) {
+					$this->_transactionsManager = $locator->get(self::PHSRV_TRANSACTIONS);
+				}
+			}
+			
+			if ($this->_transactionsManager === null) {
+				$this->_transactionsManager = new TransactionsManager($this->getTableModelDi());
+			}
+			
+			$this->_transactionsManager->setDbService(self::PHSRV_ADAPTER);
+		}
+		
+		return $this->_transactionsManager;
+	}
+	
+	/**
 	 * Get the phalcon model instance
 	 * 
 	 * @return PhalconModel
 	 */
 	protected function getTableModel() {
 		if ($this->_model === null) {
-			$model = new PhalconModel($this->getTableModelDi());
-			$model->setDatagate($this);
-			
-			$this->_model = $model;
+			$this->_model = $this->createTableModel();
 		}
 		
 		return $this->_model;
+	}
+	
+	/**
+	 * Create the phalcon model instance
+	 * 
+	 * @return PhalconModel
+	 */
+	protected function createTableModel() {
+		$model = new PhalconModel($this->getTableModelDi());
+		$model->setDatagate($this);
+		
+		return $model;
 	}
 	
 	/**
@@ -341,7 +500,8 @@ class PhalconTable extends DatagateAbstract {
 	}
 	
 	/**
-	 * Get the dependency injector for the phalcon table model
+	 * Get the dependency injector for the phalcon table model 
+	 * If has not been supplied, trying to create the our own
 	 * 
 	 * @return DiInterface
 	 */
