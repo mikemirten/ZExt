@@ -166,9 +166,8 @@ class Iterator implements IteratorInterface, CountableInterface, LocatorAwareInt
 			
 		$model = $modelClass::factory($data);
 
-		$datagate = $this->getParentDatagate();
-		if ($datagate !== null) {
-			$model->setParentDatagate($datagate);
+		if ($this->hasDatagate()) {
+			$model->setDatagate($this->getDatagate());
 		}
 		
 		if ($this->hasLocator()) {
@@ -218,9 +217,8 @@ class Iterator implements IteratorInterface, CountableInterface, LocatorAwareInt
 		
 		$collection = new Collection($data, $model);
 
-		$datagate = $this->getParentDatagate();
-		if ($datagate !== null) {
-			$collection->setParentDatagate($datagate);
+		if ($this->hasDatagate()) {
+			$collection->setDatagate($this->getDatagate());
 		}
 		
 		if ($this->hasLocator()) {

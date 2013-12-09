@@ -35,7 +35,7 @@ trait ParentsAwareTrait {
 	 * 
 	 * @var string 
 	 */
-	protected $_parentDatagate;
+	protected $_datagate;
 	
 	/**
 	 * Force the insertion action at the save method calling
@@ -45,24 +45,37 @@ trait ParentsAwareTrait {
 	protected $_forceInsert = false;
 	
 	/**
-	 * Set the parental datagate
+	 * Set the datagate
 	 *  
 	 * @param  object $datagateName
 	 * @return ModelAbstract
 	 */
-	public function setParentDatagate(DatagateInterface $datagate) {
-		$this->_parentDatagate = $datagate;
+	public function setDatagate(DatagateInterface $datagate) {
+		$this->_datagate = $datagate;
 		
 		return $this;
 	}
 	
 	/**
-	 * Get the parental datagate
+	 * Get the datagate
 	 * 
 	 * @return object
 	 */
-	public function getParentDatagate() {
-		return $this->_parentDatagate;
+	public function getDatagate() {
+		if ($this->_datagate === null) {
+			throw new Exception('Model isn\'t linked to a datagate');
+		}
+		
+		return $this->_datagate;
+	}
+	
+	/**
+	 * Has the datagate
+	 * 
+	 * @return bool
+	 */
+	public function hasDatagate() {
+		return $this->_datagate !== null;
 	}
 	
 	/**
@@ -71,9 +84,7 @@ trait ParentsAwareTrait {
 	 * @return ModelAbstract
 	 */
 	public function save() {
-		$this->_getDatagateCrud()->save($this);
-		
-		return $this;
+		return $this->getDatagate()->save($this);
 	}
 	
 	/**
@@ -122,25 +133,7 @@ trait ParentsAwareTrait {
 	 * @return ModelAbstract
 	 */
 	public function remove() {
-		$this->_getDatagateCrud()->remove($this);
-		
-		return $this;		
-	}
-	
-	/**
-	 * Get datagate for "CRUD" actions
-	 * 
-	 * @return DatagateInterface
-	 * @throws Exception
-	 */
-	protected function _getDatagateCrud() {
-		$datagate = $this->getParentDatagate();
-		
-		if ($datagate === null) {
-			throw new Exception('Model isn\'t linked to a datagate');
-		}
-		
-		return $datagate;
+		return $this->getDatagate()->remove($this);
 	}
 	
 	/**

@@ -36,7 +36,7 @@ use ZExt\Datagate\DatagateInterface;
  * @package    Model
  * @subpackage ModelInterface
  * @author     Mike.Mirten
- * @version    2.0
+ * @version    2.0.1
  */
 interface ModelInterface extends Countable {
 	
@@ -91,18 +91,25 @@ interface ModelInterface extends Countable {
 	public function isEmpty();
 	
 	/**
-	 * Set a name of a parental datagate
+	 * Set the datagate
 	 *  
 	 * @param string $datagateName
 	 */
-	public function setParentDatagate(DatagateInterface $datagateName);
+	public function setDatagate(DatagateInterface $datagate);
 	
 	/**
-	 * Get a name of a parental datagate
+	 * Get the datagate datagate
 	 * 
 	 * @return string
 	 */
-	public function getParentDatagate();
+	public function getDatagate();
+	
+	/**
+	 * Has the datagate
+	 * 
+	 * @return bool
+	 */
+	public function hasDatagate();
 	
 	/**
 	 * Get model's metadata
@@ -119,12 +126,12 @@ interface ModelInterface extends Countable {
 	public function hasMetadata();
 	
 	/**
-	 * Save a model or changes of a model
+	 * Save the data
 	 */
 	public function save();
 	
 	/**
-	 * Remove model
+	 * Remove the data
 	 */
 	public function remove();
 	
