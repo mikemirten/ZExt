@@ -139,13 +139,10 @@ class Profiler extends ModuleAbstract {
 			
 			switch ($profile->getType()) {
 				case ProfileInterface::TYPE_READ:
-				case ProfileInterface::TYPE_COUNT:
 					$color = self::COLOR_READ;
 					break;
 
 				case ProfileInterface::TYPE_WRITE:
-				case ProfileInterface::TYPE_INC:
-				case ProfileInterface::TYPE_DEC:
 					$color = self::COLOR_WRITE;
 					break;
 
