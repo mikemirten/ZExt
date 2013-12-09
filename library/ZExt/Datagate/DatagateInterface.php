@@ -77,14 +77,16 @@ interface DatagateInterface {
 	/**
 	 * Save the model or the collection of the models
 	 * 
-	 * @param ModelInterface | Collection $model
+	 * @param  ModelInterface | Collection $model
+	 * @return bool True if succeeded
 	 */
 	public function save(ModelInterface $model);
 
 	/**
 	 * Remove the record or the many of records by the model or the collection of the models
 	 * 
-	 * @param ModelInterface | Collection $model
+	 * @param  ModelInterface | Collection $model
+	 * @return bool True if succeeded
 	 */
 	public function remove(ModelInterface $model);
 
