@@ -175,7 +175,7 @@ abstract class DatagateAbstract
 	/**
 	 * Create the resultset
 	 * 
-	 * Each element of the source (array | Iterator) must be an array
+	 * Each element of the source (array | Iterator) must be an array or object
 	 * 
 	 * @param  array | Traversable $data
 	 * @param  int                 $type
@@ -192,14 +192,8 @@ abstract class DatagateAbstract
 				$data = iterator_to_array($data);
 			}
 
-			if ($type & self::RESULT_ARRAY) {
+			if ($type & (self::RESULT_ARRAY | self::RESULT_OBJECT)) {
 				return $data;
-			}
-
-			if ($type & self::RESULT_OBJECT) {
-				return array_map(function(&$in) {
-					return (object) $in;
-				}, $data);
 			}
 
 			if ($type & self::RESULT_MODEL) {
@@ -209,6 +203,10 @@ abstract class DatagateAbstract
 
 		// Resultset = collection
 		if ($type & self::RESULTSET_COLLECTION) {
+			if (! ($type & self::RESULT_MODEL)) {
+				throw new InvalidResultType('Colection resultset works only with the models type');
+			}
+			
 			if ($data instanceof Traversable) {
 				$data = iterator_to_array($data);
 			}
@@ -222,15 +220,7 @@ abstract class DatagateAbstract
 				$data = new ArrayIterator($data);
 			}
 
-			if ($type & self::RESULT_ARRAY) {
-				return $data;
-			}
-
-			if ($type & self::RESULT_OBJECT) {
-				foreach ($data as &$item) {
-					$item = (object) $item;
-				} unset ($item);
-
+			if ($type & (self::RESULT_ARRAY | self::RESULT_OBJECT)) {
 				return $data;
 			}
 
@@ -252,7 +242,7 @@ abstract class DatagateAbstract
 		$modelClass = $this->getModelClass();
 
 		$iterator = new Iterator($sourceIterator, $modelClass);
-		$iterator->setParentDatagate($this);
+		$iterator->setDatagate($this);
 
 		if ($this->hasLocator()) {
 			$iterator->setLocator($this->getLocator());
@@ -271,7 +261,7 @@ abstract class DatagateAbstract
 		$modelClass = $this->getModelClass();
 
 		$model = $modelClass::factory($data);
-		$model->setParentDatagate($this);
+		$model->setDatagate($this);
 
 		if ($this->hasLocator()) {
 			$model->setLocator($this->getLocator());
@@ -318,7 +308,7 @@ abstract class DatagateAbstract
 
 		// Creating and supplying of the dependencies
 		$collection = $collectionClass::factory($data, $modelClass, $primary);
-		$collection->setParentDatagate($this);
+		$collection->setDatagate($this);
 
 		if ($this->hasLocator()) {
 			$collection->setLocator($this->getLocator());
