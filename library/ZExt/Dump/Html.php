@@ -224,13 +224,8 @@ class Html {
 		$info  = $classTag->render(get_class($model)) . ' (' . $typeTagInt->render($count) . ($count === 1 ? ' item' : ' items') . ')';
 		$info .= $dataTitle->render('Info:');
 		
-		$datagate = $model->getParentDatagate();
-		$service  = $model->getParentService();
-		
-		$partsList = new Table([], 'zDumpArrayTable');
-				
-		$partsList[] = ['Parent datagate', ':', ($datagate === null) ? 'No datagate' : $classTag->render(get_class($datagate))];
-		$partsList[] = ['Parent service', ':', ($service === null) ? 'No service' : $classTag->render(get_class($service))];
+		$partsList   = new Table([], 'zDumpArrayTable');
+		$partsList[] = ['Parent datagate', ':', $model->hasDatagate() ? $classTag->render(get_class($model->getDatagate())) : 'No datagate'];
 		
 		if ($model instanceof LocatorAwareInterface) {
 			$partsList[] = ['Has a services\' locator', ':', $model->hasLocator() ? 'Yes' : 'No'];
