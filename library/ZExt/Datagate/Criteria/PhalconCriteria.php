@@ -27,7 +27,7 @@
 namespace ZExt\Datagate\Criteria;
 
 use Phalcon\Mvc\Model\Criteria;
-use ZExt\Datagate\DatagateInterface;
+use ZExt\Datagate\PhalconTable;
 
 /**
  * Phalcon based query criteria
@@ -50,7 +50,7 @@ class PhalconCriteria implements CriteriaInterface {
 	/**
 	 * Datagate
 	 *
-	 * @var DatagateInterface
+	 * @var PhalconTable
 	 */
 	protected $_datagate;
 	
@@ -65,9 +65,9 @@ class PhalconCriteria implements CriteriaInterface {
 	 * Constructor
 	 * 
 	 * @param Criteria          $criteria
-	 * @param DatagateInterface $datagate
+	 * @param PhalconTable $datagate
 	 */
-	public function __construct(Criteria $criteria, DatagateInterface $datagate) {
+	public function __construct(Criteria $criteria, PhalconTable $datagate) {
 		$this->_criteria = $criteria;
 		$this->_datagate = $datagate;
 	}
