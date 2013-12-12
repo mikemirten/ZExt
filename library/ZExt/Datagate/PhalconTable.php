@@ -81,6 +81,15 @@ class PhalconTable extends DatagateAbstract {
 	private static $_sharedModelsDi;
 	
 	/**
+	 * Database adapter name
+	 * 
+	 * Can be overrided by an user
+	 *
+	 * @var string
+	 */
+	protected $adapter = self::PHSRV_ADAPTER;
+	
+	/**
 	 * Phalcon DB adapter
 	 *
 	 * @var AdapterInterface
@@ -422,7 +431,7 @@ class PhalconTable extends DatagateAbstract {
 	public function getAdapter() {
 		if ($this->_adapter === null) {
 			if ($this->hasLocator()) {
-				$this->_adapter = $this->getLocator()->get(self::PHSRV_ADAPTER);
+				$this->_adapter = $this->getLocator()->get($this->getAdapterName());
 			} else {
 				throw new NoAdapter('Nor a database adapter neither a services locator has been provided');
 			}
@@ -459,7 +468,7 @@ class PhalconTable extends DatagateAbstract {
 				$this->_transactionsManager = new TransactionsManager($this->getTableModelDi());
 			}
 			
-			$this->_transactionsManager->setDbService(self::PHSRV_ADAPTER);
+			$this->_transactionsManager->setDbService($this->getAdapterName());
 		}
 		
 		return $this->_transactionsManager;
@@ -556,7 +565,7 @@ class PhalconTable extends DatagateAbstract {
 		}
 
 		// Making shure, that all the dependencies are present:
-		
+	
 		if (! $di->has(self::PHSRV_ADAPTER)) {
 			$di->set(self::PHSRV_ADAPTER, function() {
 				return $this->getAdapter();
