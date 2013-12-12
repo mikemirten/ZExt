@@ -47,7 +47,7 @@ use ZExt\Datagate\Exceptions\InvalidResultType;
  * @package    Datagate
  * @subpackage Datagate
  * @author     Mike.Mirten
- * @version    3.0 
+ * @version    3.0.1
  */
 abstract class DatagateAbstract
 
@@ -72,27 +72,36 @@ abstract class DatagateAbstract
 	private $_introspectiveData;
 
 	/**
+	 * Database adapter name
+	 * 
+	 * Can be overrided by an user
+	 *
+	 * @var  string
+	 */
+	protected $adapter;
+	
+	/**
 	 * Class of the models
 	 * 
-	 * Can be overrided by a user
+	 * Can be overrided by an user
 	 *
 	 * @var string
 	 */
-	private $model;
+	protected $model;
 
 	/**
 	 * Class of the collections
 	 * 
-	 * Can be overrided by a user
+	 * Can be overrided by an user
 	 *
 	 * @var string 
 	 */
-	private $collection = self::COLLECTION_DEFAULT;
+	protected $collection = self::COLLECTION_DEFAULT;
 
 	/**
 	 * Name of the table or collection
 	 * 
-	 * Can be overrided by a user
+	 * Can be overrided by an user
 	 *
 	 * @var string
 	 */
@@ -115,7 +124,7 @@ abstract class DatagateAbstract
 	/**
 	 * Type of a result of an item
 	 * 
-	 * Can be overrided by a user
+	 * Can be overrided by an user
 	 * Should be used the self::RESULT_* & self::RESULTSET_* constants
 	 *
 	 * @var int
@@ -239,9 +248,7 @@ abstract class DatagateAbstract
 	 * @return ModelIterator
 	 */
 	protected function createIterator(Traversable $sourceIterator) {
-		$modelClass = $this->getModelClass();
-
-		$iterator = new Iterator($sourceIterator, $modelClass);
+		$iterator = new Iterator($sourceIterator, $this->getModelClass());
 		$iterator->setDatagate($this);
 
 		if ($this->hasLocator()) {
@@ -441,6 +448,24 @@ abstract class DatagateAbstract
 		}
 
 		return $this->_introspectiveData;
+	}
+	
+	/**
+	 * Set the name of the adapter service in a services locator
+	 * 
+	 * @param string $name
+	 */
+	public function setAdapterName($name) {
+		$this->adapter = (string) $name;
+	}
+	
+	/**
+	 * Get the name of the adapter service in a services locator
+	 * 
+	 * @return string
+	 */
+	public function getAdapterName() {
+		return $this->adapter;
 	}
 
 }
