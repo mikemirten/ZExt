@@ -488,18 +488,23 @@ class DebugBar {
 
 			// Last error handling
 			$error = error_get_last();
-
+			
 			if (! empty($error) && $error['type'] === E_ERROR) {
 				foreach ($this->getModules() as $module) {
-					if ($module instanceof Errors) break;
+					if ($module instanceof Errors) {
+						break;
+					}
+					
+					unset($module);
 				}
-
+				
 				if (! isset($module)) {
-					$this->addModule('Error');
+					$module = new Errors();
+					$this->addModule($module);
 				}
-
+				
 				$module->errorHandler($error['type'], $error['message'], $error['file'], $error['line']);
-
+				
 				echo $this->renderDebugBar();
 				return;
 			}
