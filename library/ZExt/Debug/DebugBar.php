@@ -26,6 +26,8 @@
 
 namespace ZExt\Debug;
 
+use ZExt\Components\OptionsTrait;
+
 use ZExt\Html\Tag,
     ZExt\Html\ListUnordered,
     ZExt\Html\ListElement;
@@ -37,6 +39,8 @@ use ZExt\Dump\Html as Dump;
 
 use Closure, Exception;
 
+use ZExt\Debug\Exceptions\InvalidPath;
+
 /**
  * Debug bar
  * 
@@ -44,9 +48,11 @@ use Closure, Exception;
  * @package    Debug
  * @subpackage DebugBar
  * @author     Mike.Mirten
- * @version    1.0.1
+ * @version    1.1
  */
 class DebugBar {
+	
+	use OptionsTrait;
 	
 	const NAMESPACE_MODULES = '\ZExt\Debug\Modules';
 	
@@ -55,88 +61,69 @@ class DebugBar {
 	 *
 	 * @var ModuleInterface[]
 	 */
-	protected $_modules = array();
+	protected $modules = [];
 	
 	/**
-	 * Deffered mode setting
+	 * Deferred mode setting
 	 * 
 	 * @var bool
 	 */
-	protected $_deferredMode = false;
+	protected $deferredMode = false;
 	
 	/**
 	 * Deffered mode temporary directory
 	 * 
 	 * @var string
 	 */
-	protected $_deferredTempDir;
+	protected $deferredDir;
+	
+	/**
+	 * Deffered mode url
+	 * 
+	 * @var string
+	 */
+	protected $deferredUrl = '/';
 	
 	/**
 	 * Unique key of the bar
 	 * 
 	 * @var string
 	 */
-	protected $_uniqueMark;
+	protected $token;
 	
 	/**
 	 * On Shutdown callback
 	 *
 	 * @var Closure
 	 */
-	protected $_onShutdownCallback;
+	protected $onShutdownCallback;
 	
 	/**
 	 * Constructor
 	 * 
-	 * @param array $params
+	 * @param array | \Traversable $options
 	 */
-	public function __construct($params = null) {
-		$this->_uniqueMark = md5(microtime(true) . rand(0, 1000));
+	public function __construct($options = null) {
+		$this->token       = md5(microtime(true) . rand(0, 1000));
+		$this->deferredDir = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR);
 		
-		if (is_array($params)) {
-			$this->setParameters($params);
+		if ($options !== null) {
+			$this->setOptions($options);
 		}
 		
-		register_shutdown_function(function() {
-			$this->shutdownHandler();
-		});
-	}
-	
-	/**
-	 * Set parameters 
-	 * Calls set{"ParameterName"} methods
-	 * 
-	 * @param array $params
-	 * @return ModuleAbstract
-	 */
-	public function setParameters(array $params) {
-		foreach ($params as $param => $value){
-			$method = 'set' . ucfirst($param);
-			
-			// Recursion protection
-			if ($method === 'setParameters') continue;
-			
-			if (method_exists($this, $method)) {
-				$this->$method($value);
-			} else {
-				$method = 'add' . ucfirst($param);
-				
-				if (method_exists($this, $method)) {
-					$this->$method($value);
-				}
-			}
-		}
-		
-		return $this;
+		$this->registerShutdownHandler();
 	}
 	
 	/**
 	 * Set the deffered mode's setting
 	 * 
-	 * @param bool $mode
+	 * @param  bool $mode
+	 * @return DebugBar
 	 */
 	public function setDeferredMode($mode = true) {
-		$this->_deferredMode = (bool) $mode;
+		$this->deferredMode = (bool) $mode;
+		
+		return $this;
 	}
 	
 	/**
@@ -145,16 +132,33 @@ class DebugBar {
 	 * @return bool
 	 */
 	public function isDeferredMode() {
-		return $this->_deferredMode;
+		return $this->deferredMode;
 	}
 	
 	/**
 	 * Set deffered temporary directory
 	 * 
-	 * @param string $dir
+	 * @param  string $dir Directory with profiles
+	 * @param  string $url Url path to profiles
+	 * @return DebugBar
+	 * @throws InvalidPath
 	 */
-	public function setDeferredTemp($dir) {
-		$this->_deferredTempDir = (string) $dir;
+	public function setDeferredPath($dir, $url = null) {
+		$dir = realpath($dir);
+		
+		if ($dir === false || ! is_writable($dir)) {
+			throw new InvalidPath('The directory "' . $dir . '" must exists and be a writable');
+		}
+		
+		$this->deferredDir = $dir;
+		
+		if ($url === null) {
+			$this->deferredUrl = str_replace(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR), '', $dir) . '/';
+		} else {
+			$this->deferredUrl = (string) $url;
+		}
+		
+		return $this;
 	}
 	
 	/**
@@ -178,66 +182,70 @@ class DebugBar {
 	/**
 	 * Add a module
 	 * 
-	 * @param  ModuleInterface $module
-	 * @return Debug
+	 * @param  ModuleInterface | string | array $module
+	 * @param  string                           $name
+	 * @param  array                            $params
+	 * 
+	 * @return DebugBar
 	 */
 	public function addModule($module, $name = null, array $params = null) {
-		switch (true) {
-			case $module instanceof ModuleInterface:
-				if ($name === null) {
-					$class = get_class($module);
-					$name  = substr($class, strrpos($class, '\\') + 1);
-				}
-				
-				$this->_modules[$name] = $module;
-				break;
-			
-			case is_string($module):
-				if ($name === null) $name = $module;
-				
-				$this->_modules[$name] = $this->loadModule($module, $params);
-				break;
-			
-			case is_array($module):
-				$type = isset($module['type']) ? $module['type'] : $module[0];
-				
-				// Define a name
-				switch (true) {
-					case $name !== null:
-						break;
-					
-					case isset($module['name']):
-						$name = $module['name'];
-						break;
-					
-					case count($module) > 2:
-						$name = $module[1];
-						break;
-					
-					default:
-						$name = $type;
-				}
-				
-				// Define a params
-				switch (true) {
-					case isset($module['params']):
-						$moduleParams = $module['params'];
-						break;
-					
-					case count($module) > 2:
-						$moduleParams = $module[2];
-						break;
-					
-					default:
-						$moduleParams = $module[1];
-				}
-				
-				if ($params !== null) {
-					$moduleParams += $params;
-				}
-				
-				$this->_modules[$name] = $this->loadModule($type, $moduleParams);
-				break;
+		// Module instance
+		if ($module instanceof ModuleInterface) {
+			if ($name === null) {
+				$class = get_class($module);
+				$name  = substr($class, strrpos($class, '\\') + 1);
+			}
+
+			$this->modules[$name] = $module;
+		}
+		// String definition
+		else if (is_string($module)) {
+			if ($name === null) {
+				$name = $module;
+			}
+
+			$this->modules[$name] = $this->loadModule($module, $params);
+		}
+		// Array definition
+		else if (is_array($module)) {
+			$type = isset($module['type']) ? $module['type'] : $module[0];
+
+			// Define a name
+			switch (true) {
+				case $name !== null:
+					break;
+
+				case isset($module['name']):
+					$name = $module['name'];
+					break;
+
+				case count($module) > 2:
+					$name = $module[1];
+					break;
+
+				default:
+					$name = $type;
+			}
+
+			// Define a params
+			switch (true) {
+				case isset($module['params']):
+					$moduleParams = $module['params'];
+					break;
+
+				case count($module) > 2:
+					$moduleParams = $module[2];
+					break;
+
+				default:
+					$moduleParams = $module[1];
+			}
+
+			if ($params !== null) {
+				$moduleParams += $params;
+			}
+
+			$this->modules[$name] = $this->loadModule($type, $moduleParams);
 		}
 		
 		return $this;
@@ -247,21 +255,21 @@ class DebugBar {
 	 * Get the module
 	 * 
 	 * @param  string $moduleName
-	 * @return ModuleInterface
+	 * @return ModuleInterface | null
 	 */
 	public function getModule($moduleName) {
-		if (isset($this->_modules[$moduleName])) {
-			return $this->_modules[$moduleName];
+		if (isset($this->modules[$moduleName])) {
+			return $this->modules[$moduleName];
 		}
 	}
 	
 	/**
-	 * Get modules
+	 * Get all modules
 	 * 
 	 * @return ModuleInterface[]
 	 */
 	public function getModules() {
-		return $this->_modules;
+		return $this->modules;
 	}
 	
 	/**
@@ -271,7 +279,7 @@ class DebugBar {
 	 * @return bool
 	 */
 	public function hasModule($moduleName) {
-		return isset($this->_modules[$moduleName]);
+		return isset($this->modules[$moduleName]);
 	}
 	
 	/**
@@ -280,13 +288,13 @@ class DebugBar {
 	 * @return Debug
 	 */
 	public function addDefaultModules() {
-		$this->addModules(array(
-			'Versions',
-			'Time',
-			'Files',
-			'Memory',
-			'Errors'
-		));
+		$this->addModules([
+			'versions',
+			'time',
+			'files',
+			'memory',
+			'errors'
+		]);
 		
 		return $this;
 	}
@@ -308,7 +316,7 @@ class DebugBar {
 	 * @param Closure $callback
 	 */
 	public function setOnShutdown(Closure $callback) {
-		$this->_onShutdownCallback = $callback;
+		$this->onShutdownCallback = $callback;
 	}
 
 	/**
@@ -317,14 +325,14 @@ class DebugBar {
 	 * @return string
 	 */
 	public function render() {
-		if ($this->_deferredMode) {
+		if ($this->deferredMode) {
 			return $this->renderLoadingScript();
-		} else {
-			$debugBar   = $this->renderDebugBar();
-			$wrapperTag = new Tag('div', $debugBar, array('id' => 'debug-wrapper'));
-			
-			return $wrapperTag->render();
 		}
+		
+		$debugBar   = $this->renderDebugBar();
+		$wrapperTag = new Tag('div', $debugBar, ['id' => 'debug-wrapper']);
+		
+		return $wrapperTag->render();
 	}
 	
 	/**
@@ -333,15 +341,12 @@ class DebugBar {
 	 * @return string
 	 */
 	protected function renderLoadingScript() {
-		$scriptPath = realpath(__DIR__ . '/View/deferred.js');
+		$url = $this->deferredUrl . 'profile_' . $this->token . '.html';
 		
-		$dir = $this->_deferredTempDir === null ? '' : '/' . $this->_deferredTempDir;
-		$url = $dir . '/profile_' . $this->_uniqueMark . '.php';
-		
-		$script = file_get_contents($scriptPath);
+		$script = $this->getAsset('deferred.js');
 		$script = str_replace('$url', $url, $script);
 
-		$scriptTag = new Tag('script', $script, array('type' => 'text/javascript'));
+		$scriptTag = new Tag('script', $script, ['type' => 'text/javascript']);
 		
 		return $scriptTag->render();
 	}
@@ -353,7 +358,10 @@ class DebugBar {
 	 */
 	protected function renderDebugBar() {
 		$modules = $this->getModules();
-		if (empty($modules)) $this->addDefaultModules();
+		
+		if (empty($modules)) {
+			$this->addDefaultModules();
+		}
 		
 		$tabsList = new ListUnordered();
 		$tabsList->setSeparator('');
@@ -369,7 +377,9 @@ class DebugBar {
 				$tab = 'Error';
 			}
 			
-			if ($tab === null) continue;
+			if ($tab === null) {
+				continue;
+			}
 			
 			if (isset($exception)) {
 				$panel = 'Tab exception: ';
@@ -402,7 +412,9 @@ class DebugBar {
 			
 			$tabsList->addElement($tabElement);
 			
-			if (! $panel) continue;
+			if (! $panel) {
+				continue;
+			}
 			
 			$id = 'debug-panel-' . substr(md5($name), 16);
 			
@@ -412,19 +424,16 @@ class DebugBar {
 			$titleTag = new Tag('h4', $name, 'debug-bar-wrapper');
 			$panelTag = new Tag('div', $panel, 'debug-panel');
 			
-			$panels .= new Tag('div', $titleTag . $panelTag, array(
+			$panels .= new Tag('div', $titleTag . $panelTag, [
 				'id'    => $id,
 				'class' => 'debug-panel-wrapper'
-			));
+			]);
 			
 			unset($exception);
 		}
 		
-		$stylePath = realpath(__DIR__ . '/View/bar.css');
-		$styleTag = new Tag('style', file_get_contents($stylePath));
-		
-		$scriptPath = realpath(__DIR__ . '/View/bar.js');
-		$scriptTag = new Tag('script', file_get_contents($scriptPath), array('type' => 'text/javascript'));
+		$styleTag  = new Tag('style', $this->getAsset('bar.css'));
+		$scriptTag = new Tag('script', $this->getAsset('bar.js'), ['type' => 'text/javascript']);
 		
 		$wrapperTag = new Tag('div', $tabsList, 'debug-bar-wrapper');
 		$debugTag   = new Tag('div', $panels . $wrapperTag, 'debug-main');
@@ -432,6 +441,29 @@ class DebugBar {
 		return $styleTag . $scriptTag . $debugTag;
 	}
 	
+	/**
+	 * Get the path to the asset
+	 * 
+	 * @param  string $name
+	 * @return string
+	 * @throws InvalidPath
+	 */
+	protected function getAsset($name) {
+		$path  = __DIR__ . DIRECTORY_SEPARATOR . 'Assets' . DIRECTORY_SEPARATOR . $name;
+		$asset =  file_get_contents($path);
+		
+		if ($asset === false) {
+			throw new InvalidPath('Unable to get asset "' . $name . '" by path "' . $path . '"');
+		}
+		
+		return $asset;
+	}
+	
+	/**
+	 * Render the debug bar
+	 * 
+	 * @return string
+	 */
 	public function __toString() {
 		return $this->render();
 	}
@@ -439,46 +471,46 @@ class DebugBar {
 	/**
 	 * Shutdown handler
 	 */
-	protected function shutdownHandler() {
-		if ($this->_onShutdownCallback !== null) {
-			$this->_onShutdownCallback->__invoke($this);
-		}
-		
-		$error = error_get_last();
-		
-		if (! empty($error) && $error['type'] === E_ERROR) {
-			foreach ($this->getModules() as $module) {
-				if ($module instanceof Errors) break;
-			}
+	protected function registerShutdownHandler() {
+		register_shutdown_function(function() {
+			// Emergency autoloader
+			$incPath = realpath(__DIR__ . '/../..') . DIRECTORY_SEPARATOR;
 			
-			if (! isset($module)) {
-				$module = new Errors();
-				$this->addModule($module);
-			}
-			
-			$module->errorHandler($error['type'], $error['message'], $error['file'], $error['line']);
-			
-			echo $this->renderDebugBar();
-		}
-		else if ($this->_deferredMode) {
-			if ($this->_deferredTempDir !== null) {
-				$dir = '/' . $this->_deferredTempDir;
-
-				$realDir = $_SERVER['DOCUMENT_ROOT'] . $dir;
-				if (! is_dir($realDir)) {
-					mkdir($realDir, 0755);
+			spl_autoload_register(function($class) use($incPath) {
+				if (strpos($class, 'ZExt') === 0) {
+					include($incPath . str_replace('\\', DIRECTORY_SEPARATOR, $class) . '.php');
 				}
-			} else {
-				$dir = '';
+			});
+			
+			if ($this->onShutdownCallback !== null) {
+				$this->onShutdownCallback->__invoke($this);
 			}
 
-			$filePath = $_SERVER['DOCUMENT_ROOT'] . $dir . '/profile_' . $this->_uniqueMark . '.php';
+			// Last error handling
+			$error = error_get_last();
 
-			$scriptPath = realpath(__DIR__ . '/View/bar.php');
-			$scriptPhp  = file_get_contents($scriptPath);
+			if (! empty($error) && $error['type'] === E_ERROR) {
+				foreach ($this->getModules() as $module) {
+					if ($module instanceof Errors) break;
+				}
+
+				if (! isset($module)) {
+					$this->addModule('Error');
+				}
+
+				$module->errorHandler($error['type'], $error['message'], $error['file'], $error['line']);
+
+				echo $this->renderDebugBar();
+				return;
+			}
 			
-			file_put_contents($filePath, $scriptPhp . PHP_EOL . $this->renderDebugBar());
-		}
+			// Debug bar rendering for the deferred mode
+			if ($this->deferredMode) {
+				$filePath = $this->deferredDir . DIRECTORY_SEPARATOR . 'profile_' . $this->token . '.html';
+				
+				file_put_contents($filePath, $this->renderDebugBar());
+			}
+		});
 	}
 	
 }
