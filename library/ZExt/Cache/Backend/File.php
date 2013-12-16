@@ -26,8 +26,6 @@
 
 namespace ZExt\Cache\Backend;
 
-use ZExt\Profiler\ProfileableInterface;
-use ZExt\Profiler\ProfileableTrait;
 use ZExt\Components\OptionsTrait;
 
 use ZExt\Cache\Backend\Exceptions\NoPath;
@@ -42,9 +40,8 @@ use ZExt\Cache\Backend\Exceptions\OperationFailed;
  * @author     Mike.Mirten
  * @version    1.0
  */
-class File implements BackendInterface, ProfileableInterface {
+class File implements BackendInterface {
 	
-	use ProfileableTrait;
 	use OptionsTrait;
 	
 	const OPTIONS_OFFSET = 11;
@@ -111,63 +108,6 @@ class File implements BackendInterface, ProfileableInterface {
 	 * @throws OperationFailed
 	 */
 	public function get($id) {
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startRead('Get: ' . $id);
-		}
-		
-		$data = $this->_get($id);
-		
-		if ($data === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stopNotice();
-			}
-			
-			return;
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stopSuccess();
-		}
-		
-		return $data;
-	}
-	
-	/**
-	 * Fetch the many of the data from the cache
-	 * 
-	 * @param  array $id
-	 * @return array
-	 * @throws OperationFailed
-	 */
-	public function getMany(array $ids) {
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startRead('Get (' . count($ids) . '): ' . implode(', ', $ids));
-		}
-		
-		$data = [];
-		
-		foreach ($ids as $id) {
-			$result = $this->_get($id);
-			
-			if ($result !== false) {
-				$data[$id] = $result;
-			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stopSuccess();
-		}
-		
-		return $data;
-	}
-	
-	/**
-	 * Fetch the data from the cache
-	 * 
-	 * @param  string $id
-	 * @return mixed
-	 */
-	protected function _get($id) {
 		// Open the file
 		$path = $this->preparePath($id);
 		$file = $this->openFile($path);
@@ -185,6 +125,27 @@ class File implements BackendInterface, ProfileableInterface {
 	}
 	
 	/**
+	 * Fetch the many of the data from the cache
+	 * 
+	 * @param  array $id
+	 * @return array
+	 * @throws OperationFailed
+	 */
+	public function getMany(array $ids) {
+		$data = [];
+		
+		foreach ($ids as $id) {
+			$result = $this->get($id);
+			
+			if ($result !== false) {
+				$data[$id] = $result;
+			}
+		}
+		
+		return $data;
+	}
+	
+	/**
 	 * Store the data into the cache
 	 * 
 	 * @param  string $id       ID of the stored data
@@ -194,52 +155,6 @@ class File implements BackendInterface, ProfileableInterface {
 	 * @throws OperationFailed
 	 */
 	public function set($id, $data, $lifetime = 0) {
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startWrite('Set: ' . $id);
-		}
-		
-		$this->_set($id, $data, $lifetime);
-		
-		if ($this->_profilerEnabled) {
-			$profile->stopSuccess();
-		}
-		
-		return true;
-	}
-	
-	/**
-	 * Store the many of the date into the cache
-	 * 
-	 * @param  array $data
-	 * @param  int   $lifetime
-	 * @return bool
-	 * @throws OperationFailed
-	 */
-	public function setMany(array $data, $lifetime = 0) {
-		if ($this->_profilerEnabled) {
-			$ids     = array_keys($data);
-			$profile = $this->getProfiler()->startRead('Set (' . count($ids) . '): ' . implode(', ', $ids));
-		}
-		
-		foreach ($data as $id => $value) {
-			$this->_set($id, $value, $lifetime);
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stopSuccess();
-		}
-		
-		return true;
-	}
-	
-	/**
-	 * Store the data into the cache
-	 * 
-	 * @param  string $id       ID of the stored data
-	 * @param  mixed  $data     Stored data
-	 * @param  int    $lifetime Lifetime in seconds
-	 */
-	protected function _set($id, $data, $lifetime) {
 		if ($lifetime === 0) {
 			$expire = '0000000000';
 		} else {
@@ -266,8 +181,26 @@ class File implements BackendInterface, ProfileableInterface {
 		$result = file_put_contents($this->preparePath($id), $expire . ';' . $options . ';' . $data);
 		
 		if ($result === false) {
-			$this->operationError('Unable to puth the cache content to: ' . $path);
+			throw new OperationFailed('Unable to puth the cache content to: ' . $path);
 		}
+		
+		return true;
+	}
+	
+	/**
+	 * Store the many of the date into the cache
+	 * 
+	 * @param  array $data
+	 * @param  int   $lifetime
+	 * @return bool
+	 * @throws OperationFailed
+	 */
+	public function setMany(array $data, $lifetime = 0) {
+		foreach ($data as $id => $value) {
+			$this->set($id, $value, $lifetime);
+		}
+		
+		return true;
 	}
 	
 	/**
@@ -278,14 +211,12 @@ class File implements BackendInterface, ProfileableInterface {
 	 * @throws OperationFailed
 	 */
 	public function remove($id) {
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startDelete('Remove: ' . $id);
-		}
+		$path = $this->preparePath($id);
 		
-		$this->_remove($id);
-		
-		if ($this->_profilerEnabled) {
-			$profile->stopSuccess();
+		if (is_file($path)) {
+			if (unlink($path) === false) {
+				throw new OperationFailed('Unable to remove the cache content: ' . $path);
+			}
 		}
 		
 		return true;
@@ -299,34 +230,11 @@ class File implements BackendInterface, ProfileableInterface {
 	 * @throws OperationFailed
 	 */
 	public function removeMany(array $ids) {
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startRead('Remove (' . count($ids) . '): ' . implode(', ', $ids));
-		}
-		
 		foreach ($ids as $id) {
-			$this->_remove($id);
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stopSuccess();
+			$this->remove($id);
 		}
 		
 		return true;
-	}
-	
-	/**
-	 * Remove the data from the cache
-	 * 
-	 * @param  string $id
-	 */
-	protected function _remove($id) {
-		$path = $this->preparePath($id);
-		
-		if (is_file($path)) {
-			if (unlink($path) === false) {
-				$this->operationError('Unable to remove the cache content: ' . $path);
-			}
-		}
 	}
 
 	/**
@@ -337,27 +245,14 @@ class File implements BackendInterface, ProfileableInterface {
 	 * @throws OperationFailed
 	 */
 	public function has($id) {
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startDelete('Has: ' . $id);
-		}
-		
-		// Open the file
 		$path = $this->preparePath($id);
 		$file = $this->openFile($path);
 		
 		if ($file === false) { // File is absent or is expired
-			if ($this->_profilerEnabled) {
-				$profile->stopNotice();
-			}
-			
 			return false;
 		}
 		
 		fclose($file);
-		
-		if ($this->_profilerEnabled) {
-			$profile->stopSuccess();
-		}
 		
 		return true;
 	}
@@ -371,19 +266,11 @@ class File implements BackendInterface, ProfileableInterface {
 	 * @throws OperationFailed
 	 */
 	public function inc($id, $value = 1) {
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startWrite('Inc: ' . $id);
-		}
-		
 		// Open the file
 		$path = $this->preparePath($id);
 		$file = $this->openFile($path, 'c+');
 		
 		if ($file === false) { // File is absent or is expired
-			if ($this->_profilerEnabled) {
-				$profile->stopNotice();
-			}
-			
 			return false;
 		}
 		
@@ -399,10 +286,6 @@ class File implements BackendInterface, ProfileableInterface {
 		// Save the data
 		$this->putData($file, $path, $data);
 		
-		if ($this->_profilerEnabled) {
-			$profile->stopSuccess();
-		}
-		
 		return $data;
 	}
 	
@@ -415,19 +298,11 @@ class File implements BackendInterface, ProfileableInterface {
 	 * @throws OperationFailed
 	 */
 	public function dec($id, $value = 1) {
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startWrite('Dec: ' . $id);
-		}
-		
 		// Open the file
 		$path = $this->preparePath($id);
 		$file = $this->openFile($path, 'c+');
 		
 		if ($file === false) { // File is absent or is expired
-			if ($this->_profilerEnabled) {
-				$profile->stopNotice();
-			}
-			
 			return false;
 		}
 		
@@ -442,10 +317,6 @@ class File implements BackendInterface, ProfileableInterface {
 		
 		// Save the data
 		$this->putData($file, $path, $data);
-		
-		if ($this->_profilerEnabled) {
-			$profile->stopSuccess();
-		}
 		
 		return $data;
 	}
@@ -463,7 +334,7 @@ class File implements BackendInterface, ProfileableInterface {
 		
 		if ($options === false) {
 			fclose($file);
-			$this->operationError('Unable to get the metadata content from: ' . $path);
+			throw new OperationFailed('Unable to get the metadata content from: ' . $path);
 		}
 		
 		$data = stream_get_contents($file, -1, self::DATA_OFFSET);
@@ -471,7 +342,7 @@ class File implements BackendInterface, ProfileableInterface {
 		// Data
 		if ($data === false) {
 			fclose($file);
-			$this->operationError('Unable to get the cache content from: ' . $path);
+			throw new OperationFailed('Unable to get the cache content from: ' . $path);
 		}
 		
 		// Decompression
@@ -480,7 +351,7 @@ class File implements BackendInterface, ProfileableInterface {
 		}
 		
 		if ($data === false) {
-			$this->operationError('Unable to decompress data, file: ' . $path);
+			throw new OperationFailed('Unable to decompress data, file: ' . $path);
 		}
 		
 		// Deserealization
@@ -489,7 +360,7 @@ class File implements BackendInterface, ProfileableInterface {
 		}
 		
 		if ($data === false) {
-			$this->operationError('Unable to deserialize data, file: ');
+			throw new OperationFailed('Unable to deserialize data, file: ' . $path);
 		}
 		
 		return $data;
@@ -507,7 +378,7 @@ class File implements BackendInterface, ProfileableInterface {
 		
 		if (fwrite($file, serialize($data)) === false) {
 			fclose($file);
-			$this->operationError('Unable to puth the cache content to: ' . $path);
+			throw new OperationFailed('Unable to puth the cache content to: ' . $path);
 		}
 		
 		ftruncate($file, ftell($file));
@@ -530,7 +401,7 @@ class File implements BackendInterface, ProfileableInterface {
 		$file = fopen($path, $mode);
 		
 		if ($file === false) {
-			$this->operationError('Unable to open the file: ' . $path);
+			throw new OperationFailed('Unable to open the file: ' . $path);
 		}
 		
 		// Process the expire time
@@ -538,12 +409,12 @@ class File implements BackendInterface, ProfileableInterface {
 		
 		if ($expire === false) {
 			fclose($file);
-			$this->operationError('Unable to get the cache content from: ' . $path);
+			throw new OperationFailed('Unable to get the cache content from: ' . $path);
 		}
 		
 		if (! preg_match('/^\d{10}$/', $expire)) {
 			fclose($file);
-			$this->operationError('Expire time is corrupted');
+			throw new OperationFailed('Expire time is corrupted');
 		}
 		
 		$expire = (int) $expire;
@@ -552,7 +423,7 @@ class File implements BackendInterface, ProfileableInterface {
 			fclose($file);
 			
 			if (unlink($path) === false) {
-				$this->operationError('Unable to delete the expired file: ' . $path);
+				throw new OperationFailed('Unable to delete the expired file: ' . $path);
 			}
 			
 			return false;
@@ -702,20 +573,6 @@ class File implements BackendInterface, ProfileableInterface {
 	 */
 	public function getCompressionLevel() {
 		return $this->compressionLevel;
-	}
-	
-	/**
-	 * Handle an operation error
-	 * 
-	 * @param  string $message
-	 * @throws OperationFailed
-	 */
-	protected function operationError($message) {
-		if ($this->_profilerEnabled) {
-			$this->getProfiler()->getLastEvent()->stopError();
-		}
-		
-		throw new OperationFailed($message);
 	}
 	
 }

@@ -30,10 +30,6 @@ use Memcache as MemcacheClient;
 
 use ZExt\Components\OptionsTrait;
 
-use ZExt\Profiler\ProfileableInterface;
-use ZExt\Profiler\ProfileableTrait;
-use ZExt\Profiler\ProfileInterface;
-
 use ZExt\Cache\Backend\Exceptions\NoPhpExtension;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 use ZExt\Cache\Backend\Exceptions\ServerParamsError;
@@ -45,12 +41,11 @@ use ZExt\Cache\Backend\Exceptions\ServerParamsError;
  * @package    Cache
  * @subpackage Backend
  * @author     Mike.Mirten
- * @version    1.0rc2
+ * @version    1.0.1
  */
-class Memcache implements BackendInterface, ProfileableInterface {
+class Memcache implements BackendInterface {
 	
 	use OptionsTrait;
-	use ProfileableTrait;
 	
 	// Server params names
 	const SRV_PARAM_HOST           = 'host';
@@ -166,27 +161,9 @@ class Memcache implements BackendInterface, ProfileableInterface {
 			$this->addServer();
 		}
 		
-		$id = $this->prepareId($id);
+		$result = $this->getClient()->get($this->prepareId($id));
 		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Get: ' . $id, ProfileInterface::TYPE_READ);
-		}
-		
-		$result = $this->getClient()->get($id);
-		
-		if ($result === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_NOTICE);
-			}
-			
-			return;
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
-		}
-		
-		return $result;
+		return $result === false ? null : $result;
 	}
 	
 	/**
@@ -201,32 +178,14 @@ class Memcache implements BackendInterface, ProfileableInterface {
 		}
 		
 		$preparedIds = array_map([$this, 'prepareId'], $id);
+		$result      = $this->getClient()->get($preparedIds);
 		
-		if ($this->_profilerEnabled) {
-			$logId   = implode(', ', $preparedIds);
-			$profile = $this->getProfiler()->startEvent('Get (' . count($id) . '): ' . $logId, ProfileInterface::TYPE_READ);
-		}
-		
-		$result = $this->getClient()->get($preparedIds);
-		
-		if (empty($result)) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_NOTICE);
-			}
-			
+		if ($this->namespace === null) {
 			return $result;
 		}
 		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
-		}
-		
-		if ($this->namespace !== null) {
-			$ids = array_intersect_key(array_combine($preparedIds, $id), $result);
-			return array_combine(array_values($ids), array_values($result));
-		}
-		
-		return $result;
+		$ids = array_intersect_key(array_combine($preparedIds, $id), $result);
+		return array_combine(array_values($ids), array_values($result));
 	}
 	
 	/**
@@ -246,22 +205,10 @@ class Memcache implements BackendInterface, ProfileableInterface {
 		$id          = $this->prepareId($id);
 		$compression = $this->compression ? MEMCACHE_COMPRESSED : 0;
 		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Set: ' . $id, ProfileInterface::TYPE_WRITE);
-		}
-		
 		$result = $this->getClient()->set($id, $data, $compression, $lifetime);
 		
-		if ($result === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
-			if ($this->operationsExceptions) {
-				throw new OperationFailed('Inserting of the data into the cache failed, ID: "' . $id . '"');
-			}
-		} else if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		if ($result === false && $this->operationsExceptions) {
+			throw new OperationFailed('Inserting of the data into the cache failed, ID: "' . $id . '"');
 		}
 		
 		return $result;
@@ -286,30 +233,17 @@ class Memcache implements BackendInterface, ProfileableInterface {
 		
 		$ids  = array_map([$this, 'prepareId'], array_keys($data));
 		$data = array_combine($ids, array_values($data));
-		
-		if ($this->_profilerEnabled) {
-			$idLog   = implode(', ', $ids);
-			$profile = $this->getProfiler()->startEvent('Set (' . count($ids) . '): ' . $idLog, ProfileInterface::TYPE_WRITE);
-		}
 
 		foreach ($data as $id => $dataPart) {
 			$result = $client->set($id, $dataPart, $compression, $lifetime);
 
 			if ($result === false) {
-				if ($this->_profilerEnabled) {
-					$profile->stop(ProfileInterface::STATUS_ERROR);
-				}
-
 				if ($this->operationsExceptions) {
 					throw new OperationFailed('Inserting of the data into the cache failed, ID: "' . $id . '"');
 				} else {
 					return false;
 				}
 			}
-		}
-
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return true;
@@ -326,27 +260,7 @@ class Memcache implements BackendInterface, ProfileableInterface {
 			$this->addServer();
 		}
 		
-		$id = $this->prepareId($id);
-		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Has: ' . $id, ProfileInterface::TYPE_READ);
-		}
-		
-		$result = $this->getClient()->get($id);
-		
-		if ($result === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_NOTICE);
-			}
-			
-			return false;
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
-		}
-		
-		return true;
+		return $this->getClient()->get($this->prepareId($id));
 	}
 	
 	/**
@@ -361,31 +275,14 @@ class Memcache implements BackendInterface, ProfileableInterface {
 			$this->addServer();
 		}
 		
-		$id = $this->prepareId($id);
-		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Remove: ' . $id, ProfileInterface::TYPE_DELETE);
-		}
-		
+		$id     = $this->prepareId($id);
 		$result = $this->getClient()->delete($id);
 		
-		if ($result === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
-			if ($this->operationsExceptions) {
-				throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
-			} else {
-				return false;
-			}
+		if ($result === false && $this->operationsExceptions) {
+			throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
 		}
 		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
-		}
-		
-		return true;
+		return $result;
 	}
 	
 	/**
@@ -403,29 +300,16 @@ class Memcache implements BackendInterface, ProfileableInterface {
 		$client = $this->getClient();
 		$ids    = array_map([$this, 'prepareId'], $ids);
 		
-		if ($this->_profilerEnabled) {
-			$idLog   = implode(', ', $ids);
-			$profile = $this->getProfiler()->startEvent('Remove (' . count($ids) . '): ' . $idLog, ProfileInterface::TYPE_DELETE);
-		}
-		
 		foreach ($ids as $id) {
 			$result = $client->delete($id);
 		
 			if ($result === false) {
-				if ($this->_profilerEnabled) {
-					$profile->stop(ProfileInterface::STATUS_ERROR);
-				}
-
 				if ($this->operationsExceptions) {
 					throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
 				} else {
 					return false;
 				}
 			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return true;
@@ -444,28 +328,11 @@ class Memcache implements BackendInterface, ProfileableInterface {
 			$this->addServer();
 		}
 		
-		$id = $this->prepareId($id);
-		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Inc: ' . $id, ProfileInterface::TYPE_WRITE);
-		}
-		
+		$id     = $this->prepareId($id);
 		$result = $this->getClient()->increment($id, $value);
 		
-		if ($result === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
-			if ($this->operationsExceptions) {
-				throw new OperationFailed('Incrementing of the data in the cache failed, ID: "' . $id . '"');
-			} else {
-				return false;
-			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		if ($result === false && $this->operationsExceptions) {
+			throw new OperationFailed('Incrementing of the data in the cache failed, ID: "' . $id . '"');
 		}
 		
 		return $result;
@@ -484,28 +351,11 @@ class Memcache implements BackendInterface, ProfileableInterface {
 			$this->addServer();
 		}
 		
-		$id = $this->prepareId($id);
-		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Dec: ' . $id, ProfileInterface::TYPE_WRITE);
-		}
-		
+		$id     = $this->prepareId($id);
 		$result = $this->getClient()->decrement($id, $value);
 		
-		if ($result === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
-			if ($this->operationsExceptions) {
-				throw new OperationFailed('Decrementing of the data in the cache failed, ID: "' . $id . '"');
-			} else {
-				return false;
-			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
+		if ($result === false && $this->operationsExceptions) {
+			throw new OperationFailed('Decrementing of the data in the cache failed, ID: "' . $id . '"');
 		}
 		
 		return $result;
