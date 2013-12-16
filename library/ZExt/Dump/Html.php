@@ -1,10 +1,7 @@
 <?php
 namespace ZExt\Dump;
 
-use Closure,
-    Reflection,
-    ReflectionObject,
-    Exception;
+use Closure, ReflectionObject, Exception;
 
 use ZExt\Html\Tag;
 use ZExt\Html\Table;
@@ -39,7 +36,7 @@ class Html {
 		return new Tag('div', $info, 'zDumpContainer');
 	}
 	
-	protected static function _dump($var, $recursion, $maxStrLength = 256) {
+	protected static function _dump($var, $recursion, $maxStrLength = 128) {
 		$datatype = gettype($var);
 		
 		$typeTagInt  = new Tag('span', null, 'zDumpInteger');
