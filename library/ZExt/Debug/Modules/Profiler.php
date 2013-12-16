@@ -61,8 +61,11 @@ class Profiler extends ModuleAbstract {
 			$icon = $profiler->getIcon();
 			
 			if ($icon !== null) {
-				$iconEncoder = new Base64($icon);
-				return $iconEncoder->render();
+				if (strpos($icon, 'data:image') === 0) {
+					return $icon;
+				}
+				
+				return (new Base64($icon))->render();
 			}
 		}
 		
