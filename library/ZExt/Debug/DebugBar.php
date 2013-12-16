@@ -465,7 +465,11 @@ class DebugBar {
 	 * @return string
 	 */
 	public function __toString() {
-		return $this->render();
+		try {
+			return $this->render();
+		} catch (Exception $exception) {
+			return Dump::dump($exception);
+		}
 	}
 	
 	/**
