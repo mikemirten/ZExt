@@ -27,7 +27,7 @@
 namespace ZExt\NoSql\Adapter;
 
 use ZExt\Profiler\ProfilerExtendedInterface,
-	ZExt\Profiler\ProfileableTrait,
+    ZExt\Profiler\ProfileableTrait,
     ZExt\Profiler\ProfileableInterface;
 
 use Traversable, Exception;
@@ -47,9 +47,9 @@ use ZExt\NoSql\Adapter\Exceptions\OptionsError;
  * @version    2.0beta
  */
 class MongoAdapter implements ProfileableInterface {
-	
+
 	use ProfileableTrait;
-	
+
 	const PARAM_HOST     = 'host';
 	const PARAM_HOSTS    = 'hosts';
 	const PARAM_PORT     = 'port';
@@ -58,20 +58,20 @@ class MongoAdapter implements ProfileableInterface {
 	const PARAM_DATABASE = 'database';
 	const PARAM_PROFILER = 'profiler';
 	const PARAM_PARAMS   = 'params';
-	
+
 	const PARAM_CONNECTION_ATTEMPTS = 'connection_attempts';
 	const PARAM_CONNECTION_TIMEOUT  = 'connection_timeout';
-	
+
 	const DEFAULT_CONNECTION_ATTEMPTS = 3;
 	const DEFAULT_CONNECTION_TIMEOUT  = 1; // seconds
-	
+
 	/**
 	 * Mongo client
 	 * 
 	 * @var MongoClient 
 	 */
 	protected $_client;
-	
+
 	/**
 	 * Connection options
 	 *
@@ -85,49 +85,49 @@ class MongoAdapter implements ProfileableInterface {
 	 * @var array
 	 */
 	protected $_hosts = [];
-	
+
 	/**
 	 * Default port for all hosts
 	 *
 	 * @var int
 	 */
 	protected $_port = MongoClient::DEFAULT_PORT;
-	
+
 	/**
 	 * Default database
 	 * 
 	 * @var string
 	 */
 	protected $_dbname = 'test';
-	
+
 	/**
 	 * Mongo databases
 	 * 
 	 * @var MongoDB[] 
 	 */
 	protected $_databases = [];
-	
+
 	/**
 	 * Mongo collections
 	 * 
 	 * @var MongoCollection[] 
 	 */
 	protected $_collections = [];
-	
+
 	/**
 	 * Connection attempts
 	 *
 	 * @var int
 	 */
 	protected $_connectionAttempts = self::DEFAULT_CONNECTION_ATTEMPTS;
-	
+
 	/**
 	 * Timeout between connections' attempts in seconds
 	 *
 	 * @var int
 	 */
 	protected $_connectionTimeout = self::DEFAULT_CONNECTION_TIMEOUT;
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -138,17 +138,17 @@ class MongoAdapter implements ProfileableInterface {
 		if (! extension_loaded('mongo')) {
 			throw new PhpExtensionError('Mongo extension is unavailable');
 		}
-		
+
 		$driverVersion = phpversion('mongo');
 		if ((version_compare($driverVersion, '1.3.0')) < 0) {
 			throw new PhpExtensionError('Version ' . $driverVersion . ' of the Mongo extension is too old');
 		}
-		
+
 		if ($config !== null) {
 			$this->setConfig($config);
 		}
 	}
-	
+
 	/**
 	 * Set the adapter's config
 	 * 
@@ -160,20 +160,20 @@ class MongoAdapter implements ProfileableInterface {
 			$this->addHost($config);
 			return;
 		}
-		
+
 		if ($config instanceof Traversable) {
 			$config = iterator_to_array($config);
 		}
-		
+
 		if (! is_array($config)) {
 			throw new OptionsError('Config must be an array, a traversable or a string');
 		}
-		
+
 		if (isset($config[self::PARAM_PORT])) {
 			$this->_port = (int) $config[self::PARAM_PORT];
 			unset($config[self::PARAM_PORT]);
 		}
-		
+
 		if (isset($config[self::PARAM_HOST])) {
 			$this->addHost($config[self::PARAM_HOST]);
 			unset($config[self::PARAM_HOST]);
@@ -182,7 +182,7 @@ class MongoAdapter implements ProfileableInterface {
 			$this->setHosts($config[self::PARAM_HOSTS]);
 			unset($config[self::PARAM_HOSTS]);
 		}
-		
+
 		if (isset($config[self::PARAM_DATABASE])) {
 			$this->_dbname = $config[self::PARAM_DATABASE];
 			unset($config[self::PARAM_DATABASE]);
@@ -199,12 +199,12 @@ class MongoAdapter implements ProfileableInterface {
 			$this->_connectionTimeout = (int) $config[self::PARAM_CONNECTION_TIMEOUT];
 			unset($config[self::PARAM_CONNECTION_TIMEOUT]);
 		}
-		
+
 		if (! empty($config)) {
 			$this->_connectionOptions = $config;
 		}
 	}
-	
+
 	/**
 	 * Get a databases list
 	 * 
@@ -212,26 +212,26 @@ class MongoAdapter implements ProfileableInterface {
 	 */
 	public function getDatabases() {
 		$client = $this->getClient();
-		
+
 		if ($this->_profilerEnabled) {
 			$event = $this->getProfiler()->startRead('Databases list');
 		}
-		
+
 		$databasesRaw = $client->listDBs();
-		
+
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
 		}
-		
+
 		$databases = [];
-		
+
 		foreach ($databasesRaw['databases'] as $database) {
 			$databases[] = $database['name'];
 		}
-		
+
 		return $databases;
 	}
-	
+
 	/**
 	 * Get a collections list of a database
 	 * 
@@ -239,20 +239,20 @@ class MongoAdapter implements ProfileableInterface {
 	 */
 	public function getCollections($databaseName = null) {
 		$database = $this->getDatabase($databaseName);
-		
+
 		if ($this->_profilerEnabled) {
 			$event = $this->getProfiler()->startRead('Collections list');
 		}
-		
+
 		$collections = $database->getCollectionNames();
-		
+
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
 		}
-		
+
 		return $collections;
 	}
-	
+
 	/**
 	 * Insert the data into the collection
 	 * 
@@ -265,14 +265,14 @@ class MongoAdapter implements ProfileableInterface {
 			$message = 'db.' . $collectionName . '.insert(' . json_encode($data) . ');';
 			$event   = $this->getProfiler()->startInsert($message);
 		}
-			
+
 		$this->getCollection($collectionName)->insert($data, $options);
-		
+
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
 		}
 	}
-	
+
 	/**
 	 * Find the data from the collection
 	 * 
@@ -299,10 +299,10 @@ class MongoAdapter implements ProfileableInterface {
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
 		}
-		
+
 		return $cursor;
 	}
-	
+
 	/**
 	 * Find an item of the data from the collection
 	 * 
@@ -319,19 +319,19 @@ class MongoAdapter implements ProfileableInterface {
 			} else {
 				$message .= json_encode($criteria) . ');';
 			}
-			
+
 			$event = $this->getProfiler()->startRead($message);
 		}
-		
+
 		$result = $this->getCollection($collectionName)->findOne($criteria);
-		
+
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
 		}
-		
+
 		return $result;
 	}
-	
+
 	/**
 	 * Update the data of the collection
 	 * 
@@ -345,17 +345,17 @@ class MongoAdapter implements ProfileableInterface {
 			$message = 'db.' . $collectionName . '.update(' .
 				json_encode($criteria) . ',' . 
 				json_encode($data) . ');';
-			
+
 			$event = $this->getProfiler()->startWrite($message);
 		}
-		
+
 		$this->getCollection($collectionName)->update($criteria, $data, $options);
-		
+
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
 		}
 	}
-	
+
 	/**
 	 * Remove the data from the collection
 	 * 
@@ -368,14 +368,14 @@ class MongoAdapter implements ProfileableInterface {
 			$message = 'db.remove(' . json_encode($criteria) . ');';
 			$event   = $this->getProfiler()->startDelete($message);
 		}
-		
+
 		$this->getCollection($collectionName)->remove($criteria, $options);
-		
+
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
 		}
 	}
-	
+
 	/**
 	 * Get the collection
 	 * 
@@ -386,10 +386,10 @@ class MongoAdapter implements ProfileableInterface {
 		if (! isset($this->_collections[$collectionName])) {
 			$this->_collections[$collectionName] = $this->getDatabase()->selectCollection($collectionName);
 		}
-		
+
 		return $this->_collections[$collectionName];
 	}
-	
+
 	/**
 	 * Get the database
 	 * 
@@ -400,14 +400,14 @@ class MongoAdapter implements ProfileableInterface {
 		if ($databaseName === null) {
 			$databaseName = $this->_dbname;
 		}
-		
+
 		if (! isset($this->_databases[$databaseName])) {
 			$this->_databases[$databaseName] = $this->getClient()->selectDB($databaseName);
 		}
-		
+
 		return $this->_databases[$databaseName];
 	}
-	
+
 	/**
 	 * Set the mongo client
 	 * 
@@ -416,7 +416,7 @@ class MongoAdapter implements ProfileableInterface {
 	public function setClient(MongoClient $client) {
 		$this->_client = $client;
 	}
-	
+
 	/**
 	 * Get the mongo client
 	 * 
@@ -427,13 +427,13 @@ class MongoAdapter implements ProfileableInterface {
 		if ($this->_client === null) {
 			$connectionString  = $this->getConnectionString();
 			$connectionOptions = $this->getConnectionOptions();
-			
+
 			if ($this->_profilerEnabled) {
 				$event = $this->getProfiler()->startInfo('Connect: ' . $connectionString);
 			}
-			
+
 			$attempts = $this->_connectionAttempts;
-			
+
 			do {
 				try {
 					$this->_client = new MongoClient($connectionString, $connectionOptions);
@@ -447,42 +447,42 @@ class MongoAdapter implements ProfileableInterface {
 					}
 				}
 			} while (-- $attempts > 0);
-			
+
 			if ($this->_client === null) {
 				if ($this->_profilerEnabled) {
 					$event->stopError();
 				}
-				
+
 				if (isset($exception)) {
 					throw new ConnectionError('Unable to connect to the database', $exception->getCode(), $exception);
 				} else {
 					$exception = new ConnectionError('Unable to connect to the database, after ' . $this->_connectionAttempts . ' attempts');
 				}
-				
+
 				throw $exception;
 			}
-			
+
 			if ($this->_profilerEnabled) {
 				if (isset($exception)) {
 					$event->stopNotice();
 				} else {
 					$event->stopSuccess();
 				}
-				
+
 				$this->putDetailInfoIntoProfiler();
 			}
 		}
-		
+
 		return $this->_client;
 	}
-	
+
 	/**
 	 * Connect to a database (should be used ONLY for development purposes)
 	 */
 	public function connect() {
 		$this->getClient();
 	}
-	
+
 	/**
 	 * Close all opened connections
 	 */
@@ -491,7 +491,7 @@ class MongoAdapter implements ProfileableInterface {
 			$this->_client->close(true);
 		}
 	}
-	
+
 	/**
 	 * Set the hosts of the connection pool
 	 * 
@@ -500,16 +500,16 @@ class MongoAdapter implements ProfileableInterface {
 	 */
 	public function setHosts($hosts) {
 		$this->_hosts = [];
-		
+
 		if (! $hosts instanceof Traversable && ! is_array($hosts)) {
 			throw new OptionsError('Hosts data must be an array or a traversable');
 		}
-		
+
 		foreach ($hosts as $name => $host) {
 			if ($host instanceof Traversable) {
 				$host = iterator_to_array($host);
 			}
-			
+
 			if (is_int($name)) {
 				$this->addHost($host);
 			} else {
@@ -517,7 +517,7 @@ class MongoAdapter implements ProfileableInterface {
 			}
 		}
 	}
-	
+
 	/**
 	 * Add the host to the connection pool
 	 * 
@@ -528,14 +528,14 @@ class MongoAdapter implements ProfileableInterface {
 	public function addHost($host, $name = null) {
 		if (is_string($host)) {
 			$host = trim($host);
-			
+
 			// IP address as an url for the parse_url()
 			if (! preg_match('~^[a-z]+://~i', $host)) {
 				$host = 'mongodb://' . $host;
 			}
-			
+
 			$host = parse_url($host);
-			
+
 			if (isset($host['query'])) {
 				parse_str($host['query'], $host[self::PARAM_PARAMS]);
 				ksort($host[self::PARAM_PARAMS]);
@@ -552,29 +552,29 @@ class MongoAdapter implements ProfileableInterface {
 				unset($host['pass']);
 			}
 		}
-		
+
 		if (! is_array($host)) {
 			throw new OptionsError('Host parameter must be a string or an array, "' . gettype($host) . '" given.');
 		}
-		
+
 		$host = array_map(function($in) {
 			return is_string($in) ? trim($in) : $in;
 		}, $host);
-		
+
 		if (isset($host[self::PARAM_PORT])) {
 			$host[self::PARAM_PORT] = (int) $host[self::PARAM_PORT];
 		}
-		
+
 		if ($name === null) {
 			ksort($host);
 			$name = crc32(json_encode($host));
 		}
-		
+
 		if (! isset($this->_hosts[$name])) {
 			$this->_hosts[$name] = $host;
 		}
 	}
-	
+
 	/**
 	 * Get MongoClient connection string
 	 * 
@@ -582,7 +582,7 @@ class MongoAdapter implements ProfileableInterface {
 	 */
 	public function getConnectionString() {
 		$hostsCount = count($this->_hosts);
-		
+
 		if ($hostsCount === 0) {
 			$hosts = MongoClient::DEFAULT_HOST;
 		} else if ($hostsCount === 1) {
@@ -590,10 +590,10 @@ class MongoAdapter implements ProfileableInterface {
 		} else {
 			$hosts = implode(',', array_map([$this, '_assembleHost'], $this->_hosts));
 		}
-		
+
 		return 'mongodb://' . $hosts;
 	}
-	
+
 	/**
 	 * Assemble an url from the host parts
 	 * 
@@ -658,7 +658,7 @@ class MongoAdapter implements ProfileableInterface {
 	public function getConnectionOptions() {
 		return $this->_connectionOptions;
 	}
-	
+
 	/**
 	 * Profiler init callback
 	 */
@@ -666,7 +666,7 @@ class MongoAdapter implements ProfileableInterface {
 		$profiler->setIcon('data:image/png;base64,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');
 		$profiler->setName('MongoDB');
 	}
-	
+
 	/**
 	 * Collect an additional information about the MongoDB and a connection and put it to a profiler
 	 */
@@ -674,7 +674,7 @@ class MongoAdapter implements ProfileableInterface {
 		if (! $this->_profilerEnabled) {
 			return;
 		}
-		
+
 		$profiler = $this->getProfiler();
 
 		if (! $profiler instanceof ProfilerExtendedInterface) {
@@ -682,25 +682,25 @@ class MongoAdapter implements ProfileableInterface {
 		}
 
 		$infoRaw = $this->getDatabase('admin')->command(['buildinfo' => 1]);
-		
+
 		$info = ['MongoDB version' => $infoRaw['version'] . ' (' . $infoRaw['bits'] . '-bit)'];
 
 		foreach ($this->getClient()->getConnections() as $key => $connection) {
 			$string = $connection['server']['host'] . ':' . $connection['server']['port'] . ' ';
-			
+
 			if (! empty($connection['server']['repl_set_name'])) {
 				$string .= $connection['server']['repl_set_name'] . ':';
 			}
-			
+
 			$string .= $connection['connection']['connection_type_desc'];
 			$string .= ' ping: ' . $connection['connection']['ping_ms'] . 'ms';
-			
+
 			$info['Server ' . $key] = $string;
 		}
 
 		$profiler->setAdditionalInfo($info);
 	}
-	
+
 	public function __sleep() {
 		return [
 			'_hosts',
@@ -710,5 +710,5 @@ class MongoAdapter implements ProfileableInterface {
 			'_profilerEnabled'
 		];
 	}
-	
+
 }
