@@ -1,0 +1,24 @@
+{
+	"name": "zext/zext",
+	"description": "ZExt framework",
+	"type": "library",
+	"keywords": ["framework", "zext"],
+	"license": "GPL-3.0",
+	"authors": [
+		{
+			"name": "Mikemirten",
+			"email": "mikemirten@gmail.com"
+		}
+	],
+	"support": {
+		"issues": "https://github.com/mikemirten/ZExt/issues"
+	},
+	"require": {
+		"php": ">=5.4.0"
+	},
+	"autoload": {
+		"psr-0": {
+			"ZExt\\": "library/"
+		}
+	}
+}
