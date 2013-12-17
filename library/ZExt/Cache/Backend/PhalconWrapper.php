@@ -31,10 +31,6 @@ use Phalcon\Cache\Exception        as PhalconCacheException;
 
 use ZExt\Components\OptionsTrait;
 
-use ZExt\Profiler\ProfileableInterface;
-use ZExt\Profiler\ProfileableTrait;
-use ZExt\Profiler\ProfileInterface;
-
 use ZExt\Cache\Backend\Exceptions\NoBackend;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 
@@ -47,10 +43,9 @@ use ZExt\Cache\Backend\Exceptions\OperationFailed;
  * @author     Mike.Mirten
  * @version    1.0beta
  */
-class PhalconWrapper implements BackendInterface, ProfileableInterface {
+class PhalconWrapper implements BackendInterface {
 	
 	use OptionsTrait;
-	use ProfileableTrait;
 	
 	/**
 	 * Phalcon cache backend instance
@@ -71,7 +66,7 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 	 *
 	 * @var bool 
 	 */
-	protected $operationsExceptions = false;
+	protected $operationsExceptions = true;
 	
 	/**
 	 * Constructor
@@ -97,28 +92,15 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 	 * @throws OperationFailed
 	 */
 	public function get($id) {
-		$id = $this->prepareId($id);
-		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Get: ' . $id, ProfileInterface::TYPE_READ);
-		}
-		
 		try {
-			$result = $this->getBackend()->get($id);
-		} catch (PhalconCacheException $exception) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
+			$result = $this->getBackend()->get($this->prepareId($id));
+		}
+		catch (PhalconCacheException $exception) {
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Fetching of the data from the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 			} else {
 				return;
 			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop($result === null ? ProfileInterface::STATUS_NOTICE : ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return $result;
@@ -136,21 +118,13 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		$idsMap     = array_combine($idPrepared, $id);
 		$backend    = $this->getBackend();
 		
-		if ($this->_profilerEnabled) {
-			$logId   = implode(', ', $idPrepared);
-			$profile = $this->getProfiler()->startEvent('Get (' . count($id) . '): ' . $logId, ProfileInterface::TYPE_READ);
-		}
-		
 		$results = [];
 		
 		foreach ($idPrepared as $partId) {
 			try {
 				$result = $backend->get($partId);
-			} catch (PhalconCacheException $exception) {
-				if ($this->_profilerEnabled) {
-					$profile->stop(ProfileInterface::STATUS_ERROR);
-				}
-
+			}
+			catch (PhalconCacheException $exception) {
 				if ($this->operationsExceptions) {
 					throw new OperationFailed('Fetching of the data from the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 				} else {
@@ -161,10 +135,6 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 			if ($result !== null) {
 				$results[$idsMap[$partId]] = $result;
 			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(empty($results) ? ProfileInterface::STATUS_NOTICE : ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return $results;
@@ -180,19 +150,10 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 	 * @throws OperationFailed
 	 */
 	public function set($id, $data, $lifetime = 0) {
-		$id = $this->prepareId($id);
-		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Set: ' . $id, ProfileInterface::TYPE_WRITE);
-		}
-		
 		try {
-			$result = $this->getBackend()->save($id, $data, $lifetime);
-		} catch (PhalconCacheException $exception) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-
+			$result = $this->getBackend()->save($this->prepareId($id), $data, $lifetime);
+		}
+		catch (PhalconCacheException $exception) {
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Inserting of the data into the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 			} else {
@@ -201,19 +162,11 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		}
 		
 		if ($result === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Inserting of the data into the cache failed, ID: "' . $id . '"');
 			} else {
 				return false;
 			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop($result === false ? ProfileInterface::STATUS_ERROR : ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return true;
@@ -233,19 +186,11 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		$ids  = array_map([$this, 'prepareId'], array_keys($data));
 		$data = array_combine($ids, array_values($data));
 		
-		if ($this->_profilerEnabled) {
-			$idLog   = implode(', ', $ids);
-			$profile = $this->getProfiler()->startEvent('Set (' . count($ids) . '): ' . $idLog, ProfileInterface::TYPE_WRITE);
-		}
-		
 		foreach ($data as $id => $dataPart) {
 			try {
 				$result = $backend->save($id, $dataPart, $lifetime);
-			} catch (PhalconCacheException $exception) {
-				if ($this->_profilerEnabled) {
-					$profile->stop(ProfileInterface::STATUS_ERROR);
-				}
-
+			}
+			catch (PhalconCacheException $exception) {
 				if ($this->operationsExceptions) {
 					throw new OperationFailed('Inserting of the data into the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 				} else {
@@ -254,20 +199,12 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 			}
 			
 			if ($result === false) {
-				if ($this->_profilerEnabled) {
-					$profile->stop(ProfileInterface::STATUS_ERROR);
-				}
-
 				if ($this->operationsExceptions) {
 					throw new OperationFailed('Inserting of the data into the cache failed, ID: "' . $id . '"');
 				} else {
 					return false;
 				}
 			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return true;
@@ -281,28 +218,15 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 	 * @throws OperationFailed
 	 */
 	public function has($id) {
-		$id = $this->prepareId($id);
-		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Has: ' . $id, ProfileInterface::TYPE_READ);
-		}
-		
 		try {
-			$result = $this->getBackend()->exists($id);
-		} catch (PhalconCacheException $exception) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
+			$result = $this->getBackend()->exists($this->prepareId($id));
+		}
+		catch (PhalconCacheException $exception) {
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Checking of the data exiting in the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 			} else {
 				return false;
 			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop($result === false ? ProfileInterface::STATUS_NOTICE : ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return $result;
@@ -318,17 +242,10 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 	public function remove($id) {
 		$id = $this->prepareId($id);
 		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Remove: ' . $id, ProfileInterface::TYPE_DELETE);
-		}
-		
 		try {
 			$result = $this->getBackend()->delete($id);
-		} catch (PhalconCacheException $exception) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
+		}
+		catch (PhalconCacheException $exception) {
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Removing of the data from the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 			} else {
@@ -337,19 +254,11 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		}
 		
 		if ($result === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
 			} else {
 				return false;
 			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return true;
@@ -366,20 +275,9 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		$backend = $this->getBackend();
 		$ids     = array_map([$this, 'prepareId'], $ids);
 		
-		if ($this->_profilerEnabled) {
-			$idLog   = implode(', ', $ids);
-			$profile = $this->getProfiler()->startEvent('Remove (' . count($ids) . '): ' . $idLog, ProfileInterface::TYPE_DELETE);
-		}
-		
 		try {
 			foreach ($ids as $id) {
-				$result = $backend->delete($id);
-				
-				if ($result === false) {
-					if ($this->_profilerEnabled) {
-						$profile->stop(ProfileInterface::STATUS_ERROR);
-					}
-
+				if (! $backend->delete($id)) {
 					if ($this->operationsExceptions) {
 						throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
 					} else {
@@ -388,19 +286,11 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 				}
 			}
 		} catch (PhalconCacheException $exception) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Removing of the data from the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 			} else {
 				return false;
 			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return true;
@@ -418,18 +308,11 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		$id      = $this->prepareId($id);
 		$backend = $this->getBackend();
 		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Inc: ' . $id, ProfileInterface::TYPE_WRITE);
-		}
-		
 		// Get the counter
 		try {
 			$result = $backend->get($id);
-		} catch (PhalconCacheException $exception) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
+		}
+		catch (PhalconCacheException $exception) {
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Incrementing (get) of the data in the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 			} else {
@@ -438,10 +321,6 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		}
 		
 		if ($result === null) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Incrementing (get) of the data in the cache failed, ID: "' . $id . '"');
 			} else {
@@ -454,11 +333,8 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		
 		try {
 			$saveResult = $backend->save($id, $newValue);
-		} catch (PhalconCacheException $exception) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
+		}
+		catch (PhalconCacheException $exception) {
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Incrementing (set) of the data in the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 			} else {
@@ -467,19 +343,11 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		}
 		
 		if ($saveResult === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Incrementing (set) of the data in the cache failed, ID: "' . $id . '"');
 			} else {
 				return false;
 			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return $newValue;
@@ -497,18 +365,11 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		$id      = $this->prepareId($id);
 		$backend = $this->getBackend();
 		
-		if ($this->_profilerEnabled) {
-			$profile = $this->getProfiler()->startEvent('Dec: ' . $id, ProfileInterface::TYPE_WRITE);
-		}
-		
 		// Get the counter
 		try {
 			$result = $backend->get($id);
-		} catch (PhalconCacheException $exception) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
+		}
+		catch (PhalconCacheException $exception) {
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Decrementing (get) of the data in the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 			} else {
@@ -517,10 +378,6 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		}
 		
 		if ($result === null) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Decrementing (get) of the data in the cache failed, ID: "' . $id . '"');
 			} else {
@@ -533,11 +390,8 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		
 		try {
 			$saveResult = $backend->save($id, $newValue);
-		} catch (PhalconCacheException $exception) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
+		}
+		catch (PhalconCacheException $exception) {
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Decrementing (set) of the data in the cache failed due to the backend exception occurred: "' . $exception->getMessage() . '"', 0, $exception);
 			} else {
@@ -546,19 +400,11 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		}
 		
 		if ($saveResult === false) {
-			if ($this->_profilerEnabled) {
-				$profile->stop(ProfileInterface::STATUS_ERROR);
-			}
-			
 			if ($this->operationsExceptions) {
 				throw new OperationFailed('Decrementing (set) of the data in the cache failed, ID: "' . $id . '"');
 			} else {
 				return false;
 			}
-		}
-		
-		if ($this->_profilerEnabled) {
-			$profile->stop(ProfileInterface::STATUS_SUCCESS);
 		}
 		
 		return $newValue;
@@ -621,6 +467,24 @@ class PhalconWrapper implements BackendInterface, ProfileableInterface {
 		}
 		
 		return $this->phalconBackend;
+	}
+	
+	/**
+	 * Set throws or not an operation exceptions
+	 * 
+	 * @param bool $throw
+	 */
+	public function setOperationExceptions($throw = true) {
+		$this->operationsExceptions = (bool) $throw;
+	}
+	
+	/**
+	 * Get throws or not an operation exceptions
+	 * 
+	 * @return bool $throw
+	 */
+	public function getOperationExceptions() {
+		return $this->operationsExceptions;
 	}
 	
 }
