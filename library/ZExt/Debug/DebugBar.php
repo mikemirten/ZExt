@@ -155,7 +155,7 @@ class DebugBar {
 		if ($url === null) {
 			$this->deferredUrl = str_replace(rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR), '', $dir) . '/';
 		} else {
-			$this->deferredUrl = (string) $url;
+			$this->deferredUrl = rtrim($url, '/') . '/';
 		}
 		
 		return $this;
