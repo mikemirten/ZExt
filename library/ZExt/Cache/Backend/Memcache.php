@@ -125,7 +125,7 @@ class Memcache implements BackendInterface {
 	 *
 	 * @var bool 
 	 */
-	protected $operationsExceptions = false;
+	protected $operationsExceptions = true;
 	
 	/**
 	 * Has at least one server in the connection pool
