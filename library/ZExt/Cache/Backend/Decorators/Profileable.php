@@ -26,7 +26,8 @@
 
 namespace ZExt\Cache\Backend\Decorators;
 
-use ZExt\Profiler\ProfileableInterface,
+use ZExt\Profiler\ProfilerExtendedInterface,
+	ZExt\Profiler\ProfileableInterface,
     ZExt\Profiler\ProfileableTrait;
 
 /**
@@ -217,6 +218,18 @@ class Profileable extends DecoratorAbstract implements ProfileableInterface {
 		}
 		
 		return $result;
+	}
+	
+	/**
+	 * On profiler init
+	 * 
+	 * @param \ZExt\Profiler\ProfilerInterface $profiler
+	 */
+	protected function onProfilerInit($profiler) {
+		if ($profiler instanceof ProfilerExtendedInterface) {
+			$profiler->setName(get_class($this->getBackend()));
+			$profiler->setIcon('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAEeUlEQVRIS7VVXUwcVRT+7uwvSwe7sAUEky4l4AqI4ko0pURqaB8INo2xjQ0NUmPCm2jsg+XBxJ80pDXRB01M1JhW8EEeMLYvNukf9glKJbWQNlAbWZafdcHpws7s7O7Mes+dnRV91HCHm7M7d/i+c77znVmGbV5sm/FhE7BDZw6N1AXqKv4vIWNZXL1344upoalRwhIEclgO9Jx4OZJdNL3zNyNgTILDIeXZ8znwwPglSXTmgMTPKTodTjCJH+aApJ5E19EnMHZreuTy2cu9HNoU/131UlWos7NzNn4zzvQlHYGyUlRVVSKV0uEr8iIWX4Pb6cT9B78LULfbDY/XA6/HC6/XC7fLzfFzUB4q2P3CbtxdufvzxQ8vdnLotCAIHg927Htm31VOgGwsi9bw05i+PSOi8jABDweUeJZ0jwhcLhfcHiLgmxNQFZKDQdU0+Op9iJmx+dHB0ac4tCoIQv2hY821zd+tT6zDueksVLCyEsP6nwp2BcpQXOzDQiRqycKroSrcHl6J2yO+0/1sNgvNr8EIGIlzb52r4dDrgqBloOWd6vLqj9UJFT7DJx4WOnO9GRPii35IknXfJqBI1dBztHI5LpNLgVwvZ84PnW9M/JaYEwStJ1vPlj1SdhJTAFe1QGATbSX8+zORWQmIJHiTKfxhxFH9bHVuZHikI3IpMi4I9r67d7hULu3JTeTgddqaWi7ZugsO4hnTZ+oLOc5epmlCMRUUtxTj2pVrx2eHZ0cEwcH3Dl7x+/z7M5NZuPJ6SgRuWzIfhWw8TToja0ocnKxrTxMRLKeWoT+nI3o7emryk8khImCHTx++43f4G7RftILP7R7YUWTMJaE+EAmj77Y8+RI07qKYGoO530T8fvzz8Q/G32RohLv3jd6InJHLN2c2RaOEFAQkAAmYQC1JLGm2aE/TxDNX1SSSSRW6oYN1MSgR5YdLg5eOsGBHcGf3q92rRckid/xOXORigVhNtAFFJEmE7tY2DAO6rotNJLTIqpkXM1A31MkLAxfaWfi1cG1XZ9c8izMszSwJKzjyzbM1d3IrNoTqsLS8KkAILJ1Ji0n38FlwihkwxKBRFVqrhgzLLIz2jzaxtrfb2sPPh8c9yx6ocyqi0ShKSkogy3LBHZR9qX8nskYWleW7kNjYgLxjhwCjAVyNxVFRHsDC4hKXSoPWpCEtpzfHBsceZwfeP3CkMlT5vTlnoiZVg8XFRWtK+f7H4j633EJvHapSKsgihkAc8hMuY7o+jUxlJnf9y+vNrPtM98CTTY9+Gl3TkbqVwh7vHqE1Nfu/rkRFAoEG4KfRqS529LNXTp9of+zUjeU0YkoGygMFkmm5RDSVGkoXjSnlmY9Uh/XHL56Mvc2cicZQCZpqZHz9471+1vdV3ze1wWCfQ+LvdWbb0XJMwTn/IrErs0kIlAgoWm4yeb8ymJ769SPW9npbD3/wmIM5eHJWpmIO+CWGlByVH1VOWZhayp7DCS5RhXVDkNBnwzSwFln7lurmSPwNtz3L+sHZzrXtBH8BYRK7mVh8WPgAAAAASUVORK5CYII=');
+		}
 	}
 	
 }
