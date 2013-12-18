@@ -64,7 +64,7 @@ class Wrapper extends FrontendAbstract {
 	 * @param  mixed          $data
 	 * @param  int            $lifetime seconds
 	 * @param  string | array $tags
-	 * @return Wrapper
+	 * @return bool
 	 * @throws NoTagsSupported
 	 */
 	public function set($id, $data, $lifetime = null, $tags = null) {
@@ -88,9 +88,7 @@ class Wrapper extends FrontendAbstract {
 			$lifetime = $this->_defaultLifetime;
 		}
 		
-		$backend->set($id, $data, $lifetime, $tags);
-		
-		return $this;
+		return $backend->set($id, $data, $lifetime, $tags);
 	}
 	
 	/**
@@ -124,9 +122,7 @@ class Wrapper extends FrontendAbstract {
 			$lifetime = $this->_defaultLifetime;
 		}
 		
-		$backend->setMany($data, $lifetime, $tags);
-		
-		return $this;
+		return $backend->setMany($data, $lifetime, $tags);
 	}
 	
 	/**
@@ -136,9 +132,7 @@ class Wrapper extends FrontendAbstract {
 	 * @return mixed
 	 */
 	public function get($id) {
-		$id = $this->prepareId($id);
-		
-		return $this->getBackend()->get($id);
+		return $this->getBackend()->get($this->prepareId($id));
 	}
 	
 	/**
@@ -208,37 +202,29 @@ class Wrapper extends FrontendAbstract {
 	 * @return bool
 	 */
 	public function has($id) {
-		$id = $this->prepareId($id);
-		
-		return $this->has($id);
+		return $this->has($this->prepareId($id));
 	}
 	
 	/**
 	 * Remove the data
 	 * 
 	 * @param  string $id
-	 * @return Wrapper
+	 * @return bool
 	 */
 	public function remove($id) {
-		$id = $this->prepareId($id);
-		
-		$this->getBackend()->remove($id);
-		
-		return $this;
+		return $this->getBackend()->remove($this->prepareId($id));
 	}
 	
 	/**
 	 * Remove the many of the data
 	 * 
 	 * @param  array $ids
-	 * @return Wrapper
+	 * @return bool
 	 */
 	public function removeMany(array $ids) {
 		$ids = array_map([$this, 'prepareId'], $ids);
 		
-		$this->getBackend()->removeMany($ids);
-		
-		return $this;
+		return $this->getBackend()->removeMany($ids);
 	}
 	
 	/**
@@ -246,7 +232,7 @@ class Wrapper extends FrontendAbstract {
 	 * 
 	 * @param  string | array $tags
 	 * @param  bool           $byIntersect
-	 * @return Wrapper
+	 * @return bool
 	 */
 	public function removeByTag($tags, $byIntersect = false) {
 		$backend = $this->getBackend();
@@ -261,7 +247,7 @@ class Wrapper extends FrontendAbstract {
 			$tags = $this->prepareId($tags);
 		}
 		
-		$backend->removeByTag($tags, $byIntersect);
+		return $backend->removeByTag($tags, $byIntersect);
 	}
 	
 	/**
@@ -269,7 +255,7 @@ class Wrapper extends FrontendAbstract {
 	 * 
 	 * @param  string $id
 	 * @param  int $value
-	 * @return Wrapper
+	 * @return bool
 	 */
 	public function inc($id, $value = 1) {
 		$id = $this->prepareId($id);
@@ -282,7 +268,7 @@ class Wrapper extends FrontendAbstract {
 	 * 
 	 * @param  string $id
 	 * @param  int $value
-	 * @return Wrapper
+	 * @return bool
 	 */
 	public function dec($id, $value = 1) {
 		$id = $this->prepareId($id);
