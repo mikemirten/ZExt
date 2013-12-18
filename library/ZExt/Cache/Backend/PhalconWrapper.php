@@ -240,10 +240,8 @@ class PhalconWrapper implements BackendInterface {
 	 * @throws OperationFailed
 	 */
 	public function remove($id) {
-		$id = $this->prepareId($id);
-		
 		try {
-			$result = $this->getBackend()->delete($id);
+			return $this->getBackend()->delete($this->prepareId($id));
 		}
 		catch (PhalconCacheException $exception) {
 			if ($this->operationsExceptions) {
@@ -252,16 +250,6 @@ class PhalconWrapper implements BackendInterface {
 				return false;
 			}
 		}
-		
-		if ($result === false) {
-			if ($this->operationsExceptions) {
-				throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
-			} else {
-				return false;
-			}
-		}
-		
-		return true;
 	}
 	
 	/**
@@ -275,14 +263,12 @@ class PhalconWrapper implements BackendInterface {
 		$backend = $this->getBackend();
 		$ids     = array_map([$this, 'prepareId'], $ids);
 		
+		$result = true;
+		
 		try {
 			foreach ($ids as $id) {
 				if (! $backend->delete($id)) {
-					if ($this->operationsExceptions) {
-						throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
-					} else {
-						return false;
-					}
+					$result = false;
 				}
 			}
 		} catch (PhalconCacheException $exception) {
@@ -293,7 +279,7 @@ class PhalconWrapper implements BackendInterface {
 			}
 		}
 		
-		return true;
+		return $result;
 	}
 	
 	/**

@@ -268,21 +268,13 @@ class Memcache implements BackendInterface {
 	 * 
 	 * @param  string $id
 	 * @return bool
-	 * @throws OperationFailed
 	 */
 	public function remove($id) {
 		if (! $this->connectionCheckStatus) {
 			$this->addServer();
 		}
 		
-		$id     = $this->prepareId($id);
-		$result = $this->getClient()->delete($id);
-		
-		if ($result === false && $this->operationsExceptions) {
-			throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
-		}
-		
-		return $result;
+		return $this->getClient()->delete($this->prepareId($id));
 	}
 	
 	/**
@@ -290,7 +282,6 @@ class Memcache implements BackendInterface {
 	 * 
 	 * @param  array $id
 	 * @return bool
-	 * @throws OperationFailed
 	 */
 	public function removeMany(array $ids) {
 		if (! $this->connectionCheckStatus) {
@@ -300,19 +291,15 @@ class Memcache implements BackendInterface {
 		$client = $this->getClient();
 		$ids    = array_map([$this, 'prepareId'], $ids);
 		
-		foreach ($ids as $id) {
-			$result = $client->delete($id);
+		$result = true;
 		
-			if ($result === false) {
-				if ($this->operationsExceptions) {
-					throw new OperationFailed('Removing of the data from the cache failed, ID: "' . $id . '"');
-				} else {
-					return false;
-				}
+		foreach ($ids as $id) {
+			if (! $client->delete($id)) {
+				$result = false;
 			}
 		}
 		
-		return true;
+		return $result;
 	}
 	
 	/**
