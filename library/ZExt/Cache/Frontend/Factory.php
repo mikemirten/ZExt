@@ -26,8 +26,14 @@
 
 namespace ZExt\Cache\Frontend;
 
+use ZExt\Datagate\DatagateInterface;
 use ZExt\Cache\Backend\BackendInterface;
+use ZExt\Cache\Backend\Decorators\DecoratorInterface;
+
 use ZExt\Cache\Frontend\Exceptions\NoBackend;
+
+use ZExt\Profiler\ProfileableInterface;
+use ZExt\Profiler\ProfilerInterface;
 
 /**
  * Cache frontend's factory
@@ -36,37 +42,44 @@ use ZExt\Cache\Frontend\Exceptions\NoBackend;
  * @package    Cache
  * @subpackage Frontend
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
-class Factory implements FactoryInterface {
+class Factory implements FactoryInterface, ProfileableInterface {
 	
 	/**
 	 * Backend
 	 *
 	 * @var BackendInterface 
 	 */
-	protected $backend;
+	protected $_backend;
 	
 	/**
 	 * Default data lifetime
 	 *
 	 * @var int
 	 */
-	protected $defaultLifetime;
+	protected $_defaultLifetime;
 	
 	/**
 	 * Instanced wrappers
 	 *
 	 * @var Wrapper[]
 	 */
-	protected $wrappers = [];
+	protected $_wrappers = [];
 	
 	/**
 	 * Instanced collections' handlers
 	 *
 	 * @var CollectionHandler[]
 	 */
-	protected $collectionHandlers = [];
+	protected $_collectionHandlers = [];
+	
+	/**
+	 * Cache queries profiler
+	 *
+	 * @var ProfilerInterface
+	 */
+	protected $_profiler;
 	
 	/**
 	 * Constructor
@@ -85,7 +98,7 @@ class Factory implements FactoryInterface {
 	 * @param int $lifetime
 	 */
 	public function setDefaultLifetime($lifetime) {
-		$this->defaultLifetime = (int) $lifetime;
+		$this->_defaultLifetime = (int) $lifetime;
 	}
 	
 	/**
@@ -94,7 +107,7 @@ class Factory implements FactoryInterface {
 	 * @return int $lifetime
 	 */
 	public function getDefaultLifetime() {
-		return $this->defaultLifetime;
+		return $this->_defaultLifetime;
 	}
 
 	/**
@@ -104,7 +117,7 @@ class Factory implements FactoryInterface {
 	 * @return Wrapper
 	 */
 	public function createWrapper($namespace = null) {
-		if (! isset($this->wrappers[$namespace])) {
+		if (! isset($this->_wrappers[$namespace])) {
 			$wrapper  = new Wrapper($this->getBackend(), $namespace);
 			$lifetime = $this->getDefaultLifetime();
 			
@@ -112,10 +125,33 @@ class Factory implements FactoryInterface {
 				$wrapper->setDefaultLifetime($lifetime);
 			}
 			
-			$this->wrappers[$namespace] = $wrapper;
+			$this->_wrappers[$namespace] = $wrapper;
 		}
 		
-		return $this->wrappers[$namespace];
+		return $this->_wrappers[$namespace];
+	}
+	
+	/**
+	 * Create the collection handler for the datagate
+	 * 
+	 * @param  DatagateInterface $datagate
+	 * @return CollectionHandler
+	 */
+	public function createCollectionHandler(DatagateInterface $datagate) {
+		$namespace = md5($datagate->getModelClass());
+		
+		if (! isset($this->_collectionHandlers[$namespace])) {
+			$handler  = new CollectionHandler($this->getBackend(), $datagate, $namespace);
+			$lifetime = $this->getDefaultLifetime();
+			
+			if ($lifetime !== null) {
+				$handler->setDefaultLifetime($lifetime);
+			}
+			
+			$this->_collectionHandlers[$namespace] = $handler;
+		}
+		
+		return $this->_collectionHandlers[$namespace];
 	}
 	
 	/**
@@ -124,7 +160,7 @@ class Factory implements FactoryInterface {
 	 * @return Wrapper[]
 	 */
 	public function getInitializedWrappers() {
-		return $this->wrappers;
+		return $this->_wrappers;
 	}
 	
 	/**
@@ -134,7 +170,22 @@ class Factory implements FactoryInterface {
 	 * @return Factory
 	 */
 	public function setBackend(BackendInterface $backend) {
-		$this->backend = $backend;
+		$this->_backend = $backend;
+		
+		if ($this->_profiler === null) {
+			do {
+				if ($backend instanceof ProfileableInterface) {
+					if ($backend->isProfilerEnabled()) {
+						$this->setProfiler($backend->getProfiler());
+					}
+					
+					break;
+				}
+			} while (
+				$backend instanceof DecoratorInterface
+			&& ($backend = $backend->getBackend()) !== null
+			);
+		}
 		
 		return $this;
 	}
@@ -146,13 +197,51 @@ class Factory implements FactoryInterface {
 	 * @throws NoBackend
 	 */
 	public function getBackend() {
-		if ($this->backend === null) {
+		if ($this->_backend === null) {
 			throw new NoBackend('Backend wasn\'t been supplied');
 		}
 		
-		return $this->backend;
+		return $this->_backend;
 	}
 	
+	/**
+	 * Set the profiler
+	 * 
+	 * @var ProfilerInterface
+	 */
+	public function setProfiler(ProfilerInterface $profiler) {
+		$this->_profiler = $profiler;
+	}
+	
+	/**
+	 * Get the profiler
+	 * 
+	 * @return ProfilerInterface
+	 */
+	public function getProfiler() {
+		return $this->_profiler;
+	}
+	
+	/**
+	 * Switch the profiler on/off
+	 * 
+	 * @param bool $switch
+	 */
+	public function setProfilerStatus($enabled = true) {
+		if (! $enabled) {
+			trigger_error('Unable to disable a profiler, due to profiler is always active if one used');
+		}
+	}
+	
+	/**
+	 * Is enabled the profiler
+	 * 
+	 * @return bool
+	 */
+	public function isProfilerEnabled() {
+		return $this->_profiler !== null;
+	}
+
 	/**
 	 * Create the namespaced wrapper
 	 * 

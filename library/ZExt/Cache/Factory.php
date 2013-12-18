@@ -28,6 +28,7 @@ namespace ZExt\Cache;
 
 use ZExt\Cache\Exceptions\InvalidOptions;
 use ZExt\Cache\Backend\TaggableInterface;
+use ZExt\Cache\Backend\Decorators\Profileable;
 use ZExt\Cache\Backend\Decorators\Taggable;
 use ZExt\Cache\Backend\Decorators\SerializerJson;
 use ZExt\Cache\Frontend\Wrapper;
@@ -42,15 +43,17 @@ use Traversable;
  * @package    Cache
  * @subpackage Factory
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.0.1
  */
 class Factory {
 	
+	// Factory's params
 	const PARAM_TYPE         = 'type';
 	const PARAM_TAGS         = 'tags';
 	const PARAM_TAGS_BACKEND = 'tags_backend';
 	const PARAM_LIFETIME     = 'lifetime';
 	const PARAM_SERIALIZE    = 'serialize';
+	const PARAM_PROFILER     = 'profiler';
 	
 	const BACKENDS_NAMESPACE = 'ZExt\Cache\Backend';
 	const DEFAULT_BACKEND    = 'Memcache';
@@ -70,6 +73,12 @@ class Factory {
 			unset($options[self::PARAM_TYPE]);
 		} else {
 			$backendType = self::DEFAULT_BACKEND;
+		}
+		
+		// Profiler
+		if (isset($options[self::PARAM_PROFILER])) {
+			$profiler = (bool) $options[self::PARAM_PROFILER];
+			unset($options[self::PARAM_PROFILER]);
 		}
 		
 		// Tags ability
@@ -94,6 +103,12 @@ class Factory {
 		
 		$backendClass = self::BACKENDS_NAMESPACE . '\\' . ucfirst($backendType);
 		$backend      = new $backendClass($options);
+		
+		// Wrap to a profiler
+		if (isset($profiler) && $profiler === true) {
+			$backend = new Profileable($backend);
+			$backend->setProfilerStatus(true);
+		}
 		
 		// Wrap to a serializer
 		if (isset($serialize)) {
