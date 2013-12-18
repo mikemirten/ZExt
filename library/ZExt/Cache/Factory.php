@@ -27,23 +27,30 @@
 namespace ZExt\Cache;
 
 use ZExt\Cache\Exceptions\InvalidOptions;
+
 use ZExt\Cache\Backend\TaggableInterface;
 use ZExt\Cache\Backend\Decorators\Profileable;
 use ZExt\Cache\Backend\Decorators\Taggable;
 use ZExt\Cache\Backend\Decorators\SerializerJson;
+
 use ZExt\Cache\Frontend\Wrapper;
 use ZExt\Cache\Frontend\Factory as FrontendFactory;
+
+use ZExt\Profiler\ProfileableInterface;
 
 use Traversable;
 
 /**
  * Cache system's factory
  * 
+ * Creates a full stack of a backend(s), decorators, frontends by the passed params
+ * Parameters can be an array or a traversable implementation
+ * 
  * @category   ZExt
  * @package    Cache
  * @subpackage Factory
  * @author     Mike.Mirten
- * @version    1.0.1
+ * @version    1.0.2
  */
 class Factory {
 	
@@ -60,6 +67,17 @@ class Factory {
 	
 	/**
 	 * Create the backend
+	 * 
+	 * Parameters:
+	 * param name   | datatype | description
+	 * =====================================
+	 * type         | string   | Type of the backend (memcache, files...), memcache will be used as default
+	 * profiler     | bool     | Queries must be profileable (implements the "ZExt\Profiler\ProfileableInterface")
+	 * tags         | bool     | Backend must support the operations with a tags (save with tags, get by tags...)
+	 * tags_backend | array    | Tags must be stored in a separated backend with personal params (regardless of tags supporting by backend)
+	 * serialize    | string   | Serialize a data (eg. into json)
+	 * 
+	 * Other params will be passed to the backend's constructor
 	 * 
 	 * @param  array | Traversable $options
 	 * @return \ZExt\Cache\Backend\BackendInterface
@@ -106,7 +124,10 @@ class Factory {
 		
 		// Wrap to a profiler
 		if (isset($profiler) && $profiler === true) {
-			$backend = new Profileable($backend);
+			if (! $backend instanceof ProfileableInterface) {
+				$backend = new Profileable($backend);
+			}
+			
 			$backend->setProfilerStatus(true);
 		}
 		
@@ -117,7 +138,7 @@ class Factory {
 			}
 		}
 		
-		if (! $tagsForced || $backend instanceof TaggableInterface) {
+		if (! $tagsForced || ($backend instanceof TaggableInterface && ! isset($tagsBackendOptions))) {
 			return $backend;
 		}
 		
@@ -132,6 +153,7 @@ class Factory {
 	
 	/**
 	 * Create the frontend
+	 * The "lifetime" option is only supported, others will be passed further
 	 * 
 	 * @param  array | Traversable $options
 	 * @return Wrapper
@@ -155,6 +177,7 @@ class Factory {
 	
 	/**
 	 * Create the frontend factory
+	 * The "lifetime" option is only supported, others will be passed further
 	 * 
 	 * @param  array | Traversable $options
 	 * @return FrontendFactory
