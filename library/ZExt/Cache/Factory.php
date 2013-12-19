@@ -69,15 +69,15 @@ class Factory {
 	 * Create the backend
 	 * 
 	 * Parameters:
-	 * param name   | datatype | description
-	 * =====================================
-	 * type         | string   | Type of the backend (memcache, files...), memcache will be used as default
-	 * profiler     | bool     | Queries must be profileable (implements the "ZExt\Profiler\ProfileableInterface")
-	 * tags         | bool     | Backend must support the operations with a tags (save with tags, get by tags...)
-	 * tags_backend | array    | Tags must be stored in a separated backend with personal params (regardless of tags supporting by backend)
-	 * serialize    | string   | Serialize a data (eg. into json)
+	 * param name   | datatype | default  | description
+	 * ===============================================
+	 * type         | string   | memcache | Type of the backend (memcache, files...)
+	 * profiler     | bool     | false    | Queries must be profileable (implements the "ZExt\Profiler\ProfileableInterface")
+	 * tags         | bool     | false    | Backend must support the operations with a tags (save with tags, get by tags...)
+	 * tags_backend | array    | null     | Tags must be stored in a separated backend with personal params (regardless of tags supporting by backend)
+	 * serialize    | string   | null     | Serialize a data (eg. into json)
 	 * 
-	 * Other params will be passed to the backend's constructor
+	 * Other params will be passed to the backend's constructor (see backend constructors phpdocs)
 	 * 
 	 * @param  array | Traversable $options
 	 * @return \ZExt\Cache\Backend\BackendInterface

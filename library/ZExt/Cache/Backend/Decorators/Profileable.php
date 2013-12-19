@@ -27,7 +27,7 @@
 namespace ZExt\Cache\Backend\Decorators;
 
 use ZExt\Profiler\ProfilerExtendedInterface,
-	ZExt\Profiler\ProfileableInterface,
+    ZExt\Profiler\ProfileableInterface,
     ZExt\Profiler\ProfileableTrait;
 
 /**

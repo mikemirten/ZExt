@@ -88,6 +88,16 @@ class File implements BackendInterface {
 	/**
 	 * Constructor
 	 * 
+	 * Parameters:
+	 * param name          | datatype | default  | description
+	 * ======================================================
+	 * cachePath           | string   | null     | Path to cache directory (REQUIRED)
+	 * cachePrefix         | string   | 'zcache' | Prefix for the cache filenames
+	 * namespace           | string   | null     | Namespace of an IDs
+	 * compression         | bool     | true     | Use compression of a data
+	 * compressionTreshold | int      | 1024     | Compression theshold in bytes
+	 * compressionLevel    | int      | 1        | Compression level 1-9 (higher -> better compression, slowly operations)
+	 * 
 	 * @param  string | array | Traversable $options
 	 */
 	public function __construct($options = null) {

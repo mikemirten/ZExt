@@ -137,6 +137,25 @@ class Memcache implements BackendInterface {
 	/**
 	 * Constructor
 	 * 
+	 * Parameters:
+	 * param name          | datatype | default | description
+	 * ======================================================
+	 * servers             | array    | null    | Memcache servers params
+	 * namespace           | string   | null    | Namespace of an IDs
+	 * compression         | bool     | false   | Use compression of a data
+	 * operationExceptions | bool     | true    | Throw the exceptions by operation errors
+	 * client              | Memcache | null    | Configured memcache client instance if necessary
+	 * 
+	 * Servers parameters:
+	 * param name    | datatype | default     | description
+	 * ======================================================
+	 * host          | string   | '127.0.0.1' | IP address or the host name or the socket path
+	 * port          | int      | 11211       | TCP port number
+	 * persistent    | bool     | true        | Persistent connection (Will not be closed on script end, and can be reused)
+	 * weight        | int      | 1           | Server weight in the servers pool
+	 * timeout       | int      | 1           | Connection timeout in seconds
+	 * retryInterval | int      | 15          | Connection retry interval in seconds
+	 * 
 	 * @param  array | Traversable $options
 	 * @throws NoPhpExtension
 	 */

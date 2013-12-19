@@ -71,6 +71,13 @@ class PhalconWrapper implements BackendInterface {
 	/**
 	 * Constructor
 	 * 
+	 * Parameters:
+	 * param name          | datatype         | default | description
+	 * ======================================================
+	 * namespace           | string           | null    | Namespace of an IDs
+	 * operationExceptions | bool             | true    | Throw the exceptions by operation errors
+	 * backend             | BackendInterface | null    | Configured Phalcon backend instance
+	 * 
 	 * @param PhalconBackendInterface $backend
 	 * @param array | Traversable     $options
 	 */
