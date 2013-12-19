@@ -27,8 +27,6 @@
 namespace ZExt\Cache\Backend;
 
 use ZExt\Components\OptionsTrait;
-
-use ZExt\Cache\Backend\Exceptions\NoPath;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 
 /**
@@ -89,14 +87,14 @@ class File implements BackendInterface {
 	 * Constructor
 	 * 
 	 * Parameters:
-	 * param name          | datatype | default  | description
-	 * ======================================================
-	 * cachePath           | string   | null     | Path to cache directory (REQUIRED)
-	 * cachePrefix         | string   | 'zcache' | Prefix for the cache filenames
-	 * namespace           | string   | null     | Namespace of an IDs
-	 * compression         | bool     | true     | Use compression of a data
-	 * compressionTreshold | int      | 1024     | Compression theshold in bytes
-	 * compressionLevel    | int      | 1        | Compression level 1-9 (higher -> better compression, slowly operations)
+	 * param name          | datatype | default     | description
+	 * ==========================================================
+	 * cachePath           | string   | system temp | Path to the cache directory
+	 * cachePrefix         | string   | 'zcache'    | Prefix for the cache filenames
+	 * namespace           | string   | null        | Namespace of an IDs
+	 * compression         | bool     | true        | Use compression of a data
+	 * compressionTreshold | int      | 1024        | Compression theshold in bytes
+	 * compressionLevel    | int      | 1           | Compression level 1-9 (higher -> better compression, slowly operations)
 	 * 
 	 * @param  string | array | Traversable $options
 	 */
@@ -486,7 +484,7 @@ class File implements BackendInterface {
 	 */
 	public function getCachePath() {
 		if ($this->path === null) {
-			throw new NoPath('Path to the cache directory was not been specified');
+			$this->path = sys_get_temp_dir();
 		}
 		
 		return $this->path;
