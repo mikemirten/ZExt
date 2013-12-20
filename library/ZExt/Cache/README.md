@@ -14,6 +14,8 @@ $cache = CacheFactory::createFrontend();
 ```
 Factory can be used with a parameters passed as an array or a Traversable implementation (eg. ZExt\Config) with keys as the param name and values as the param value.
 
+**Parameters can be in the "camelCase" or the "underscore" format, it is does not matter. Eg. `tags_backend` and `tagsBackend` is all the same.**
+
 | Param name  | Datatype | Default | Description |
 |:------------|:---------|:--------|:------------|
 |type         | string   | memcache       | Type of the backend (memcache, files...)|
@@ -34,7 +36,7 @@ $cache = CacheFactory::createFrontend([
 ###Usage with a config file
 
 You can place your cache parameters in an application config.
-d
+
 ```php
 <?php
 use ZExt\Config\Factory as ConfigFactory;
@@ -94,63 +96,94 @@ cache.tags_backend.servers.0.port = 11213
 Frontend is the final interface of a cache usage.
 List of the provided methods:
 
-* `__construct(BackendInterface $backend = null, string $namespace = null)`
+```java
+void __construct(BackendInterface $backend = null, string $namespace = null)
+```
 
 Constructor. Backend can be passed through it. Also a namespace can be specified.
 You can specify the unique namespace for an IDs for the frontend
-* `void setBackend(BackendInterface $backend)`
+
+```java
+void setBackend(BackendInterface $backend)
+```
 
 Backend can be supplied anytime after instantiating.
 
-* `void setNamespace(string $namespace)`
+```java
+void setNamespace(string $namespace)
+```
 
-You can specify the unique namespace for an IDs for the frontend
+You can specify the unique namespace for an IDs for the frontend.
 
-* `void setDefaultLifetime(int $lifetime)`
+```java
+void setDefaultLifetime(int $lifetime)
+```
 
 Default data lifetime in a cache in seconds
 
-* `bool set(string $id, mixed $data, int $lifetime = null, string | array $tags = null)`
+```java
+boolean set(string $id, mixed $data, int $lifetime = null, string | array $tags = null)
+```
 
 Store the data in the cache. Can be specified the tag(s). Exception will be thrown if a backend is not taggable. Boolean will be returned: true - if succeded, false - if not.
 
-* `bool setMany(array $data, int $lifetime = null, $tags = null)`
+```java
+boolean setMany(array $data, int $lifetime = null, string | array $tags = null)
+```
 
 The same as `set()`, but for the many of a data. Key of the data array as IDs, value as a data.
 
-* `mixed get(string $id)`
+```java
+mixed get(string $id)
+```
 
 Get the data from the cache by the id. Null will be returned if no the data exists in the cache.
 
-* `array getMany(array $id)`
+```java
+array getMany(array $id)
+```
 
 The same as `get()`, but for the many of a data. Returned array will be contain the existing data: key of the array as IDs, value as a data.
 
-* `array getByTag(string | array $tags, bool $intersect = false)`
+```java
+array getByTag(string | array $tags, boolean $intersect = false)
+```
 
 The same as `getMany()`, but by the tag(s) instead of IDs. The "intersect" option finds the data, which contain all the specified tags, if = true, otherwise all the data, which contain one of the specified tags. Exception will be thrown if a backend is not taggable.
 
-* `bool has(string $id)`
+```java
+boolean has(string $id)
+```
 
 Has the data with the id in the cache.
 
-* `bool remove(string $id)`
+```java
+boolean remove(string $id)
+```
 
 Remove the data from the cache. False will be returned if the data have not exist in the cache.
 
-* `bool removeMany(array $id)`
+```java
+boolean removeMany(array $id)
+```
 
 The same as `remove`, but for the many of a data.
 
-* `bool removeByTag(string | array $tags, $intersect = false)`
+```java
+boolean removeByTag(string | array $tags, $intersect = false)
+```
 
 The sane as `getByTag`, but data will be removed instead of obtained
 
-* `bool inc(string $id, int $value = 1)`
+```java
+boolean inc(string $id, int $value = 1)
+```
 
 Increment the integer value, which stored in the cache, by the specified value if one specified
 
-* `bool dec(string $id, int $value = 1)`
+```java
+boolean dec(string $id, int $value = 1)
+```
 
 The same as `inc` but decrement by the value.
 
@@ -162,7 +195,9 @@ Instead of direct creating the frontend, you can create the Factory, which will 
 
 Factory able to create the next type of frontends:
 
-* `Wrapper createWrapper(string $namespace)`
+```java
+Wrapper createWrapper(string $namespace)
+```
 
 Simple frontend, which works with the specified namespace of an IDs  of a cache.
 
@@ -216,4 +251,219 @@ class ProductsService extends ServiceAbstract {
     }
 
 }
+```
+
+##Backends
+
+###Memcache
+
+Backend for the one of the most popular cache system.
+Accepted parameters for a direct instance or creating through the factory:
+
+| Param name          | Datatype | Default | Description |
+|:--------------------|:---------|:--------|:------------|
+| servers             | array    | null    | Memcache servers params |
+| namespace           | string   | null    | Namespace of an IDs |
+| compression         | bool     | false   | Use compression of a data |
+| operationExceptions | bool     | true    | Throw the exceptions by an operation errors |
+| client              | Memcache | null    | Configured memcache client instance if necessary |
+
+Server parameters:
+
+| Param name    | Datatype | Default     | Description |
+|:--------------|:---------|:------------|:------------|
+| host          | string   | '127.0.0.1' | IP address or the host name or the socket path |
+| port          | int      | 11211       | TCP port number |
+| persistent    | bool     | true        | Persistent connection (Will not be closed on a script end, and can be reused) |
+| weight        | int      | 1           | Server weight in the servers pool |
+| timeout       | int      | 1           | Connection timeout in seconds |
+| retryInterval | int      | 15          | Connection retry interval in seconds |
+
+Instance example:
+```php
+<?php
+use ZExt\Cache\Backend\Memcache;
+
+$backend = new Memcache([
+    'namespace'   => 'my_app',
+    'compression' => true,
+    'servers'     => [
+        ['host' => '192.168.1.20'],
+        ['host' => '192.168.1.21']
+    ]
+]);
+```
+Through the factory:
+```php
+<?php
+use ZExt\Cache\Factory as CacheFactory;
+
+$cache = CacheFactory::createFrontend([
+    'type'        => 'memcache',
+    'namespace'   => 'my_app',
+    'compression' => true,
+    'servers'     => [
+        ['host' => '192.168.1.20'],
+        ['host' => '192.168.1.21']
+    ]
+]);
+```
+Through the INI config:
+```ini
+cache.type           = memcache
+cache.namespace      = my_app
+cache.compression    = On
+cache.servers.0.host = 192.168.1.20
+cache.servers.1.host = 192.168.1.20
+```
+
+###File
+
+The File backend uses the file system for storage the data. Apparently this way not suitable for a highly loaded projects, but can be suitable for a small projects, auxiliary and development purposes.
+
+Accepted parameters:
+
+| Param name          | Datatype | Default     | Description |
+|:--------------------|:---------|:------------|:------------|
+| cachePath           | string   | system temp | Path to the cache directory |
+| cachePrefix         | string   | 'zcache'    | Prefix for the cache filenames |
+| compression         | bool     | true        | Use compression of a data |
+| compressionTreshold | int      | 1024        | Compression theshold in bytes |
+| compressionLevel    | int      | 1           | Compression level 1-9 (higher -> better compression, slowly operations) |
+
+Instance example:
+```php
+<?php
+use ZExt\Cache\Backend\File;
+
+$backend = new File([
+    'cache_path'   => '/my_app/tmp',
+    'cache_prefix' => 'my_prefix'
+]);
+```Instance example:
+```php
+<?php
+use ZExt\Cache\Backend\File;
+
+$backend = new File([
+    'cache_path'   => '/my_app/tmp',
+    'cache_prefix' => 'my_prefix'
+]);
+```
+Through the factory:
+```php
+<?php
+use ZExt\Cache\Factory as CacheFactory;
+
+$cache = CacheFactory::createFrontend([
+    'type'         => 'file',
+    'cache_path'   => '/my_app/tmp',
+    'cache_prefix' => 'my_prefix'
+]);
+```
+Through the INI config:
+```ini
+cache.type         = file
+cache.cache_path   = /my_app/tmp
+cache.cache_prefix = my_prefix
+```
+Through the factory:
+```php
+<?php
+use ZExt\Cache\Factory as CacheFactory;
+
+$cache = CacheFactory::createFrontend([
+    'type'         => 'file',
+    'cache_path'   => '/my_app/tmp',
+    'cache_prefix' => 'my_prefix'
+]);
+```
+Through the INI config:
+```ini
+cache.type         = file
+cache.cache_path   = /my_app/tmp
+cache.cache_prefix = my_prefix
+```
+
+###Dummy
+
+The "dummy" backend does nothing and accepts no parameters. The only reason of using it is development and testing.
+
+Instance example:
+```php
+<?php
+use ZExt\Cache\Backend\Dummy;
+
+$backend = new Dummy();
+```
+Through the factory:
+```php
+<?php
+use ZExt\Cache\Factory as CacheFactory;
+
+$cache = CacheFactory::createFrontend([
+    'type' => 'dummy'
+]);
+```
+Through the INI config:
+```ini
+cache.type = dummy
+```
+
+###Phalcon cache aggregation
+
+The backend provides aggregation with the [Phalcon framework](http://phalconphp.com/) cache module. It can be useful in the case if you already uses the Phalcon in your application.
+
+Accepted parameters:
+
+| Param name          | Datatype         | Default | Description |
+|:--------------------|:-----------------|:--------|:------------|
+| namespace           | string           | null    | Namespace of an IDs |
+| operationExceptions | bool             | true    | Throw the exceptions by an operation errors |
+| backend             | BackendInterface | null    | Configured Phalcon backend instance |
+
+Instance example:
+```php
+<?php
+use Phalcon\Cache\Frontend\Data    as PhalconFrontend;
+use Phalcon\Cache\Backend\Memcache as PhalconMemcache;
+use ZExt\Cache\Backend\PhalconWrapper;
+
+$phalconBackend = new PhalconFrontend([
+    'lifetime' => 3600
+]);
+
+$phalconCache = new PhalconMemcache($phalconBackend, [
+    'host'       => 'localhost',
+    'port'       => 11211,
+    'persistent' => true
+]);
+
+$backend = new PhalconWrapper($phalconCache, [
+    'namespace' => 'my_app'
+]);
+```
+
+Through the factory:
+```php
+<?php
+use Phalcon\Cache\Frontend\Data    as PhalconFrontend;
+use Phalcon\Cache\Backend\Memcache as PhalconMemcache;
+use ZExt\Cache\Factory             as CacheFactory;
+
+$phalconBackend = new PhalconFrontend([
+    'lifetime' => 3600
+]);
+
+$phalconCache = new PhalconMemcache($phalconBackend, [
+    'host'       => 'localhost',
+    'port'       => 11211,
+    'persistent' => true
+]);
+
+$cache = CacheFactory::createFrontend([
+    'type'    => 'phalconWrapper',
+    'backend' => $phalconCache,
+    'tags'    => true
+]);
 ```
