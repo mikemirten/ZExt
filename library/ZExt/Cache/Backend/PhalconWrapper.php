@@ -81,9 +81,13 @@ class PhalconWrapper implements BackendInterface {
 	 * @param PhalconBackendInterface $backend
 	 * @param array | Traversable     $options
 	 */
-	public function __construct(PhalconBackendInterface $backend = null, $options = null) {
+	public function __construct($backend = null, $options = null) {
 		if ($backend !== null) {
-			$this->setBackend($backend);
+			if ($backend instanceof PhalconBackendInterface) {
+				$this->setBackend($backend);
+			} else {
+				$options = $backend;
+			}
 		}
 		
 		if ($options !== null) {
