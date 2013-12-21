@@ -28,6 +28,10 @@ namespace ZExt\Debug;
 
 use ZExt\Components\OptionsTrait;
 
+use ZExt\Profiler\ProfilerInterface,
+    ZExt\Profiler\ProfilerExtendedInterface,
+    ZExt\Profiler\ProfileableInterface;
+
 use ZExt\Html\Tag,
     ZExt\Html\ListUnordered,
     ZExt\Html\ListElement;
@@ -174,6 +178,33 @@ class DebugBar {
 			} else {
 				$this->addModule($module);
 			}
+		}
+		
+		return $this;
+	}
+	
+	/**
+	 * Add the profiler
+	 * 
+	 * @param  ProfilerInterface | ProfileableInterface $profiler
+	 * @param  string $name
+	 * @return Debug
+	 */
+	public function addProfiler($profiler, $name = null) {
+		if ($profiler instanceof ProfileableInterface) {
+			if ($profiler->isProfilerEnabled()) {
+				$profiler = $profiler->getProfiler();
+			}
+		}
+		
+		if ($profiler instanceof ProfilerInterface) {
+			if ($name === null && $profiler instanceof ProfilerExtendedInterface) {
+				$name = $profiler->getName();
+			}
+			
+			$this->addModule('profiler', $name, [
+				'profiler' => $profiler
+			]);
 		}
 		
 		return $this;
