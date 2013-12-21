@@ -202,7 +202,7 @@ class Wrapper extends FrontendAbstract {
 	 * @return bool
 	 */
 	public function has($id) {
-		return $this->has($this->prepareId($id));
+		return $this->getBackend()->has($this->prepareId($id));
 	}
 	
 	/**
