@@ -104,7 +104,7 @@ interface CriteriaInterface {
 	 * 
 	 * @return mixed
 	 */
-	public function findAll();
+	public function find();
 	
 	/**
 	 * Find a first by the query

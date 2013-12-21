@@ -172,8 +172,8 @@ class PhalconCriteria implements CriteriaInterface {
 	 * 
 	 * @return mixed
 	 */
-	public function findAll() {
-		return $this->_datagate->findAll($this);
+	public function find() {
+		return $this->_datagate->find($this);
 	}
 	
 	/**

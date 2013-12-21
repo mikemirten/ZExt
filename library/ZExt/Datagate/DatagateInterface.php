@@ -51,13 +51,13 @@ interface DatagateInterface {
 	const RESULTSET_ARRAY      = 32;
 
 	/**
-	 * Find a record or a dataset by the id or an array of the ids
+	 * Find all records of a data
 	 * 
-	 * @param  mixed $id The primary key or an array of the primary keys
-	 * @return ModelInterface | Collection | Iterator
+	 * @param  mixed $criteria Query criteria
+	 * @return Collection | Iterator
 	 */
-	public function find($id);
-
+	public function find($criteria = null);
+	
 	/**
 	 * Find a first record
 	 * 
@@ -67,12 +67,12 @@ interface DatagateInterface {
 	public function findFirst($criteria = null);
 
 	/**
-	 * Find all records of a data
+	 * Find a record or a dataset by the primary id or an array of the ids
 	 * 
-	 * @param  mixed $criteria Query criteria
-	 * @return Collection | Iterator
+	 * @param  mixed $id The primary key or an array of the primary keys
+	 * @return ModelInterface | Collection | Iterator
 	 */
-	public function findAll($criteria = null);
+	public function findByPrimaryId($id = null);
 
 	/**
 	 * Save the model or the collection of the models

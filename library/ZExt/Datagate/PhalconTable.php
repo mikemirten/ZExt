@@ -26,28 +26,28 @@
 
 namespace ZExt\Datagate;
 
-use Phalcon\Db\AdapterInterface;
-use Phalcon\DiInterface;
-use Phalcon\Di;
+use Phalcon\Db\AdapterInterface,
+    Phalcon\DiInterface,
+    Phalcon\Di;
 
-use Phalcon\Mvc\Model\Criteria            as PhalconCriteria;
-use Phalcon\Mvc\Model\Manager             as ModelsManager;
-use Phalcon\Mvc\Model\Transaction\Manager as TransactionsManager;
-use Phalcon\Mvc\Model\Metadata\Memory     as MetaData;
-use Phalcon\Mvc\Model\Resultset\Simple    as ResultsetSimple;
-use Phalcon\Mvc\Model\Row;
+use Phalcon\Mvc\Model\Criteria            as PhalconCriteria,
+    Phalcon\Mvc\Model\Manager             as ModelsManager,
+    Phalcon\Mvc\Model\Transaction\Manager as TransactionsManager,
+    Phalcon\Mvc\Model\Metadata\Memory     as MetaData,
+    Phalcon\Mvc\Model\Resultset\Simple    as ResultsetSimple,
+    Phalcon\Mvc\Model\Row;
 
-use ZExt\Datagate\Criteria\PhalconCriteria as Criteria;
-use ZExt\Datagate\Phalcon\Model            as PhalconModel;
-use ZExt\Model\ModelInterface;
-use ZExt\Model\Collection;
-use ZExt\Model\Model;
+use ZExt\Datagate\Criteria\PhalconCriteria as Criteria,
+    ZExt\Datagate\Phalcon\Model            as PhalconModel,
+    ZExt\Model\ModelInterface,
+    ZExt\Model\Collection,
+    ZExt\Model\Model;
 
-use ZExt\Paginator\Paginator;
-use ZExt\Paginator\Adapter\SqlTableCriteria as AdapterCriteria;
+use ZExt\Paginator\Paginator,
+    ZExt\Paginator\Adapter\SqlTableCriteria as AdapterCriteria;
 
-use ZExt\Datagate\Exceptions\NoAdapter;
-use ZExt\Datagate\Exceptions\InvalidCriteria;
+use ZExt\Datagate\Exceptions\NoAdapter,
+    ZExt\Datagate\Exceptions\InvalidCriteria;
 
 /**
  * Phalcon model based datagate
@@ -141,20 +141,24 @@ class PhalconTable extends DatagateAbstract {
 	}
 	
 	/**
-	 * Find a record or a dataset by the id or an array of the ids
+	 * Find a record or a dataset by the primary id or an array of the ids
 	 * 
 	 * @param  mixed $id The primary key or an array of the primary keys
 	 * @return ModelInterface | Collection | Iterator
 	 */
-	public function find($id) {
+	public function findByPrimaryId($id = null) {
+		if ($id === null) {
+			return $this->find();
+		}
+		
 		if (is_array($id)) {
 			$primaty  = $this->getPrimaryName();
 			$criteria = $this->getTableModel()->query()->inWhere($primaty, $id);
 			
-			return $this->findAll($criteria);
-		} else {
-			return $this->findFirst($id);
+			return $this->find($criteria);
 		}
+		
+		return $this->findFirst($id);
 	}
 	
 	/**
@@ -186,7 +190,7 @@ class PhalconTable extends DatagateAbstract {
 	 * @param  mixed $criteria Query criteria
 	 * @return Collection | Iterator
 	 */
-	public function findAll($criteria = null) {
+	public function find($criteria = null) {
 		$criteria = $this->normalizeCriteria($criteria);
 		$result   = $this->getTableModel()->find($criteria);
 		
@@ -207,10 +211,14 @@ class PhalconTable extends DatagateAbstract {
 	 * Normalize the type of a criteria
 	 * 
 	 * @param  mixed $criteria
-	 * @return array | string | int
+	 * @return array | string | int | null
 	 * @throws InvalidCriteria
 	 */
 	protected function normalizeCriteria($criteria) {
+		if ($criteria === null) {
+			return;
+		}
+		
 		if ($criteria instanceof Criteria) {
 			return $criteria->getInnerCriteria()->getParams();
 		}
@@ -375,7 +383,6 @@ class PhalconTable extends DatagateAbstract {
 		$criteria = $this->getTableModel()->query();
 		
 		return new Criteria($criteria, $this);
-		
 	}
 	
 	/**
