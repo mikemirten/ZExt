@@ -32,7 +32,7 @@ namespace ZExt\Html;
  * @package    Html
  * @subpackage Tag
  * @author     Mike.Mirten
- * @version    1.1.1
+ * @version    1.2
  */
 class Tag {
 	
@@ -88,6 +88,13 @@ class Tag {
 	 * @var string
 	 */
 	protected $_separator = PHP_EOL;
+	
+	/**
+	 * Rendered tag's cache
+	 *
+	 * @var string
+	 */
+	protected $_tagCached;
 	
 	/**
 	 * Constructor
@@ -163,7 +170,8 @@ class Tag {
 	 * @return Tag
 	 */
 	public function setTag($tag) {
-		$this->_tag = $tag;
+		$this->_tag       = $tag;
+		$this->_tagCached = null;
 		
 		return $this;
 	}
@@ -184,7 +192,8 @@ class Tag {
 	 * @return Tag
 	 */
 	public function setClosed($flag = true) {
-		$this->_closed = (bool) $flag;
+		$this->_closed    = (bool) $flag;
+		$this->_tagCached = null;
 		
 		return $this;
 	}
@@ -242,6 +251,7 @@ class Tag {
 	 */
 	public function setAttr($attr, $value) {
 		$this->_attrs[$attr] = trim($value);
+		$this->_tagCached    = null;
 		
 		return $this;
 	}
@@ -275,6 +285,7 @@ class Tag {
 	 */
 	public function removeAttr($attr) {
 		unset($this->_attrs[$attr]);
+		$this->_tagCached = null;
 		
 		return $this;
 	}
@@ -309,7 +320,7 @@ class Tag {
 	 * @return array
 	 */
 	public function getClasses() {
-		return array_unique($this->_classes);
+		return $this->_classes;
 	}
 	
 	/**
@@ -327,7 +338,8 @@ class Tag {
 			return $this;
 		}
 		
-		$this->_classes[] = $class;
+		$this->_classes[$class] = $class;
+		$this->_tagCached       = null;
 		
 		return $this;
 	}
@@ -339,11 +351,8 @@ class Tag {
 	 * @return Tag
 	 */
 	public function removeClass($class) {
-		$key = array_search($class, $this->_classes);
-		
-		if ($key !== false)	{
-			unset($this->_classes[$key]);
-		}
+		unset($this->_classes[$class]);
+		$this->_tagCached = null;
 		
 		return $this;
 	}
@@ -355,7 +364,7 @@ class Tag {
 	 * @return bool
 	 */
 	public function hasClass($class) {
-		return in_array($class, $this->_classes);
+		return isset($this->_classes[$class]);
 	}
 	
 	/**
@@ -391,6 +400,7 @@ class Tag {
 	 */
 	public function addStyle($param, $value) {
 		$this->_style[$param] = $value;
+		$this->_tagCached     = null;
 		
 		return $this;
 	}
@@ -415,6 +425,7 @@ class Tag {
 	 */
 	public function removeStyle($param) {
 		unset($this->_style[$param]);
+		$this->_tagCached = null;
 		
 		return $this;
 	}
@@ -435,80 +446,52 @@ class Tag {
 	 * @return string
 	 */
 	public function render($html = null) {
-		$tag = '<' . $this->getTag();
-		
-		$class = $this->_renderClasses();
-		if ($class !== null) {
-			$this->setAttr(self::ATTR_CLASS, $class);
-		}
-		
-		$style = $this->_renderStyle();
-		if ($style !== null) {
-			$this->setAttr(self::ATTR_STYLE, $style);
-		}
-		
-		$attrs = $this->_renderAttrs();
-		if ($attrs !== null) {
-			$tag.= ' ' . $attrs;
-		}
-		
-		if ($this->getClosed()) {
-			$tag.= ' />';
-		} else {
-			if ($html === null) {
-				$html = $this->getHtml();
+		if ($this->_tagCached === null) {
+			$tag = '<' . $this->_tag;
+			
+			// Classes
+			if (! empty($this->_classes)) {
+				$this->setAttr(
+					self::ATTR_CLASS,
+					implode(' ', $this->_classes)
+				);
+			}
+
+			// Style
+			if (! empty($this->_style)) {
+				$style = [];
+				
+				foreach ($this->_style as $param => $value) {
+					$style[] = $param . ':' . $value . ';';
+				}
+				
+				$this->setAttr(
+					self::ATTR_STYLE,
+					implode(' ', $style)
+				);
+			}
+
+			// Attrs
+			if (! empty($this->_attrs)) {
+				$attrs = [];
+				
+				foreach ($this->_attrs as $attr => $value) {
+					$attrs[] = $attr . '="' . $value . '"';
+				}
+
+				$tag .= ' ' .  implode(' ', $attrs);
 			}
 			
-			$tag.= '>' . $html . '</' . $this->getTag() . '>';
+			$tag .= $this->_closed ? ' />' : '>';
+			
+			$this->_tagCached = $tag;
 		}
 		
-		return $tag;
-	}
-	
-	/**
-	 * Render the attributes
-	 * 
-	 * @return string
-	 */
-	protected function _renderAttrs() {
-		$attrsRaw = $this->getAttrs();
-		if (empty($attrsRaw)) return;
-		
-		$attrsStr = array();
-		foreach ($attrsRaw as $attr => $value) {
-			$attrsStr[] = $attr . '="' . $value . '"';
+		if ($this->_closed) {
+			return $this->_tagCached;
 		}
-		
-		return implode(' ', $attrsStr);
-	}
-	
-	/**
-	 * Render the "class" attribute's value
-	 * 
-	 * @return string
-	 */
-	protected function _renderClasses() {
-		$classes = $this->getClasses();
-		if (empty($classes)) return;
-		
-		return implode(' ', $classes);
-	}
-	
-	/**
-	 * Render the "style" attribute's value
-	 * 
-	 * @return string
-	 */
-	protected function _renderStyle() {
-		$styleRaw = $this->getStyles();
-		if (empty($styleRaw)) return;
-		
-		$styleStr = array();
-		foreach ($styleRaw as $param => $value) {
-			$styleStr[] = $param . ':' . $value . ';';
-		}
-		
-		return implode(' ', $styleStr);
+			
+		return $this->_tagCached . ($html === null ? $this->_html : $html) . '</' . $this->_tag . '>';
 	}
 	
 	/**

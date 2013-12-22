@@ -169,9 +169,13 @@ abstract class MultiElementsAbstract extends Tag implements Countable, ArrayAcce
 	 */
 	public function render($html = null) {
 		$separator = $this->getSeparator();
-		$list      = implode($separator, $this->getElements());
+		$result    = '';
 		
-		return parent::render($separator . $list . $separator);
+		foreach ($this->getElements() as $element) {
+			$result .= $separator . $element->render();
+		}
+		
+		return parent::render($result . $separator);
 	}
 	
 	/**

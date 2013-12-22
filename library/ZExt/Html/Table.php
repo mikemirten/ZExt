@@ -189,25 +189,26 @@ class Table extends Tag implements ArrayAccess, Countable, IteratorAggregate {
 	 * @return string
 	 */
 	public function render($html = null) {
-		$parts = [];
+		$separator = $this->getSeparator();
+		$result    = '';
 		
 		if ($this->_colgroup !== null) {
-			$parts[] = $this->_colgroup->render();
+			$result .= $separator . $this->_colgroup->render();
 		}
 		
 		if ($this->_head !== null) {
-			$parts[] = $this->_head->render();
+			$result .= $separator . $this->_head->render();
 		}
 		
 		if ($this->_body !== null) {
-			$parts[] = $this->_body->render();
+			$result .= $separator . $this->_body->render();
 		}
 		
 		if ($this->_foot !== null) {
-			$parts[] = $this->_foot->render();
+			$result .= $separator . $this->_foot->render();
 		}
 		
-		return parent::render(implode($this->getSeparator(), $parts));
+		return parent::render($result . $separator);
 	}
 	
 	/**
