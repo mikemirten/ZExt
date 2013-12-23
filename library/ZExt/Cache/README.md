@@ -317,6 +317,31 @@ cache.servers.0.host = 192.168.1.20
 cache.servers.1.host = 192.168.1.20
 ```
 
+###Apc
+
+The APC backend uses the php-apc extension for storage the data and accept no parameters.
+
+Instance example:
+```php
+<?php
+use ZExt\Cache\Backend\Apc;
+
+$backend = new Apc();
+```
+Through the factory:
+```php
+<?php
+use ZExt\Cache\Factory as CacheFactory;
+
+$cache = CacheFactory::createFrontend([
+    'type' => 'apc'
+]);
+```
+Through the INI config:
+```ini
+cache.type = apc
+```
+
 ###File
 
 The File backend uses the file system for storage the data. Apparently this way not suitable for a highly loaded projects, but can be suitable for a small projects, auxiliary and development purposes.
@@ -340,32 +365,6 @@ $backend = new File([
     'cache_path'   => '/my_app/tmp',
     'cache_prefix' => 'my_prefix'
 ]);
-```Instance example:
-```php
-<?php
-use ZExt\Cache\Backend\File;
-
-$backend = new File([
-    'cache_path'   => '/my_app/tmp',
-    'cache_prefix' => 'my_prefix'
-]);
-```
-Through the factory:
-```php
-<?php
-use ZExt\Cache\Factory as CacheFactory;
-
-$cache = CacheFactory::createFrontend([
-    'type'         => 'file',
-    'cache_path'   => '/my_app/tmp',
-    'cache_prefix' => 'my_prefix'
-]);
-```
-Through the INI config:
-```ini
-cache.type         = file
-cache.cache_path   = /my_app/tmp
-cache.cache_prefix = my_prefix
 ```
 Through the factory:
 ```php
@@ -410,7 +409,7 @@ Through the INI config:
 cache.type = dummy
 ```
 
-###Phalcon cache aggregation
+###PhalconWrapper
 
 The backend provides aggregation with the [Phalcon framework](http://phalconphp.com/) cache module. It can be useful in the case if you already uses the Phalcon in your application.
 
