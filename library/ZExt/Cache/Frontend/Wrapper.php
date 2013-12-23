@@ -28,7 +28,7 @@ namespace ZExt\Cache\Frontend;
 
 use ZExt\Cache\Backend\BackendInterface;
 use ZExt\Cache\Backend\TaggableInterface;
-use ZExt\Cache\Backend\Exceptions\NoTagsSupported;
+use ZExt\Cache\Frontend\Exceptions\NoTagsSupported;
 
 /**
  * Namespaced cache frontend
