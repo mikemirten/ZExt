@@ -52,7 +52,7 @@ use ZExt\Debug\Exceptions\InvalidPath;
  * @package    Debug
  * @subpackage DebugBar
  * @author     Mike.Mirten
- * @version    1.1
+ * @version    1.1.1
  */
 class DebugBar {
 	
@@ -399,6 +399,9 @@ class DebugBar {
 		$tabsList->addClass('debug-bar');
 		$tabsList->setAttr('id', 'debug-elements');
 		
+		$titleTag = new Tag('h4', null, 'debug-bar-wrapper');
+		$panelTag = new Tag('div', null, 'debug-panel');
+		
 		$panels = '';
 		
 		foreach ($this->getModules() as $name => $module) {
@@ -435,8 +438,7 @@ class DebugBar {
 			$tabElement->addClass('debug-tab');
 			$tabElement->setAttr('title', $name . ': ' . $tab);
 			
-			$icon = $module->getTabIcon();
-			if ($icon) {
+			if (($icon = $module->getTabIcon()) !== null) {
 				$tabElement->addClass('hasicon');
 				$tabElement->addStyle('background-image', "url($icon)");
 			}
@@ -452,10 +454,7 @@ class DebugBar {
 			$tabElement->addClass('withpanel clickable');
 			$tabElement->setAttr('data-panel-id', $id);
 			
-			$titleTag = new Tag('h4', $name, 'debug-bar-wrapper');
-			$panelTag = new Tag('div', $panel, 'debug-panel');
-			
-			$panels .= new Tag('div', $titleTag . $panelTag, [
+			$panels .= new Tag('div', $titleTag->render($name) . $panelTag->render($panel), [
 				'id'    => $id,
 				'class' => 'debug-panel-wrapper'
 			]);
