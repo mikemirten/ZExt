@@ -41,7 +41,7 @@ use ZExt\Debug\Modules\ModuleInterface,
 
 use ZExt\Dump\Html as Dump;
 
-use Closure, Exception;
+use Closure, Exception, DirectoryIterator;
 
 use ZExt\Debug\Exceptions\InvalidPath;
 
@@ -101,6 +101,20 @@ class DebugBar {
 	 * @var Closure
 	 */
 	protected $onShutdownCallback;
+	
+	/**
+	 * Is profiles garbage collection enabled ?
+	 *
+	 * @var bool
+	 */
+	protected $profilesGcEnabled = true;
+	
+	/**
+	 * Profiles lifetime for garbage collection in seconds
+	 *
+	 * @var int
+	 */
+	protected $profilesGcTime = 600;
 	
 	/**
 	 * Constructor
@@ -545,9 +559,32 @@ class DebugBar {
 			
 			// Debug bar rendering for the deferred mode
 			if ($this->deferredMode) {
+				// Content creating
 				$filePath = $this->deferredDir . DIRECTORY_SEPARATOR . 'profile_' . $this->token . '.html';
 				
 				file_put_contents($filePath, $this->renderDebugBar());
+				
+				// Garbage collection
+				if ($this->profilesGcEnabled) {
+					$profilesDir = new DirectoryIterator($this->deferredDir);
+					$currentTime = time();
+
+					foreach ($profilesDir as $file) {
+						if (! $file->isFile() || ! $file->isWritable()) {
+							continue;
+						}
+
+						$fileName = $file->getFilename();
+
+						if (strpos($fileName, 'profile_') !== 0) {
+							continue;
+						}
+
+						if ($file->getMTime() + $this->profilesGcTime < $currentTime) {
+							unlink($file->getFilename());
+						}
+					}
+				}
 			}
 		});
 	}
