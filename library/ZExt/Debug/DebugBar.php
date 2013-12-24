@@ -43,7 +43,8 @@ use ZExt\Dump\Html as Dump;
 
 use Closure, Exception, DirectoryIterator;
 
-use ZExt\Debug\Exceptions\InvalidPath;
+use ZExt\Debug\Exceptions\InvalidPath,
+    ZExt\Debug\Exceptions\GcError;
 
 /**
  * Debug bar
@@ -115,6 +116,13 @@ class DebugBar {
 	 * @var int
 	 */
 	protected $profilesGcTime = 600;
+	
+	/**
+	 * Max lifetime of the GC lock in seconds
+	 *
+	 * @var int
+	 */
+	protected $gcLockLifetime = 60;
 	
 	/**
 	 * Constructor
@@ -559,34 +567,54 @@ class DebugBar {
 			
 			// Debug bar rendering for the deferred mode
 			if ($this->deferredMode) {
-				// Content creating
-				$filePath = $this->deferredDir . DIRECTORY_SEPARATOR . 'profile_' . $this->token . '.html';
-				
-				file_put_contents($filePath, $this->renderDebugBar());
-				
 				// Garbage collection
 				if ($this->profilesGcEnabled) {
-					$profilesDir = new DirectoryIterator($this->deferredDir);
-					$currentTime = time();
-
-					foreach ($profilesDir as $file) {
-						if (! $file->isFile() || ! $file->isWritable()) {
-							continue;
-						}
-
-						$fileName = $file->getFilename();
-
-						if (strpos($fileName, 'profile_') !== 0) {
-							continue;
-						}
-
-						if ($file->getMTime() + $this->profilesGcTime < $currentTime) {
-							unlink($file->getFilename());
-						}
-					}
+					$this->gcCycle();
+				}
+				
+				// Content creating
+				$filePath = $this->deferredDir . DIRECTORY_SEPARATOR . 'profile_' . $this->token . '.html';
+				if (file_put_contents($filePath, $this->renderDebugBar()) === false) {
+					throw new InvalidPath('Unable to write the debug data into: "' . $filePath . '"');
 				}
 			}
 		});
+	}
+	
+	/**
+	 * Garbage collector
+	 */
+	protected function gcCycle() {
+		$lockPath    = $this->deferredDir . DIRECTORY_SEPARATOR . '.zdebug_gclock';
+		$currentTime = time();
+
+		// Check the lock file and expiration time
+		if (is_file($lockPath) && filemtime($lockPath) + $this->gcLockLifetime > $currentTime) {
+			return;
+		}
+
+		if (! touch($lockPath)) {
+			throw new GcError('Unable to create or update the lock file while a garbage collection cycle');
+		}
+
+		$profilesDir = new DirectoryIterator($this->deferredDir);
+		
+
+		foreach ($profilesDir as $file) {
+			if (! $file->isFile()) {
+				continue;
+			}
+
+			$fileName = $file->getFilename();
+
+			if (strpos($fileName, 'profile_') !== 0) {
+				continue;
+			}
+
+			if ($file->getMTime() + $this->profilesGcTime < $currentTime) {
+				unlink($file->getRealPath());
+			}
+		}
 	}
 	
 }
