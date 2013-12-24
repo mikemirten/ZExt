@@ -27,6 +27,7 @@
 namespace ZExt\Loader;
 
 use ZExt\Loader\Exceptions\InvalidPath;
+use ZExt\Loader\Exceptions\InvalidNamespace;
 use ZExt\Loader\Exceptions\RegistrationFailed;
 
 use stdClass, SplStack;
@@ -114,6 +115,11 @@ class Autoloader {
 	 * @throws InvalidPath
 	 */
 	public function registerNamespace($namespace, $path, $prepend = false) {
+		if (! isset($namespace[0])) {
+			require_once __DIR__ . '/Exceptions/InvalidNamespace.php';
+			throw new InvalidNamespace('Namespace cannot be empty');
+		}
+		
 		$definition = new stdClass();
 		$definition->namespace = trim($namespace, '\ ');
 		$definition->dirs      = new SplStack();
@@ -167,12 +173,13 @@ class Autoloader {
 		}
 		
 		spl_autoload_register(function($class) {
-			$class = trim($class, '\ ');
-			
 			foreach ($this->namespaces as $definition) {
 				if (strpos($class, $definition->namespace) === 0) {
-					$class = str_replace($definition->namespace, '', $class);
-					$this->loadClass($class, $definition->dirs);
+					$this->loadClass(
+						substr($class, strlen($definition->namespace)),
+						$definition->dirs
+					);
+					
 					return;
 				}
 			}
