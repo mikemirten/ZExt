@@ -65,6 +65,13 @@ class Autoloader {
 	protected $namespaces;
 	
 	/**
+	 * Directories
+	 *
+	 * @var SplStack
+	 */
+	protected $dirs;
+	
+	/**
 	 * Register autloader with default namespaces
 	 * 
 	 * @return Autoloader
@@ -89,6 +96,7 @@ class Autoloader {
 	 */
 	public function __construct() {
 		$this->namespaces = new SplStack();
+		$this->dirs       = new SplStack();
 	}
 	
 	/**
@@ -97,9 +105,9 @@ class Autoloader {
 	 * @param  array $namespaces [namespace => dir(s)]
 	 * @return Autoloader
 	 */
-	public function registerNamespaces(array $namespaces) {
+	public function registerNamespaces(array $namespaces, $prepend = false) {
 		foreach ($namespaces as $namespace => $path) {
-			$this->registerNamespace($namespace, $path);
+			$this->registerNamespace($namespace, $path, $prepend);
 		}
 		
 		return $this;
@@ -142,6 +150,40 @@ class Autoloader {
 	}
 	
 	/**
+	 * Register the directories
+	 * 
+	 * @param  array $dirs
+	 * @param  bool  $prepend
+	 * @return Autoloader
+	 */
+	public function registerDirs(array $dirs, $prepend = false) {
+		foreach ($dirs as $path) {
+			$this->registerDir($path, $prepend);
+		}
+		
+		return $this;
+	}
+	
+	/**
+	 * Register the directory
+	 * 
+	 * @param  string $path
+	 * @param  bool   $prepend
+	 * @return Autoloader
+	 */
+	public function registerDir($path, $prepend = false) {
+		$path = $this->normalizePath($path);
+		
+		if ($prepend) {
+			$this->dirs->shift($path);
+		} else {
+			$this->dirs[] = $path;
+		}
+		
+		return $this;
+	}
+	
+	/**
 	 * Normalize the path
 	 * 
 	 * @param  string $path
@@ -175,13 +217,16 @@ class Autoloader {
 		spl_autoload_register(function($class) {
 			foreach ($this->namespaces as $definition) {
 				if (strpos($class, $definition->namespace) === 0) {
-					$this->loadClass(
-						substr($class, strlen($definition->namespace)),
-						$definition->dirs
-					);
+					$resolvedClass = substr($class, strlen($definition->namespace));
 					
-					return;
+					if ($this->loadClass($resolvedClass, $definition->dirs)) {
+						return;
+					}
 				}
+			}
+			
+			if (! $this->dirs->isEmpty()) {
+				$this->loadClass('\\' . $class, $this->dirs);
 			}
 		});
 		
@@ -191,10 +236,11 @@ class Autoloader {
 	/**
 	 * Load the class
 	 * 
-	 * @param string $class
-	 * @param string $path
+	 * @param  string   $class
+	 * @param  SplStack $path
+	 * @return bool
 	 */
-	protected function loadClass($class, $dirs) {
+	protected function loadClass($class, SplStack $dirs) {
 		$script = str_replace(['_', '\\'], DIRECTORY_SEPARATOR, $class) . '.php';
 		
 		foreach ($dirs as $dir) {
@@ -202,9 +248,11 @@ class Autoloader {
 			
 			if (is_file($path)) {
 				include $path;
-				return;
+				return true;
 			}
 		}
+		
+		return false;
 	}
 	
 }
