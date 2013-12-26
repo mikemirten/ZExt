@@ -9,12 +9,26 @@
 	overflow-x:  auto;
 }
 
+.zDumpComment {
+	color:   #358;
+	opacity: 0.6;
+}
+
 .zDumpInteger {
 	color: #e00;
 }
 
 .zDumpString {
 	color: #080;
+}
+
+.zDumpKeyword {
+	color:       #804;
+	font-weight: bold;
+}
+
+.zDumpVariable {
+	color: #059;
 }
 
 .zDumpClass {
@@ -58,4 +72,31 @@
 
 .zDumpArrayTable tr:first-child {
 	border-top: none;
+}
+
+.zDumpCodeTable {
+	width:           100%;
+	border-collapse: collapse;
+	font-family:     monospace;
+	font-size:       medium;
+	border-left:     3px solid #e0e3ec;
+}
+
+.zDumpCodeTable td {
+	vertical-align: top;
+	padding:        0.2em 0.5em;
+}
+
+.zDumpLineError {
+	background: #f9f6dd;
+}
+
+.zDumpCodeTable td:first-child {
+	background-color: #f4f4fc;
+	text-align:       right;
+	color:            #567;
+}
+
+.zDumpLineError td:first-child {
+	color: #e00;
 }

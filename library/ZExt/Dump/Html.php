@@ -313,78 +313,141 @@ class Html {
 		
 		$partsList = new Table([], 'zDumpArrayTable');
 		
-		$fileInfo  = $exception->getFile();
-		$fileInfo .= ' (line: ' . $typeTagStr->render($exception->getLine()) . ')';
+		$filePath = $exception->getFile();
+		$fileLine = $exception->getLine();
+		
+		$fileInfo  = $filePath;
+		$fileInfo .= ' (line: ' . $typeTagStr->render($fileLine) . ')';
 		
 		$partsList[] = ['File', ':', $fileInfo];
-		
 		$info .= $partsList->render();
 		
-		$info .= $dataTitle->render('Trace:');
+		if (is_readable($filePath)) {
+			$rangeLines = 10;
 		
-		$traceList = new Table([], 'zDumpArrayTable');
-		
-		$traceList[] = ['File', 'Line', '', 'Call'];
-		
-		foreach ($exception->getTrace() as $part) {
-			if (isset($part['file'])) {
-				$fileInfo = $part['file'];
-				$lineInfo = $typeTagStr->render($part['line']);
-			} else {
-				$fileInfo = 'Internal function';
-				$lineInfo = '';
+			$minLine = $fileLine - $rangeLines;
+			$maxLine = $fileLine + $rangeLines;
+
+			if ($minLine < 1) {
+				$minLine = 1;
 			}
 			
-			$callInfo = '';
-
-			if (isset($part['class'])) {
-				$callInfo .= $classTag->render($part['class']);
-				$callInfo .= $part['type'];
-			}
-
-			$callInfo .= $part['function'] . '(';
-
-			if (! empty($part['args'])) {
-				$argsInfo = [];
-
-				foreach ($part['args'] as $arg) {
-					switch (gettype($arg)) {
-						case 'NULL':
-							$argInfo = 'Null';
-							break;
-
-						case 'object':
-							$argInfo = $classTag->render(get_class($arg));
-							break;
-
-						case 'array':
-							$argInfo = 'Array(' . $typeTagInt->render(count($arg)) . ' items)';
-							break;
-
-						default:
-							$argsCount = count($part['args']);
-							$maxLength = (int) round(160 / $argsCount);
-
-							if ($maxLength < 16) {
-								$maxLength = 16;
-							}
-
-							$argInfo = self::_dump($arg, 0, $maxLength)[1];
+			$dumpTable = new Table([], 'zDumpCodeTable');
+			$dumpTable->getColgroup()->addElements([1, 99]);
+			
+			$file = fopen($filePath, 'r');
+			$line = 1;
+			
+			$keywords = implode('|', ['abstract', 'and', 'array', 'as', 'break', 'callable', 'case', 'catch', 'class', 'clone', 'const', 'continue', 'declare', 'default', 'die', 'do', 'echo', 'else', 'elseif', 'empty', 'enddeclare', 'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'eval', 'exit', 'extends', 'final', 'for', 'foreach', 'function', 'global', 'goto', 'if', 'implements', 'include', 'include_once', 'instanceof', 'insteadof', 'interface', 'isset', 'list', 'namespace', 'new', 'or', 'print', 'private', 'protected', 'public', 'require', 'require_once', 'return', 'static', 'switch', 'throw', 'trait', 'try', 'unset', 'use', 'var', 'while', 'xor', 'true', 'false']);
+			
+			$tagCodeVariable = (new Tag('span', '$1', 'zDumpVariable'))->render() . '$2';
+			$tagCodeKeyword  = '$1' . (new Tag('span', '$2', 'zDumpKeyword'))->render() . '$3';
+			$tagCodeInteger  = '$1' . $typeTagInt->render('$2') . '$3';
+			$tagCodeString   = $typeTagStr->render('$1$2$1');
+			$tagCodeComment  = (new Tag('span', '$1', 'zDumpComment'))->render();
+			
+			while (! feof($file) && ($string = fgets($file)) !== false) {
+				if ($line <= $maxLine && $line >= $minLine) {
+					$string = str_replace(["\t", ' '], ['&nbsp;&nbsp;&nbsp;&nbsp;', '&nbsp;'], $string);
+					
+					$string = preg_replace([
+						'/([^a-z]*)(' . $keywords . ')([^a-z_]+)/i', // keywords
+						'/(\$[a-z_]+[a-z0-9_]*)([^a-z0-9_]+)/i',     // variables
+						'/([^0-9a-z_\.]+?)([0-9\.]+)([^0-9\.]+?)/i', // numerics
+						'/(\')([^\1]+?)\1/',                         // strings
+						'~(//.*)~'
+					], [
+						
+						$tagCodeKeyword,
+						$tagCodeVariable,
+						$tagCodeInteger,
+						$tagCodeString,
+						$tagCodeComment
+					], $string);
+					
+					if ($line === $fileLine) {
+						$dumpTable[] = [$line, $string, '_class_' => 'zDumpLineError'];
+					} else {
+						$dumpTable[] = [$line, $string];
 					}
-
-					$argsInfo[] = $argInfo;
 				}
-
-				$callInfo .= implode(', ', $argsInfo);
+				
+				++ $line;
 			}
-
-			$callInfo .= ')';
-
-			$traceList[] = [$fileInfo, $lineInfo, ':', $callInfo];
 			
+			$info .= $dataTitle->render('Code listing:');
+			$info .= $dumpTable->render();
 		}
 		
-		$info .= $traceList->render();
+		$trace = $exception->getTrace();
+		
+		if (! empty($trace)) {
+			$info .= $dataTitle->render('Trace:');
+
+			$traceList = new Table([], 'zDumpArrayTable');
+
+			$traceList[] = ['File', 'Line', '', 'Call'];
+
+			foreach ($trace as $part) {
+				if (isset($part['file'])) {
+					$fileInfo = $part['file'];
+					$lineInfo = $typeTagStr->render($part['line']);
+				} else {
+					$fileInfo = 'Internal function';
+					$lineInfo = '';
+				}
+
+				$callInfo = '';
+
+				if (isset($part['class'])) {
+					$callInfo .= $classTag->render($part['class']);
+					$callInfo .= $part['type'];
+				}
+
+				$callInfo .= $part['function'] . '(';
+
+				if (! empty($part['args'])) {
+					$argsInfo = [];
+
+					foreach ($part['args'] as $arg) {
+						switch (gettype($arg)) {
+							case 'NULL':
+								$argInfo = 'Null';
+								break;
+
+							case 'object':
+								$argInfo = $classTag->render(get_class($arg));
+								break;
+
+							case 'array':
+								$argInfo = 'Array(' . $typeTagInt->render(count($arg)) . ' items)';
+								break;
+
+							default:
+								$argsCount = count($part['args']);
+								$maxLength = (int) round(160 / $argsCount);
+
+								if ($maxLength < 16) {
+									$maxLength = 16;
+								}
+
+								$argInfo = self::_dump($arg, 0, $maxLength)[1];
+						}
+
+						$argsInfo[] = $argInfo;
+					}
+
+					$callInfo .= implode(', ', $argsInfo);
+				}
+
+				$callInfo .= ')';
+
+				$traceList[] = [$fileInfo, $lineInfo, ':', $callInfo];
+
+			}
+
+			$info .= $traceList->render();
+		}
 		
 		$previous = $exception->getPrevious();
 		
