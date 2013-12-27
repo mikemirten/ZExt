@@ -325,59 +325,8 @@ class Html {
 		$info .= $partsList->render();
 		
 		if (is_readable($filePath)) {
-			$rangeLines = 8;
-		
-			$minLine = $fileLine - $rangeLines;
-			$maxLine = $fileLine + $rangeLines;
-
-			if ($minLine < 1) {
-				$minLine = 1;
-			}
-			
-			$dumpTable = new Table([], 'zDumpCodeTable');
-			$dumpTable->getColgroup()->addElements([1, 99]);
-			
-			$file = fopen($filePath, 'r');
-			$line = 1;
-			
-			$keywords = implode('|', ['abstract', 'and', 'array', 'as', 'break', 'callable', 'case', 'catch', 'class', 'clone', 'const', 'continue', 'declare', 'default', 'die', 'do', 'echo', 'else', 'elseif', 'empty', 'enddeclare', 'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'eval', 'exit', 'extends', 'final', 'for', 'foreach', 'function', 'global', 'goto', 'if', 'implements', 'include', 'include_once', 'instanceof', 'insteadof', 'interface', 'isset', 'list', 'namespace', 'new', 'or', 'print', 'private', 'protected', 'public', 'require', 'require_once', 'return', 'static', 'switch', 'throw', 'trait', 'try', 'unset', 'use', 'var', 'while', 'xor', 'true', 'false']);
-			
-			$tagCodeVariable = (new Tag('span', '$1', 'zDumpVariable'))->render() . '$2';
-			$tagCodeKeyword  = '$1' . (new Tag('span', '$2', 'zDumpKeyword'))->render() . '$3';
-			$tagCodeInteger  = $typeTagInt->render('$1');
-			$tagCodeString   = $typeTagStr->render('$1$2$1');
-			$tagCodeComment  = (new Tag('span', '$1', 'zDumpComment'))->render();
-			
-			while ($line <= $maxLine && ! feof($file) && ($string = fgets($file)) !== false) {
-				if ($line >= $minLine) {
-					$string = str_replace(["\t", ' '], ['&nbsp;&nbsp;&nbsp;&nbsp;', '&nbsp;'], $string);
-					
-					$string = preg_replace([
-						'/([^a-z]*)(' . $keywords . ')([^a-z_]+)/', // keywords
-						'/(\$[a-z_]+[a-z0-9_]*)([^a-z0-9_]+)/i',    // variables
-						'/([0-9]?\.?[0-9]+)/i',                     // numerics
-						'/(\')([^\1]+?)\1/',                        // strings
-						'~(//.*)~'
-					], [
-						$tagCodeKeyword,
-						$tagCodeVariable,
-						$tagCodeInteger,
-						$tagCodeString,
-						$tagCodeComment
-					], $string);
-					
-					if ($line === $fileLine) {
-						$dumpTable[] = [$line, $string, '_class_' => 'zDumpLineError'];
-					} else {
-						$dumpTable[] = [$line, $string];
-					}
-				}
-				
-				++ $line;
-			}
-			
 			$info .= $dataTitle->render('Code listing:');
-			$info .= $dumpTable->render();
+			$info .= self::dumpPhpScript($filePath, $fileLine);
 		}
 		
 		$trace = $exception->getTrace();
@@ -474,6 +423,80 @@ class Html {
 		}
 		
 		return $info;
+	}
+	
+	public static function dumpPhpScript($path, $line, $range = 8) {
+		$minLine = $line - $range;
+		$maxLine = $line + $range;
+
+		if ($minLine < 1) {
+			$minLine = 1;
+		}
+
+		$dumpTable = new Table([], 'zDumpCodeTable');
+		$dumpTable->getColgroup()->addElements([1, 99]);
+
+		$file = fopen($path, 'r');
+		$currentline = 1;
+
+		$keywords = implode('|', ['abstract', 'and', 'array', 'as', 'break', 'callable', 'case', 'catch', 'class', 'clone', 'const', 'continue', 'declare', 'default', 'die', 'do', 'echo', 'else', 'elseif', 'empty', 'enddeclare', 'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'eval', 'exit', 'extends', 'final', 'for', 'foreach', 'function', 'global', 'goto', 'if', 'implements', 'include', 'include_once', 'instanceof', 'insteadof', 'interface', 'isset', 'list', 'namespace', 'new', 'or', 'print', 'private', 'protected', 'public', 'require', 'require_once', 'return', 'static', 'switch', 'throw', 'trait', 'try', 'unset', 'use', 'var', 'while', 'xor', 'true', 'false', 'null']);
+
+		$tagCodeVariable = (new Tag('span', '$1', 'zDumpVariable'))->render() . '$2';
+		$tagCodeKeyword  = '$1' . (new Tag('span', '$2', 'zDumpKeyword'))->render() . '$3';
+		
+		$tagCodeInteger  = (new Tag('span', null, 'zDumpInteger'))->render('$1');
+		$tagCodeString   = new Tag('span', null, 'zDumpString');
+		$tagCodeComment  = new Tag('span', null, 'zDumpComment');
+		$tagStrong       = (new Tag('strong', '$1'))->render();
+
+		while ($currentline <= $maxLine && ! feof($file) && ($string = fgets($file)) !== false) {
+			if ($currentline >= $minLine) {
+				$string = str_replace(["\t", ' '], ['&nbsp;&nbsp;&nbsp;&nbsp;', '&nbsp;'], $string);
+
+				$string = preg_replace([
+					'/(^|[^a-zA-Z0-9_\$]+)(' . $keywords . ')([^a-zA-Z0-9_]+)/', // keywords
+					'/(\$[a-z_]+[a-z0-9_]*)([^a-z0-9_]+)/i',                     // variables
+					'/([0-9]?\.?[0-9]+)/i',                                      // numerics
+				], [
+					$tagCodeKeyword,
+					$tagCodeVariable,
+					$tagCodeInteger,
+				], $string);
+
+				// Strings
+				$string = $string = preg_replace_callback('/(\')([^\1]+?)\1/', function($in) use($tagCodeString) {
+					return $tagCodeString->render($in[1] . strip_tags($in[2]) . $in[1]);
+				}, $string);
+				
+				// Comments
+				$string = preg_replace_callback(
+					'~((?://|/\*|\*/|&nbsp;\*).*)~',
+					function($in) use($tagCodeComment, $tagCodeVariable, $tagStrong) {
+						$line = strip_tags($in[1]);
+
+						$line = preg_replace([
+							'/(@[a-z0-9\-_]+)/i',                     // PHPDoc keywords
+							'/(\$[a-z_]+[a-z0-9_]*)($|[^a-z0-9_]+)/i' // variables
+						], [
+							$tagStrong, $tagCodeVariable
+						], $line);
+
+						return $tagCodeComment->render($line);
+					},
+					$string
+				);
+
+				if ($currentline === $line) {
+					$dumpTable[] = [$currentline, $string, '_class_' => 'zDumpLineError'];
+				} else {
+					$dumpTable[] = [$currentline, $string];
+				}
+			}
+
+			++ $currentline;
+		}
+
+		return $dumpTable->render();
 	}
 
 	protected static function addStyle() {
