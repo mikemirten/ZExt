@@ -142,6 +142,7 @@ class Html {
 		$typeTagStr = new Tag('span', null, 'zDumpString');
 		
 		$partsList = new Table([], 'zDumpArrayTable');
+		$partsList->getColgroup()->addElements([1, 1, 1, 1, 95]);
 		
 		foreach ($array as $key => $value) {
 			$row = [];
@@ -156,7 +157,7 @@ class Html {
 			
 			$row[1] = '&nbsp=>&nbsp';
 			$row[2] = (string) $varInfo[0];
-			$row[3] = '&nbsp:&nbsp';
+			$row[3] = ':';
 			$row[4] = (string) $varInfo[1];
 			
 			$partsList[] = $row;
@@ -312,6 +313,7 @@ class Html {
 		$info .= $dataTitle->render('Info:');
 		
 		$partsList = new Table([], 'zDumpArrayTable');
+		$partsList->getColgroup()->addElements([1, 1, 99]);
 		
 		$filePath = $exception->getFile();
 		$fileLine = $exception->getLine();
@@ -323,7 +325,7 @@ class Html {
 		$info .= $partsList->render();
 		
 		if (is_readable($filePath)) {
-			$rangeLines = 10;
+			$rangeLines = 8;
 		
 			$minLine = $fileLine - $rangeLines;
 			$maxLine = $fileLine + $rangeLines;
@@ -342,22 +344,21 @@ class Html {
 			
 			$tagCodeVariable = (new Tag('span', '$1', 'zDumpVariable'))->render() . '$2';
 			$tagCodeKeyword  = '$1' . (new Tag('span', '$2', 'zDumpKeyword'))->render() . '$3';
-			$tagCodeInteger  = '$1' . $typeTagInt->render('$2') . '$3';
+			$tagCodeInteger  = $typeTagInt->render('$1');
 			$tagCodeString   = $typeTagStr->render('$1$2$1');
 			$tagCodeComment  = (new Tag('span', '$1', 'zDumpComment'))->render();
 			
-			while (! feof($file) && ($string = fgets($file)) !== false) {
-				if ($line <= $maxLine && $line >= $minLine) {
+			while ($line <= $maxLine && ! feof($file) && ($string = fgets($file)) !== false) {
+				if ($line >= $minLine) {
 					$string = str_replace(["\t", ' '], ['&nbsp;&nbsp;&nbsp;&nbsp;', '&nbsp;'], $string);
 					
 					$string = preg_replace([
-						'/([^a-z]*)(' . $keywords . ')([^a-z_]+)/i', // keywords
-						'/(\$[a-z_]+[a-z0-9_]*)([^a-z0-9_]+)/i',     // variables
-						'/([^0-9a-z_\.]+?)([0-9\.]+)([^0-9\.]+?)/i', // numerics
-						'/(\')([^\1]+?)\1/',                         // strings
+						'/([^a-z]*)(' . $keywords . ')([^a-z_]+)/', // keywords
+						'/(\$[a-z_]+[a-z0-9_]*)([^a-z0-9_]+)/i',    // variables
+						'/([0-9]?\.?[0-9]+)/i',                     // numerics
+						'/(\')([^\1]+?)\1/',                        // strings
 						'~(//.*)~'
 					], [
-						
 						$tagCodeKeyword,
 						$tagCodeVariable,
 						$tagCodeInteger,
