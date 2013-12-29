@@ -1,4 +1,29 @@
 <?php
+/**
+ * ZExt Framework (http://z-ext.com)
+ * Copyright (C) 2012 Mike.Mirten
+ * 
+ * LICENSE
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * @copyright (c) 2012, Mike.Mirten
+ * @license   http://www.gnu.org/licenses/gpl.html GPL License
+ * @category  ZExt
+ * @version   1.0
+ */
+
 namespace ZExt\Dump;
 
 use Closure, ReflectionObject, Exception;
@@ -13,6 +38,8 @@ use ZExt\Log\LoggerAwareInterface;
 use ZExt\Model\Collection;
 use ZExt\Model\Iterator;
 use ZExt\Model\Model;
+
+use ZExt\Highlighter\Languages\Php as PhpHighlighter;
 
 class Html {
 	
@@ -439,52 +466,11 @@ class Html {
 		$file = fopen($path, 'r');
 		$currentline = 1;
 
-		$keywords = implode('|', ['abstract', 'and', 'array', 'as', 'break', 'callable', 'case', 'catch', 'class', 'clone', 'const', 'continue', 'declare', 'default', 'die', 'do', 'echo', 'else', 'elseif', 'empty', 'enddeclare', 'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'eval', 'exit', 'extends', 'final', 'for', 'foreach', 'function', 'global', 'goto', 'if', 'implements', 'include', 'include_once', 'instanceof', 'insteadof', 'interface', 'isset', 'list', 'namespace', 'new', 'or', 'print', 'private', 'protected', 'public', 'require', 'require_once', 'return', 'static', 'switch', 'throw', 'trait', 'try', 'unset', 'use', 'var', 'while', 'xor', 'true', 'false', 'null']);
-
-		$tagCodeVariable = (new Tag('span', '$1', 'zDumpVariable'))->render() . '$2';
-		$tagCodeKeyword  = '$1' . (new Tag('span', '$2', 'zDumpKeyword'))->render() . '$3';
+		$highlighter = new PhpHighlighter();
 		
-		$tagCodeInteger  = (new Tag('span', null, 'zDumpInteger'))->render('$1');
-		$tagCodeString   = new Tag('span', null, 'zDumpString');
-		$tagCodeComment  = new Tag('span', null, 'zDumpComment');
-		$tagStrong       = (new Tag('strong', '$1'))->render();
-
 		while ($currentline <= $maxLine && ! feof($file) && ($string = fgets($file)) !== false) {
 			if ($currentline >= $minLine) {
-				$string = str_replace(["\t", ' '], ['&nbsp;&nbsp;&nbsp;&nbsp;', '&nbsp;'], $string);
-
-				$string = preg_replace([
-					'/(^|[^a-zA-Z0-9_\$]+)(' . $keywords . ')([^a-zA-Z0-9_]+)/', // keywords
-					'/(\$[a-z_]+[a-z0-9_]*)([^a-z0-9_]+)/i',                     // variables
-					'/([0-9]?\.?[0-9]+)/i',                                      // numerics
-				], [
-					$tagCodeKeyword,
-					$tagCodeVariable,
-					$tagCodeInteger,
-				], $string);
-
-				// Strings
-				$string = $string = preg_replace_callback('/(\')([^\1]+?)\1/', function($in) use($tagCodeString) {
-					return $tagCodeString->render($in[1] . strip_tags($in[2]) . $in[1]);
-				}, $string);
-				
-				// Comments
-				$string = preg_replace_callback(
-					'~((?://|/\*|\*/|&nbsp;\*).*)~',
-					function($in) use($tagCodeComment, $tagCodeVariable, $tagStrong) {
-						$line = strip_tags($in[1]);
-
-						$line = preg_replace([
-							'/(@[a-z0-9\-_]+)/i',                     // PHPDoc keywords
-							'/(\$[a-z_]+[a-z0-9_]*)($|[^a-z0-9_]+)/i' // variables
-						], [
-							$tagStrong, $tagCodeVariable
-						], $line);
-
-						return $tagCodeComment->render($line);
-					},
-					$string
-				);
+				$string = $highlighter->highlightLine($string);
 
 				if ($currentline === $line) {
 					$dumpTable[] = [$currentline, $string, '_class_' => 'zDumpLineError'];
