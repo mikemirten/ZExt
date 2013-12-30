@@ -72,7 +72,6 @@ class Php implements LanguageInterface {
 	 * @return string
 	 */
 	public function highlightLine($source) {
-		$source = htmlspecialchars($source);
 		$length = mb_strlen($source, 'UTF-8');
 		$result = '';
 		$state  = self::STATE_RUN;
@@ -82,8 +81,8 @@ class Php implements LanguageInterface {
 		for ($pos = 0; $pos < $length; ++ $pos) {
 			$char = $source[$pos];
 			
-			// State: run
-			if ($state === self::STATE_RUN) {
+			if ($state === self::STATE_RUN || $state === self::STATE_STR
+			 || $state === self::STATE_STS || $state === self::STATE_CME) {
 				// Whitespace
 				if ($char === ' ') {
 					$result .= '&nbsp;';
@@ -95,7 +94,28 @@ class Php implements LanguageInterface {
 					$result .= '&nbsp;&nbsp;&nbsp;&nbsp;';
 					continue;
 				}
-
+				
+				// Less than escape
+				if ($char === '<') {
+					$result .= '&lt;';
+					continue;
+				}
+				
+				// Greater than escape
+				if ($char === '>') {
+					$result .= '&gt;';
+					continue;
+				}
+				
+				// Ampersand escape
+				if ($char === '&') {
+					$result .=  '&amp;';
+					continue;
+				}
+			}
+			
+			// State: run
+			if ($state === self::STATE_RUN) {
 				// Variable
 				if ($char === '$') {
 					$result .= '<span class="zDumpVariable">';
@@ -110,7 +130,7 @@ class Php implements LanguageInterface {
 				if ($char === '\'') {
 					$result .= '<span class="zDumpString">';
 					$tags[]  = '</span>';
-					$result .= $char;
+					$result .= '&apos;';
 					$stack[] = self::STATE_RUN;
 					$state   = self::STATE_STR;
 					continue;
@@ -120,7 +140,7 @@ class Php implements LanguageInterface {
 				if ($char === '"') {
 					$result .= '<span class="zDumpString">';
 					$tags[]  = '</span>';
-					$result .= $char;
+					$result .= '&quot;';
 					$stack[] = self::STATE_RUN;
 					$state   = self::STATE_STS;
 					continue;
@@ -181,13 +201,15 @@ class Php implements LanguageInterface {
 			
 			// State: String
 			if ($state === self::STATE_STR) {
-				$result .= $char;
-				
+				// String end
 				if ($char === '\'' && $source[$pos - 1] !== '\\') {
+					$result .= '&apos;';
 					$result .= $tags->pop();
 					$state   = $stack->pop();
+					continue;
 				}
 				
+				$result .= $char;
 				continue;
 			}
 			
@@ -203,13 +225,15 @@ class Php implements LanguageInterface {
 					continue;
 				}
 				
-				$result .= $char;
-				
+				// String end
 				if ($char === '"' && $source[$pos - 1] !== '\\') {
+					$result .= '&quot;';
 					$result .= $tags->pop();
 					$state   = $stack->pop();
+					continue;
 				}
 				
+				$result .= $char;
 				continue;
 			}
 			
@@ -268,18 +292,6 @@ class Php implements LanguageInterface {
 			
 			// State: Comment run
 			if ($state === self::STATE_CME) {
-				// Whitespace
-				if ($char === ' ') {
-					$result .= '&nbsp;';
-					continue;
-				}
-
-				// Tabulation
-				if ($char === "\t") {
-					$result .= '&nbsp;&nbsp;&nbsp;&nbsp;';
-					continue;
-				}
-				
 				// End
 				if ($char === '/' && $source[$pos - 1] === '*') {
 					$state   = $stack->pop();
