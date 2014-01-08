@@ -44,6 +44,20 @@ use ZExt\Html\MultiElementsAbstract;
 class TableRow extends MultiElementsAbstract {
 	
 	/**
+	 * Constructor
+	 * 
+	 * @param array $elements
+	 * @param array $attrs
+	 */
+	public function __construct(array $elements = null, $attrs = null, $headRow = false) {
+		if ($headRow) {
+			$this->setHeadRow(true);
+		}
+		
+		parent::__construct($elements, $attrs);
+	}
+	
+	/**
 	 * Tag's name
 	 *
 	 * @var string 

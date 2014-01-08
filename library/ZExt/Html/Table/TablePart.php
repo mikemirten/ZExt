@@ -52,6 +52,31 @@ class TablePart extends MultiElementsAbstract {
 	protected $_tag = 'table';
 	
 	/**
+	 * Is thead part of the table
+	 *
+	 * @var bool
+	 */
+	protected $_headPart = false;
+	
+	/**
+	 * Set the part of the table into thead
+	 * 
+	 * @param bool $option
+	 */
+	public function setHeadPart($option = true) {
+		$this->_headPart = (bool) $option;
+	}
+	
+	/**
+	 * Is thead part of the table
+	 * 
+	 * @return bool
+	 */
+	public function isHeadPart() {
+		return $this->_headPart;
+	}
+	
+	/**
 	 * Add a row to a table
 	 * 
 	 * @param  array | TableRow $element
@@ -61,7 +86,7 @@ class TablePart extends MultiElementsAbstract {
 	 */
 	public function addElement($row, $name = null, $attrs = null) {
 		if (is_array($row)) {
-			$row = new TableRow($row, $attrs);
+			$row = new TableRow($row, $attrs, $this->_headPart);
 		}
 		else if (! $row instanceof TableRow) {
 			throw new Exception('Element must be an instance of the TableRow or an array');

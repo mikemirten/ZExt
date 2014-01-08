@@ -149,6 +149,7 @@ class Table extends Tag implements ArrayAccess, Countable, IteratorAggregate {
 		if ($this->_head === null) {
 			$this->_head = new TablePart();
 			$this->_head->setTag(self::TAG_HEAD);
+			$this->_head->setHeadPart(true);
 		}
 		
 		return $this->_head;
