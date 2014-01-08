@@ -187,6 +187,12 @@ class Html implements RendererInterface {
 		return $tabElement;
 	}
 	
+	/**
+	 * Handle the icon
+	 * 
+	 * @param  Infoset $info
+	 * @param  Tag     $tabElement
+	 */
 	protected function handleIcon(Infoset $info, Tag $tabElement) {
 		switch ($info->getIconType()) {
 			case Infoset::ICON_ASSET:
