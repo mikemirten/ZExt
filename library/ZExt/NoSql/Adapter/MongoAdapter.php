@@ -663,7 +663,7 @@ class MongoAdapter implements ProfileableInterface {
 	 * Profiler init callback
 	 */
 	protected function onProfilerInit($profiler) {
-		$profiler->setIcon('data:image/png;base64,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');
+		$profiler->setIcon('dbmongo');
 		$profiler->setName('MongoDB');
 	}
 
@@ -683,7 +683,10 @@ class MongoAdapter implements ProfileableInterface {
 
 		$infoRaw = $this->getDatabase('admin')->command(['buildinfo' => 1]);
 
-		$info = ['MongoDB version' => $infoRaw['version'] . ' (' . $infoRaw['bits'] . '-bit)'];
+		$info = [
+			'MongoDB version'    => $infoRaw['version'] . ' (' . $infoRaw['bits'] . '-bit)',
+			'PHP driver version' => MongoClient::VERSION
+		];
 
 		foreach ($this->getClient()->getConnections() as $key => $connection) {
 			$string = $connection['server']['host'] . ':' . $connection['server']['port'] . ' ';
