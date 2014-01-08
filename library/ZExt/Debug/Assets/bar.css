@@ -24,7 +24,6 @@
 .debug-bar-wrapper {
 	background: #e5ebee;
 	background: linear-gradient(#f6f8f9, #c1c8cd);
-	background: -webkit-linear-gradient(#f6f8f9, #c1c8cd);
 	box-shadow: 0 0 10px rgba(127, 127, 127, 0.5);
 }
 
@@ -57,7 +56,6 @@
 	border-radius: 1em;
 	background:    rgba(32, 32, 40, 0.75);
 	background:    linear-gradient(rgba(0, 0, 8, 0.75), rgba(96, 96, 104, 0.75));
-	background:    -webkit-linear-gradient(rgba(0, 0, 8, 0.75), rgba(96, 96, 104, 0.75));
 	box-shadow:    inset 1px 1px 4px #000;
 	color:         #fff;
 	text-shadow:   1px 1px 1px #000;
@@ -96,6 +94,10 @@
 	opacity: 0;
 }
 
+.debug-bar .debug-tab.alert .debug-info-holder {
+	color: #f00;
+}
+
 .debug-panel-wrapper {
 	display:    none;
 	background: #d7dee3;
@@ -103,7 +105,7 @@
 
 .debug-panel-wrapper h4 {
 	margin:      0;
-	padding:     0.2em 0.5em;
+	padding:     0.25em 0.5em;
 	font-size:   small;
 	text-shadow: 1px 1px 2px #fff;
 }
@@ -114,79 +116,133 @@
 	padding:    0.35em;
 }
 
-.debug-panel p {
-	margin: 0.35em;
+.debug-panel .content-table {
+	border-collapse: collapse;
+	padding:         0;
+	margin:          0;
+	font-size:       small;
+	background:      #fff;
+	width:           100%;
 }
 
-.debug-panel h1,
-.debug-panel h2,
-.debug-panel h3,
-.debug-panel h4 {
-	margin: 0.5em;
+.debug-panel .content-table > tbody tr td {
+	border-bottom: 1px dashed #ccc;
+	padding:       0.25em 0.75em;
 }
 
-.debug-panel ul,
-.debug-panel ol {
-	margin:     0;
+.debug-panel .content-table > thead {
+	background:    #eee;
+	border-bottom: 1px solid #ddd;
+}
+
+.debug-panel .content-table > thead tr th {
+	text-align: left;
+	padding:    0.3em 0.75em;
+}
+
+.debug-panel .content-table > tbody tr.info {
+	background: #dcebfa;
+}
+
+.debug-panel .content-table > tbody tr.success {
+	background: #ebfaeb;
+	
+}
+
+.debug-panel .content-table > tbody tr.warning {
+	background: #fff5eb;
+}
+
+.debug-panel .content-table > tbody tr.alert {
+	background: #fae6e6;
+}
+
+.debug-panel .content-table > tbody tr:last-child td {
+	border-bottom: none;
+} 
+
+.debug-panel .content-desclist {
 	padding:    0;
-	background: #eee;
+	margin:     0;
+	background: #fff;
 }
 
-.debug-panel ul ul,
-.debug-panel ul ol,
-.debug-panel ol ul,
-.debug-panel ol ol {
-	padding-left: 3em;
+.debug-panel .content-desclist dt {
+	margin:        0;
+	padding:       0.2em 0.5em;
+	font-weight:   bold;
+	background:    #eee;
+	border-bottom: 1px solid #ddd;
 }
 
-.debug-panel li {
-	margin-left: 3em;
-	padding:     0.1em 0;
+.debug-panel .content-desclist dd {
+	margin:        0;
+	padding:       0.2em 0.5em 0.2em 2em;
+	border-bottom: 1px dashed #ccc;
 }
 
-.debug-panel li .debug-info-holder {
-	padding:       1px 0.75em;
-	margin:        0 1em;
-	border:        1px solid #c1c8cd;
-	border-radius: 1em;
+.debug-panel .content-desclist dd:last-child {
+	border-bottom: none;
 }
 
-.debug-panel .list-rows > li {
+.debug-panel .content-list {
+	padding:    0;
+	margin:     0;
+	list-style: none;
+}
+
+.debug-panel .content-list > li {
+	margin-left:   0;
 	padding:       0.2em 0.75em;
 	border-bottom: 1px dashed #ccc;
 	background:    #fff;
 }
 
-.debug-panel .list-rows > li:last-child {
+.debug-panel .content-list > li:last-child {
 	border-bottom: none;
 }
 
-.debug-panel .list-simple {
-	list-style:  none;
-	margin-left: 0;
-}
-
-.debug-panel .list-simple li {
-	margin-left: 0;
-}
-
-.debug-panel .list-simple p {
-	margin-left: 0;
-}
-
-.debug-keyword {
+.debug-panel .content-keyword {
 	color:       #823;
 	font-weight: bold;
 }
 
-.debug-string {
-	color: #292;
+.debug-bar .content-alert {
+	color: #f00;
 }
 
-.debug-string2 {
-	color: #229;
+.debug-panel .content-alert {
+	color: #922;
 }
 
-.debug-line {
-	color: #283;
+.debug-bar .content-warning {
+	color: ee0;
+}
+
+.debug-panel .content-warning {
+	color: #980;
+}
+
+.debug-bar .content-success {
+	color: #0e0;
+}
+
+.debug-panel .content-success {
+	color: #282;
+}
+
+.debug-bar .content-info {
+	color: #0cf;
+}
+
+.debug-panel .content-info {
+	color: #238;
+}
+
+.debug-panel .content-special {
+	padding:       0.1em 0.75em;
+	margin:        0 1em;
+	border:        1px solid #c1c8cd;
+	border-radius: 1em;
+	white-space:   nowrap !important;
 }

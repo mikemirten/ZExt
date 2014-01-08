@@ -28,16 +28,19 @@ namespace ZExt\Debug;
 
 use ZExt\Components\OptionsTrait;
 
+use ZExt\Di\LocatorByArgumentsInterface,
+    ZExt\Di\InitializerNamespace;
+
 use ZExt\Profiler\ProfilerInterface,
     ZExt\Profiler\ProfilerExtendedInterface,
     ZExt\Profiler\ProfileableInterface;
 
-use ZExt\Html\Tag,
-    ZExt\Html\ListUnordered,
-    ZExt\Html\ListElement;
+use ZExt\Html\Script;
 
-use ZExt\Debug\Modules\ModuleInterface,
-    ZExt\Debug\Modules\Errors;
+use ZExt\Debug\Infosets\Infoset,
+    ZExt\Debug\Collectors\CollectorInterface,
+    ZExt\Debug\Renderers\RendererInterface,
+    ZExt\Debug\Renderers\Html as RendererHtml;
 
 use ZExt\Dump\Html as Dump;
 
@@ -53,20 +56,27 @@ use ZExt\Debug\Exceptions\InvalidPath,
  * @package    Debug
  * @subpackage DebugBar
  * @author     Mike.Mirten
- * @version    1.1.1
+ * @version    2.0beta
  */
 class DebugBar {
 	
 	use OptionsTrait;
 	
-	const NAMESPACE_MODULES = '\ZExt\Debug\Modules';
+	const NAMESPACE_COLLECTORS = 'ZExt\Debug\Collectors';
 	
 	/**
-	 * Modules instances
+	 * Collectors' locator
 	 *
-	 * @var ModuleInterface[]
+	 * @var LocatorByArgumentsInterface 
 	 */
-	protected $modules = [];
+	protected $collectorsLocator;
+	
+	/**
+	 * Information collectors instances
+	 *
+	 * @var CollectorInterface[]
+	 */
+	protected $collectors = [];
 	
 	/**
 	 * Deferred mode setting
@@ -125,6 +135,13 @@ class DebugBar {
 	protected $gcLockLifetime = 60;
 	
 	/**
+	 * Content renderer
+	 * 
+	 * @var RendererInterface
+	 */
+	protected $renderer;
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param array | \Traversable $options
@@ -137,7 +154,7 @@ class DebugBar {
 			$this->setOptions($options);
 		}
 		
-		$this->registerShutdownHandler();
+		$this->registerHandlers();
 	}
 	
 	/**
@@ -188,17 +205,17 @@ class DebugBar {
 	}
 	
 	/**
-	 * Add modules
+	 * Add the collectors
 	 * 
-	 * @param  array $modules
+	 * @param  array $collectors
 	 * @return Debug
 	 */
-	public function addModules(array $modules) {
-		foreach ($modules as $name => $module) {
+	public function addCollectors(array $collectors) {
+		foreach ($collectors as $name => $collector) {
 			if (is_string($name)) {
-				$this->addModule($module, $name);
+				$this->addCollector($collector, $name);
 			} else {
-				$this->addModule($module);
+				$this->addCollector($collector);
 			}
 		}
 		
@@ -214,17 +231,19 @@ class DebugBar {
 	 */
 	public function addProfiler($profiler, $name = null) {
 		if ($profiler instanceof ProfileableInterface) {
-			if ($profiler->isProfilerEnabled()) {
-				$profiler = $profiler->getProfiler();
+			if (! $profiler->isProfilerEnabled()) {
+				$profiler->setProfilerStatus(true);
 			}
+			
+			$profiler = $profiler->getProfiler();
 		}
 		
 		if ($profiler instanceof ProfilerInterface) {
 			if ($name === null && $profiler instanceof ProfilerExtendedInterface) {
-				$name = $profiler->getName();
+				$name = $profiler->getName() . ' profiler';
 			}
 			
-			$this->addModule('profiler', $name, [
+			$this->addCollector('profiler', $name, [
 				'profiler' => $profiler
 			]);
 		}
@@ -233,47 +252,45 @@ class DebugBar {
 	}
 	
 	/**
-	 * Add a module
+	 * Add the collector
 	 * 
-	 * @param  ModuleInterface | string | array $module
-	 * @param  string                           $name
-	 * @param  array                            $params
+	 * @param  CollectorInterface | string $collector
+	 * @param  string                      $name
+	 * @param  array                       $params
 	 * 
 	 * @return DebugBar
 	 */
-	public function addModule($module, $name = null, array $params = null) {
-		// Module instance
-		if ($module instanceof ModuleInterface) {
+	public function addCollector($collector, $name = null, array $params = null) {
+		// Collector instance
+		if ($collector instanceof CollectorInterface) {
 			if ($name === null) {
-				$class = get_class($module);
+				$class = get_class($collector);
 				$name  = substr($class, strrpos($class, '\\') + 1);
 			}
-
-			$this->modules[$name] = $module;
 		}
 		// String definition
-		else if (is_string($module)) {
+		else if (is_string($collector)) {
 			if ($name === null) {
-				$name = $module;
+				$name = $collector;
 			}
 
-			$this->modules[$name] = $this->loadModule($module, $params);
+			$collector = $this->loadCollector($collector, $params);
 		}
 		// Array definition
-		else if (is_array($module)) {
-			$type = isset($module['type']) ? $module['type'] : $module[0];
+		else if (is_array($collector)) {
+			$type = isset($collector['type']) ? $collector['type'] : $collector[0];
 
 			// Define a name
 			switch (true) {
 				case $name !== null:
 					break;
 
-				case isset($module['name']):
-					$name = $module['name'];
+				case isset($collector['name']):
+					$name = $collector['name'];
 					break;
 
-				case count($module) > 2:
-					$name = $module[1];
+				case count($collector) > 2:
+					$name = $collector[1];
 					break;
 
 				default:
@@ -282,85 +299,113 @@ class DebugBar {
 
 			// Define a params
 			switch (true) {
-				case isset($module['params']):
-					$moduleParams = $module['params'];
+				case isset($collector['params']):
+					$collectorParams = $collector['params'];
 					break;
 
-				case count($module) > 2:
-					$moduleParams = $module[2];
+				case count($collector) > 2:
+					$collectorParams = $collector[2];
 					break;
 
 				default:
-					$moduleParams = $module[1];
+					$collectorParams = $collector[1];
 			}
 
 			if ($params !== null) {
-				$moduleParams += $params;
+				$collectorParams += $params;
 			}
 
-			$this->modules[$name] = $this->loadModule($type, $moduleParams);
+			$collector = $this->loadCollector($type, $collectorParams);
+		}
+		
+		if ($collector !== null) {
+			$this->collectors[$name] = $collector;
 		}
 		
 		return $this;
 	}
 	
 	/**
-	 * Get the module
+	 * Get the collector
 	 * 
-	 * @param  string $moduleName
-	 * @return ModuleInterface | null
+	 * @param  string $name
+	 * @return CollectorInterface | null
 	 */
-	public function getModule($moduleName) {
-		if (isset($this->modules[$moduleName])) {
-			return $this->modules[$moduleName];
+	public function getCollector($name) {
+		if (isset($this->collectors[$name])) {
+			return $this->collectors[$name];
 		}
 	}
 	
 	/**
-	 * Get all modules
+	 * Get all collectors
 	 * 
-	 * @return ModuleInterface[]
+	 * @return CollectorInterface[]
 	 */
-	public function getModules() {
-		return $this->modules;
+	public function getCollectors() {
+		if (empty($this->collectors)) {
+			$this->addDefaultCollectors();
+		}
+		
+		return $this->collectors;
 	}
 	
 	/**
-	 * Has the module ?
+	 * Has the collector ?
 	 * 
-	 * @param  string $moduleName
+	 * @param  string $name
 	 * @return bool
 	 */
-	public function hasModule($moduleName) {
-		return isset($this->modules[$moduleName]);
+	public function hasCollector($name) {
+		return isset($this->collectors[$name]);
 	}
 	
 	/**
-	 * Add default modules
+	 * Add the default collectors
 	 * 
 	 * @return Debug
 	 */
-	public function addDefaultModules() {
-		$this->addModules([
-			'versions',
-			'time',
-			'files',
-			'memory',
-			'errors'
-		]);
+	public function addDefaultCollectors() {
+		$this->addCollector('php', 'Php engine');
+		$this->addCollector('time', 'Execution time');
+		$this->addCollector('memory', 'Memory usage');
+		$this->addCollector('files', 'Included files');
+		$this->addCollector('errors', 'Occurred errors');
+		$this->addCollector('request', 'Request info');
+		$this->addCollector('response', 'Response info');
 		
 		return $this;
 	}
 	
 	/**
-	 * Load the module
+	 * Load the collector
 	 * 
-	 * @return ModuleInterface
+	 * @return CollectorInterface | null
 	 */
-	protected function loadModule($moduleName, array $params = null) {
-		$class = self::NAMESPACE_MODULES . '\\' . ucfirst($moduleName);
+	protected function loadCollector($name, array $params = null) {
+		$locator = $this->getCollectorsLocator();
 		
-		return new $class($params);
+		try {
+			return $locator->getByArguments(ucfirst($name), [$params]);
+		} catch (Exception $exception) {
+			$this->pushException($exception);
+		}
+	}
+	
+	/**
+	 * Get the collectors' locator
+	 * 
+	 * @return LocatorByArgumentsInterface
+	 */
+	public function getCollectorsLocator() {
+		if ($this->collectorsLocator === null) {
+			$locator = new InitializerNamespace();
+			$locator->registerNamespace(self::NAMESPACE_COLLECTORS);
+			
+			$this->collectorsLocator = $locator;
+		}
+		
+		return $this->collectorsLocator;
 	}
 	
 	/**
@@ -382,14 +427,11 @@ class DebugBar {
 			return $this->renderLoadingScript();
 		}
 		
-		$debugBar   = $this->renderDebugBar();
-		$wrapperTag = new Tag('div', $debugBar, ['id' => 'debug-wrapper']);
-		
-		return $wrapperTag->render();
+		return $this->renderDebugBar();
 	}
 	
 	/**
-	 * Render a loading script
+	 * Render the loading script
 	 * 
 	 * @return string
 	 */
@@ -398,99 +440,57 @@ class DebugBar {
 		
 		$script = $this->getAsset('deferred.js');
 		$script = str_replace('$url', $url, $script);
-
-		$scriptTag = new Tag('script', $script, ['type' => 'text/javascript']);
 		
-		return $scriptTag->render();
+		return (new Script($script))->render();
 	}
 	
 	/**
-	 * Render the debug panel
+	 * Render the debug bar
 	 * 
 	 * @return string
 	 */
 	protected function renderDebugBar() {
-		$modules = $this->getModules();
+		$collectors = $this->getCollectors();
+		$renderer   = $this->getRenderer();
 		
-		if (empty($modules)) {
-			$this->addDefaultModules();
-		}
-		
-		$tabsList = new ListUnordered();
-		$tabsList->setSeparator('');
-		$tabsList->addClass('debug-bar');
-		$tabsList->setAttr('id', 'debug-elements');
-		
-		$titleTag = new Tag('h4', null, 'debug-bar-wrapper');
-		$panelTag = new Tag('div', null, 'debug-panel');
-		
-		$panels = '';
-		
-		foreach ($this->getModules() as $name => $module) {
+		foreach ($collectors as $name => $collector) {
 			try {
-				$tab = $module->renderTab();
-			} catch(Exception $exception) {
-				$tab = 'Error';
+				$info = $collector->getInfo();
+				$info->setName($name);
+			} catch (Exception $exception) {
+				$this->pushException($exception);
 			}
 			
-			if ($tab === null) {
-				continue;
-			}
-			
-			if (isset($exception)) {
-				$panel = 'Tab exception: ';
-			} else {
-				try {
-					$panel = $module->renderPanel();
-				} catch(Exception $exception) {
-					$tab   = 'Error';
-					$panel = 'Panel exception: ';
-				}
-			}
-			
-			$infoTag = new Tag('span', $tab, 'debug-info-holder');
-			
-			if (isset($exception)) {
-				$panel .= Dump::getDump($exception);
-				
-				$infoTag->addStyle('color', 'red');
-			}
-			
-			$tabElement = new ListElement($infoTag);
-			$tabElement->addClass('debug-tab');
-			$tabElement->setAttr('title', $name . ': ' . $tab);
-			
-			if (($icon = $module->getTabIcon()) !== null) {
-				$tabElement->addClass('hasicon');
-				$tabElement->addStyle('background-image', "url($icon)");
-			}
-			
-			$tabsList->addElement($tabElement);
-			
-			if (! $panel) {
-				continue;
-			}
-			
-			$id = 'debug-panel-' . substr(md5($name), 16);
-			
-			$tabElement->addClass('withpanel clickable');
-			$tabElement->setAttr('data-panel-id', $id);
-			
-			$panels .= new Tag('div', $titleTag->render($name) . $panelTag->render($panel), [
-				'id'    => $id,
-				'class' => 'debug-panel-wrapper'
-			]);
-			
-			unset($exception);
+			$renderer->addInfo($info);
 		}
 		
-		$styleTag  = new Tag('style', $this->getAsset('bar.css'));
-		$scriptTag = new Tag('script', $this->getAsset('bar.js'), ['type' => 'text/javascript']);
+		return $renderer->render();
+	}
+	
+	/**
+	 * Set the content renderer
+	 * 
+	 * @param  RendererInterface $renderer
+	 * @return DebugBar
+	 */
+	public function setRenderer(RendererInterface $renderer) {
+		$this->renderer = $renderer;
 		
-		$wrapperTag = new Tag('div', $tabsList, 'debug-bar-wrapper');
-		$debugTag   = new Tag('div', $panels . $wrapperTag, 'debug-main');
+		return $this;
+	}
+	
+	/**
+	 * Get the content renderer
+	 * 
+	 * @return RendererInterface
+	 */
+	public function getRenderer() {
+		if ($this->renderer === null) {
+			$this->renderer = new RendererHtml();
+			$this->renderer->setAssetsPath(__DIR__ . DIRECTORY_SEPARATOR . 'Assets');
+		}
 		
-		return $styleTag . $scriptTag . $debugTag;
+		return $this->renderer;
 	}
 	
 	/**
@@ -527,42 +527,16 @@ class DebugBar {
 	/**
 	 * Shutdown handler
 	 */
-	protected function registerShutdownHandler() {
+	protected function registerHandlers() {
+		set_exception_handler(function($exception) {
+			$this->pushException($exception);
+			
+			echo $this->renderDebugBar();
+		});
+		
 		register_shutdown_function(function() {
-			// Emergency autoloader
-			$incPath = realpath(__DIR__ . '/../..') . DIRECTORY_SEPARATOR;
-			
-			spl_autoload_register(function($class) use($incPath) {
-				if (strpos($class, 'ZExt') === 0) {
-					include($incPath . str_replace('\\', DIRECTORY_SEPARATOR, $class) . '.php');
-				}
-			});
-			
 			if ($this->onShutdownCallback !== null) {
 				$this->onShutdownCallback->__invoke($this);
-			}
-
-			// Last error handling
-			$error = error_get_last();
-			
-			if (! empty($error) && $error['type'] === E_ERROR) {
-				foreach ($this->getModules() as $module) {
-					if ($module instanceof Errors) {
-						break;
-					}
-					
-					unset($module);
-				}
-				
-				if (! isset($module)) {
-					$module = new Errors();
-					$this->addModule($module);
-				}
-				
-				$module->errorHandler($error['type'], $error['message'], $error['file'], $error['line']);
-				
-				echo $this->renderDebugBar();
-				return;
 			}
 			
 			// Debug bar rendering for the deferred mode
@@ -579,6 +553,23 @@ class DebugBar {
 				}
 			}
 		});
+	}
+	
+	/**
+	 * Push the exception into the debug bar
+	 * 
+	 * @param Exception $exception
+	 */
+	protected function pushException(Exception $exception) {
+		$info = new Infoset();
+			
+		$info->setTitle('Exception')
+		     ->setIcon('alert')
+			 ->setLevel(Infoset::LEVEL_ALERT)
+			 ->setContentType(Infoset::TYPE_DUMP)
+			 ->pushContent($exception);
+
+		$this->getRenderer()->addInfo($info);
 	}
 	
 	/**
@@ -599,7 +590,6 @@ class DebugBar {
 
 		$profilesDir = new DirectoryIterator($this->deferredDir);
 		
-
 		foreach ($profilesDir as $file) {
 			if (! $file->isFile()) {
 				continue;

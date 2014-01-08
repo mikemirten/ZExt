@@ -24,7 +24,7 @@
  * @version   1.0
  */
 
-namespace ZExt\Debug\Modules;
+namespace ZExt\Debug\Collectors;
 
 /**
  * Modules' interface
@@ -35,35 +35,13 @@ namespace ZExt\Debug\Modules;
  * @author     Mike.Mirten
  * @version    1.0
  */
-interface ModuleInterface {
+interface CollectorInterface {
 	
 	/**
-	 * Get a base64 encoded icon for a tab
+	 * Get the collected information
 	 * 
-	 * @param size of an icon
-	 * @return string 
+	 * @return \ZExt\Debug\InfoSet
 	 */
-	public function getTabIcon($size = null);
-	
-	/**
-	 * Title of a tab
-	 * 
-	 * @return string | null if no title
-	 */
-	public function getTitle();
-
-	/**
-	 * Tab with base information
-	 * 
-	 * @return string | null if "do not render me this time"
-	 */
-	public function renderTab();
-	
-	/**
-	 * Panel with full information
-	 * 
-	 * @return string | null if nothing, to show
-	 */
-	public function renderPanel();
+	public function getInfo();
 	
 }
