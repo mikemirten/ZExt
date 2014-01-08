@@ -82,7 +82,8 @@ class Php implements LanguageInterface {
 			$char = $source[$pos];
 			
 			if ($state === self::STATE_RUN || $state === self::STATE_STR
-			 || $state === self::STATE_STS || $state === self::STATE_CME) {
+			 || $state === self::STATE_STS || $state === self::STATE_CME
+			 || $state === self::STATE_CML) {
 				// Whitespace
 				if ($char === ' ') {
 					$result .= '&nbsp;';
