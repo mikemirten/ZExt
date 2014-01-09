@@ -449,7 +449,7 @@ class Html implements RendererInterface {
 	protected function bbCodesHandle($content) {
 		$bbCodes = $this->getTagsLocator();
 		
-		return preg_replace_callback('~\[([a-z]+)\](.*)\[/\1\]~', function($match) use($bbCodes) {
+		return preg_replace_callback('~\[([a-z]+)\](.*?)\[/\1\]~', function($match) use($bbCodes) {
 			array_shift($match);
 			list($tag, $value) = $match;
 			
