@@ -218,7 +218,10 @@ class Html implements RendererInterface {
 	protected function createPanel(Infoset $info) {
 		$content = $this->createContent($info);
 		
-		$title = new Tag('h4', $info->getName(), 'debug-bar-wrapper');
+		$titleValue = $info->getName() . ' :: ' . $this->stripBbCodes($info->getTitle());
+		$titleValue = $this->specialCharsHandle($titleValue);
+		
+		$title = new Tag('h4', $titleValue, 'debug-bar-wrapper');
 		$panel = new Tag('div', $content, 'debug-panel');
 		
 		return new Tag('div', $title->render() . $panel->render(), 'debug-panel-wrapper');
