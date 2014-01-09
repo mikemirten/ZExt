@@ -48,13 +48,31 @@ class Php extends CollectorAbstract {
 			->setName('Php engine')
 			->setIcon('elephant');
 		
-		preg_match('/([0-9\.]+)/i', phpversion(), $matches);
-		$info->setTitle('PHP ' . $matches[1]);
-		
+		$this->createTitle($info);
 		$this->engineInfo($info);
 		$this->extensionsInfo($info);
 		
 		return $info;
+	}
+	
+	/**
+	 * Create the title
+	 * 
+	 * @param Infoset $info
+	 */
+	protected function createTitle(Infoset $info) {
+		preg_match('/([0-9\.]+)/i', phpversion(), $matches);
+		$title = 'PHP ' . $matches[1];
+		
+		if (extension_loaded('xdebug')) {
+			$title .= ' / [alert]xdebug[/alert]';
+		}
+		
+		if (extension_loaded('apc')) {
+			$title .= ' / [success]apc[/success]';
+		}
+		
+		$info->setTitle($title);
 	}
 	
 	/**
