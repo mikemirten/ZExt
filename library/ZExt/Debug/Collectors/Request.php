@@ -79,8 +79,9 @@ class Request extends CollectorAbstract {
 	 * @return Infoset
 	 */
 	public function getInfo() {
-		$info = $this->createInfoset();
-		$info->setIcon('arrowdown');
+		$info = $this->createInfoset()
+			->setName('Request info')
+			->setIcon('arrowdown');
 		
 		if (isset($_SERVER['REQUEST_METHOD'])) {
 			$info->setTitle(preg_replace('/[^a-z]+/i', '', $_SERVER['REQUEST_METHOD']));

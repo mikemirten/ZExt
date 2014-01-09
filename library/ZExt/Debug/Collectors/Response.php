@@ -44,8 +44,9 @@ class Response extends CollectorAbstract {
 	 * @return Infoset
 	 */
 	public function getInfo() {
-		$info = $this->createInfoset();
-		$info->setIcon('arrowup');
+		$info = $this->createInfoset()
+			->setName('Response info')
+			->setIcon('arrowup');
 		
 		$this->createTitle($info);
 		$this->createContent($info);

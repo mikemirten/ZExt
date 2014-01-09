@@ -50,6 +50,7 @@ class Memory extends CollectorAbstract {
 		$limit  = ini_get('memory_limit');
 		
 		$info->setIcon('chip')
+		     ->setName('Memory usage')
 		     ->setTitle($this->formatMemory($memory) . ' of ' . $limit);
 		
 		if ($limit / $memory < 0.25) {

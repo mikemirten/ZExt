@@ -318,6 +318,17 @@ class DebugBar {
 			$collector = $this->loadCollector($type, $collectorParams);
 		}
 		
+		// Name collision handling
+		while (isset($this->collectors[$name])) {
+			if (preg_match('/[0-9]+$/', $name, $matches)) {
+				$name = preg_replace_callback('/([0-9]+)$/', function($match) {
+					return ((int) $match[1]) + 1;
+				}, $name);
+			} else {
+				$name .= 2;
+			}
+		}
+		
 		if ($collector !== null) {
 			$this->collectors[$name] = $collector;
 		}
@@ -366,13 +377,10 @@ class DebugBar {
 	 * @return Debug
 	 */
 	public function addDefaultCollectors() {
-		$this->addCollector('php', 'Php engine');
-		$this->addCollector('time', 'Execution time');
-		$this->addCollector('memory', 'Memory usage');
-		$this->addCollector('files', 'Included files');
-		$this->addCollector('errors', 'Occurred errors');
-		$this->addCollector('request', 'Request info');
-		$this->addCollector('response', 'Response info');
+		$this->addCollectors([
+			'php', 'time', 'memory', 'files',
+			'errors', 'request', 'response'
+		]);
 		
 		return $this;
 	}
@@ -456,7 +464,10 @@ class DebugBar {
 		foreach ($collectors as $name => $collector) {
 			try {
 				$info = $collector->getInfo();
-				$info->setName($name);
+				
+				if ($info->getName() === null) {
+					$info->setName($name);
+				}
 			} catch (Exception $exception) {
 				$this->pushException($exception);
 			}

@@ -44,8 +44,9 @@ class Php extends CollectorAbstract {
 	 * @return Infoset
 	 */
 	public function getInfo() {
-		$info = $this->createInfoset();
-		$info->setIcon('elephant');
+		$info = $this->createInfoset()
+			->setName('Php engine')
+			->setIcon('elephant');
 		
 		preg_match('/([0-9\.]+)/i', phpversion(), $matches);
 		$info->setTitle('PHP ' . $matches[1]);

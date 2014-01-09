@@ -49,6 +49,7 @@ class Time extends CollectorAbstract {
 		$elapsed = microtime(true) - $_SERVER['REQUEST_TIME_FLOAT'];
 		
 		$info->setIcon('clock')
+		     ->setName('Execution time')
 		     ->setTitle($this->formatTime($elapsed));
 		
 		return $info;

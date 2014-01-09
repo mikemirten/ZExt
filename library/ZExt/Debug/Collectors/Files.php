@@ -92,6 +92,7 @@ class Files extends CollectorAbstract {
 		$files = $this->getIncludedFiles();
 		
 		$info->setIcon('script')
+		     ->setName('Included files')
 		     ->setTitle(count($files) . ' Files');
 		
 		$this->createContent($info);

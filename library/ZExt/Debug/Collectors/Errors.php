@@ -112,6 +112,7 @@ class Errors extends CollectorAbstract {
 	 */
 	public function getInfo() {
 		$info = $this->createInfoset();
+		$info->setName('Occurred errors');
 		
 		$this->handleIcon($info);
 		$this->createTitle($info);
