@@ -26,6 +26,7 @@
 namespace ZExt\Db\Phalcon\Adapter;
 
 use Phalcon\Db\Adapter\Pdo\Mysql as PhalconMysql;
+use ZExt\Profiler\ProfileableInterface;
 
 /**
  * Phalcon Mysql adapter
@@ -35,7 +36,7 @@ use Phalcon\Db\Adapter\Pdo\Mysql as PhalconMysql;
  * @author     Mike.Mirten
  * @version    1.0
  */
-class Mysql extends PhalconMysql {
+class Mysql extends PhalconMysql implements ProfileableInterface {
 	
 	use AdapterTrait;
 	
@@ -49,6 +50,14 @@ class Mysql extends PhalconMysql {
 	public function __construct($options) {
 		$this->handleOptions($options);
 		parent::__construct($options);
+	}
+	
+	/**
+	 * Profiler initialization
+	 */
+	protected function onProfilerInit($profiler) {
+		$profiler->setName('Phalcon MySQL')
+		         ->setIcon('db');
 	}
 	
 }
