@@ -37,6 +37,8 @@ use ZExt\Di\Exception\NoService,
 
 use Phalcon\Di\Exception as PhalconDiException;
 
+use Closure;
+
 /**
  * Dependency injection service container trait based on the Phalcon DI
  * 
@@ -346,6 +348,10 @@ trait ContainerTrait {
 			} catch (PhalconDiException $exception) {
 				// Do nothing
 			}
+		}
+		
+		if (is_object($service) && ! $service instanceof Closure) {
+			$this->_initializedServices[$id] = $service;
 		}
 		
 		return $this;

@@ -340,7 +340,7 @@ class InitializerNamespace
 				$namespace .= '\\' . $id;
 			}
 
-			$class = $namespace . '\\' . $this->_classPrefix . ucfirst($id) . $this->_classPostfix;
+			$class = $namespace . '\\' . $this->_classPrefix . $id . $this->_classPostfix;
 			
 			if (class_exists($class)) {
 				restore_error_handler();
