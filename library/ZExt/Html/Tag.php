@@ -229,6 +229,30 @@ class Tag {
 	}
 	
 	/**
+	 * Append the inner html
+	 * 
+	 * @param  string $html
+	 * @return Tag
+	 */
+	public function appendHtml($html) {
+		$this->_html .= $html;
+		
+		return $this;
+	}
+	
+	/**
+	 * Prepend the inner html
+	 * 
+	 * @param  string $html
+	 * @return Tag
+	 */
+	public function aprependHtml($html) {
+		$this->_html = $html . $this->_html;
+		
+		return $this;
+	}
+	
+	/**
 	 * Set the tag's attributes
 	 * 
 	 * @param  array $attrs
