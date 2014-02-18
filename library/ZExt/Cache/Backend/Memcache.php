@@ -41,7 +41,7 @@ use ZExt\Cache\Backend\Exceptions\ServerParamsError;
  * @package    Cache
  * @subpackage Backend
  * @author     Mike.Mirten
- * @version    1.0.1
+ * @version    1.0.2
  */
 class Memcache implements BackendInterface {
 	
@@ -139,7 +139,7 @@ class Memcache implements BackendInterface {
 	 * 
 	 * Parameters:
 	 * param name          | datatype | default | description
-	 * ======================================================
+	 * ===========================================================================================
 	 * servers             | array    | null    | Memcache servers params
 	 * namespace           | string   | null    | Namespace of an IDs
 	 * compression         | bool     | false   | Use compression of a data
@@ -148,7 +148,7 @@ class Memcache implements BackendInterface {
 	 * 
 	 * Servers parameters:
 	 * param name    | datatype | default     | description
-	 * ======================================================
+	 * ===========================================================================================
 	 * host          | string   | '127.0.0.1' | IP address or the host name or the socket path
 	 * port          | int      | 11211       | TCP port number
 	 * persistent    | bool     | true        | Persistent connection (Will not be closed on script end, and can be reused)
@@ -376,6 +376,10 @@ class Memcache implements BackendInterface {
 	protected function prepareId($id) {
 		if (! is_scalar($id)) {
 			$id = json_encode($id);
+			
+			if (isset($id[33])) {
+				$id = md5($id);
+			}
 		}
 		
 		if ($this->namespace === null) {
