@@ -36,7 +36,7 @@ use Closure;
  * @package    Html
  * @subpackage Pagination
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.0.1
  */
 class Pagination extends Navigation {
 	
@@ -113,6 +113,7 @@ class Pagination extends Navigation {
 	 */
 	public function setPaginator(PaginatorInterface $paginator) {
 		$this->_paginator = $paginator;
+		$this->_pageParam = $paginator->getPageParam();
 		
 		return $this;
 	}

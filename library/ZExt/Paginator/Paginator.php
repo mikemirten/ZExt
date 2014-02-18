@@ -42,7 +42,7 @@ use Traversable, RuntimeException;
  * @package    Paginator
  * @subpackage Paginator
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
 class Paginator implements PaginatorInterface, LocatorAwareInterface {
 	
@@ -75,6 +75,13 @@ class Paginator implements PaginatorInterface, LocatorAwareInterface {
 	 * @var int
 	 */
 	protected $_currentPage = 1;
+	
+	/**
+	 * Page param
+	 *
+	 * @var string
+	 */
+	protected $_pageParam = 'page';
 	
 	/**
 	 * Number of an items per a page
@@ -249,7 +256,7 @@ class Paginator implements PaginatorInterface, LocatorAwareInterface {
 	 * 
 	 * @return int
 	 */
-	public function getItemsNumberPerPage() {
+	public function getItemsPerPage() {
 		return $this->_itemsPerPage;
 	}
 	
@@ -264,6 +271,15 @@ class Paginator implements PaginatorInterface, LocatorAwareInterface {
 		}
 		
 		return $this->_entirePagesNumbe;
+	}
+	
+	/**
+	 * Get the entire items number
+	 * 
+	 * @retirn int
+	 */
+	public function getItemsNumber() {
+		return $this->getAdapter()->count();
 	}
 	
 	/**
@@ -320,6 +336,33 @@ class Paginator implements PaginatorInterface, LocatorAwareInterface {
 	 */
 	public function count() {
 		return count($this->getCurrentItems());
+	}
+	
+	/**
+	 * Is the paginator data empty ?
+	 * 
+	 * @return bool
+	 */
+	public function isEmpty() {
+		return count($this->getCurrentItems()) === 0;
+	}
+	
+	/**
+	 * Set the name of the page param
+	 * 
+	 * @param string $page
+	 */
+	public function setPageParam($name) {
+		$this->_pageParam = (string) $name;
+	}
+	
+	/**
+	 * Set the name of the page param
+	 * 
+	 * @return string
+	 */
+	public function getPageParam() {
+		return $this->_pageParam;
 	}
 	
 }
