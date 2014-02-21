@@ -34,6 +34,10 @@ use ZExt\Cache\Backend\Exceptions\NoPhpExtension;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 use ZExt\Cache\Backend\Exceptions\ServerParamsError;
 
+use ZExt\Cache\Topology\TopologyInterface;
+use ZExt\Topology\Descriptor;
+
+
 /**
  * Memcache backend adapter
  * 
@@ -43,7 +47,7 @@ use ZExt\Cache\Backend\Exceptions\ServerParamsError;
  * @author     Mike.Mirten
  * @version    1.0.2
  */
-class Memcache implements BackendInterface {
+class Memcache implements BackendInterface, TopologyInterface {
 	
 	use OptionsTrait;
 	
@@ -533,6 +537,32 @@ class Memcache implements BackendInterface {
 	 */
 	public function getOperationExceptions() {
 		return $this->operationsExceptions;
+	}
+	
+	/**
+	 * Get the cache topology
+	 * 
+	 * @return Descriptor
+	 */
+	public function getTopology() {
+		$descriptor = new Descriptor('Memcache', self::TOPOLOGY_BACKEND);
+		
+		if ($this->memcacheClient === null) {
+			return $descriptor;
+		}
+		
+		foreach($this->memcacheClient->getextendedstats() as $serverKey => $serverInfo) {
+			$descriptor->setProperty(null, $serverKey);
+			
+			$filled = $serverInfo['bytes'] / $serverInfo['limit_maxbytes'] * 100;
+			
+			$descriptor->version = $serverInfo['version'];
+			$descriptor->used    = $serverInfo['bytes'];
+			$descriptor->total   = $serverInfo['limit_maxbytes'];
+			$descriptor->filled  = round($filled, 2) . '%';
+		}
+		
+		return $descriptor;
 	}
 	
 }

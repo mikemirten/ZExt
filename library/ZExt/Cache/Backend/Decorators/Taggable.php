@@ -29,6 +29,9 @@ namespace ZExt\Cache\Backend\Decorators;
 use ZExt\Cache\Backend\TaggableInterface;
 use ZExt\Cache\Backend\BackendInterface;
 
+use ZExt\Cache\Topology\TopologyInterface;
+use ZExt\Topology\Descriptor;
+
 /**
  * Tags supporting ability decorator
  * 
@@ -374,6 +377,28 @@ class Taggable extends DecoratorAbstract implements TaggableInterface {
 		}
 		
 		return $this->tagsBackend;
+	}
+	
+	/**
+	 * Get the cache topology
+	 * 
+	 * @return Descriptor
+	 */
+	public function getTopology() {
+		$descriptor = new Descriptor('Taggable', Descriptor::TYPE_SUCCESS);
+		$backend    = $this->getBackend();
+		
+		if ($backend instanceof TopologyInterface) {
+			$descriptor['data'] = $backend->getTopology();
+		}
+		
+		$tagsBackend = $this->getTagHolderBackend();
+		
+		if ($tagsBackend instanceof TopologyInterface) {
+			$descriptor['tags'] = $tagsBackend->getTopology();
+		}
+		
+		return $descriptor;
 	}
 	
 }

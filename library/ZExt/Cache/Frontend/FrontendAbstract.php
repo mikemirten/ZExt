@@ -29,7 +29,10 @@ namespace ZExt\Cache\Frontend;
 use ZExt\Cache\Backend\BackendInterface;
 use ZExt\Cache\Frontend\Exceptions\NoBackend;
 
-abstract class FrontendAbstract {
+use ZExt\Cache\Topology\TopologyInterface;
+use ZExt\Topology\Descriptor;
+
+abstract class FrontendAbstract implements TopologyInterface {
 	
 	/**
 	 * Cache backend instance
@@ -109,6 +112,29 @@ abstract class FrontendAbstract {
 	 */
 	public function getDefaultLifetime() {
 		return $this->_defaultLifetime;
+	}
+	
+	/**
+	 * Get the cache topology
+	 * 
+	 * @return Descriptor
+	 */
+	public function getTopology() {
+		$descriptor = new Descriptor('Frontend', self::TOPOLOGY_FRONTEND);
+		
+		if ($this->_namespace !== null) {
+			$descriptor->namespace = $this->_namespace;
+		}
+		
+		$descriptor->lifetime  = $this->_defaultLifetime;
+		
+		$backend = $this->getBackend();
+		
+		if ($backend instanceof TopologyInterface) {
+			$descriptor[] = $backend->getTopology();
+		}
+		
+		return $descriptor;
 	}
 	
 }

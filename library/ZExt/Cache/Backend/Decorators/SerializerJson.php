@@ -38,6 +38,13 @@ namespace ZExt\Cache\Backend\Decorators;
 class SerializerJson extends DecoratorAbstract {
 	
 	/**
+	 * Cache topology title
+	 *
+	 * @var string
+	 */
+	protected $topologyTitle = 'Serializer Json';
+	
+	/**
 	 * Fetch the data from the cache
 	 * 
 	 * @param  string $id

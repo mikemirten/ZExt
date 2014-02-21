@@ -30,6 +30,9 @@ use ZExt\Profiler\ProfilerExtendedInterface,
     ZExt\Profiler\ProfileableInterface,
     ZExt\Profiler\ProfileableTrait;
 
+use ZExt\Cache\Topology\TopologyInterface;
+use ZExt\Topology\Descriptor;
+
 /**
  * Profiling ability decorator
  * 
@@ -233,6 +236,28 @@ class Profileable extends DecoratorAbstract implements ProfileableInterface {
 			$profiler->setName($pos === false ? $name : substr($name, $pos + 1));
 			$profiler->setIcon('lightning');
 		}
+	}
+	
+	/**
+	 * Get the cache topology
+	 * 
+	 * @return Descriptor
+	 */
+	public function getTopology() {
+		$descriptor = new Descriptor('Profileable', self::TOPOLOGY_DECORATOR);
+		
+		$profiler = $this->getProfiler();
+		
+		$descriptor->events = $profiler->getTotalEvents();
+		$descriptor->time   = round($profiler->getTotalElapsedTime(), 4) . 's';
+		
+		$backend = $this->getBackend();
+		
+		if ($backend instanceof TopologyInterface) {
+			$descriptor[] = $backend->getTopology();
+		}
+		
+		return $descriptor;
 	}
 	
 }
