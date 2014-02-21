@@ -269,6 +269,10 @@ class Html implements RendererInterface {
 				$content .= $this->createDump($info);
 				break;
 			
+			case Infoset::TYPE_TOPOLOGY:
+				$content .= $this->createTopology($info);
+				break;
+			
 			default:
 				throw new InvalidContent('Unknown content type: "' . $info->getContentType() . '"');
 		}
@@ -403,6 +407,17 @@ class Html implements RendererInterface {
 		}
 		
 		return $content;
+	}
+	
+	/**
+	 * Create the topology
+	 * 
+	 * @param Infoset $into
+	 */
+	protected function createTopology(Infoset $into) {
+		/**
+		 * @todo Implement the method
+		 */
 	}
 	
 	/**
