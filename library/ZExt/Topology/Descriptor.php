@@ -39,16 +39,16 @@ use IteratorAggregate, ArrayObject, ArrayAccess, Countable;
  */
 class Descriptor implements IteratorAggregate, ArrayAccess, Countable {
 	
-	const TYPE_DEFAULT = 0;
-	const TYPE_PRIMARY = 1;
-	const TYPE_SUCCESS = 2;
-	const TYPE_WARNING = 3;
-	const TYPE_ALERT   = 4;
+	const TYPE_DEFAULT = 'default';
+	const TYPE_PRIMARY = 'primary';
+	const TYPE_SUCCESS = 'success';
+	const TYPE_WARNING = 'warning';
+	const TYPE_ALERT   = 'alert';
 	
 	/**
 	 * Type
 	 *
-	 * @var int 
+	 * @var string 
 	 */
 	protected $_type = self::TYPE_DEFAULT;
 	
@@ -130,11 +130,11 @@ class Descriptor implements IteratorAggregate, ArrayAccess, Countable {
 	/**
 	 * Set the descriptor type
 	 * 
-	 * @param  int $type
+	 * @param  string $type
 	 * @return Descriptor
 	 */
 	public function setType($type) {
-		$this->_type = (int) $type;
+		$this->_type = (string) $type;
 		
 		return $this;
 	}
@@ -142,7 +142,7 @@ class Descriptor implements IteratorAggregate, ArrayAccess, Countable {
 	/**
 	 * Set the descriptor type
 	 * 
-	 * @return int
+	 * @return string
 	 */
 	public function getType() {
 		return $this->_type;
@@ -231,19 +231,44 @@ class Descriptor implements IteratorAggregate, ArrayAccess, Countable {
 	}
 	
 	/**
+	 * Add the children
+	 * 
+	 * @param  array  $children
+	 * @param  string $type
+	 * @return Descriptor
+	 */
+	public function addChildren(array $children, $type = self::TYPE_DEFAULT) {
+		foreach ($children as $name => $child) {
+			if (is_string($name)) {
+				$this->addChild($child, $name, $type);
+				continue;
+			}
+			
+			$this->addChild($child, null, $type);
+		}
+		
+		return $this;
+	}
+	
+	/**
 	 * Add the child
 	 * 
-	 * @param  Descriptor $child
-	 * @return Descriptor;
+	 * @param  Descriptor | string $child
+	 * @param  string              $name
+	 * @return Descriptor
 	 */
-	public function addChild(Descriptor $child, $name = null) {
+	public function addChild($child, $name = null, $type = self::TYPE_DEFAULT) {
+		if (! $child instanceof Descriptor) {
+			$child = new static($child, $type);
+		}
+		
 		if ($name === null) {
 			$this->_children[] = $child;
-			return $this;
+			return $child;
 		}
 		
 		$this->_children[$name] = $child;
-		return $this;
+		return $child;
 	}
 	
 	/**
@@ -293,24 +318,36 @@ class Descriptor implements IteratorAggregate, ArrayAccess, Countable {
 		return $this->_propertities->count();
 	}
 	
+	/**
+	 * Add the child or the array of children
+	 * 
+	 * @param  string              $offset
+	 * @param  Descriptor | string $value
+	 * @return Descriptor
+	 */
 	public function offsetSet($offset, $value) {
+		if (is_array($value)) {
+			$this->addChildren($value, is_string($offset) ? $offset : null);
+			return;
+		}
+		
 		$this->addChild($value, $offset);
 	}
 	
 	public function offsetGet($offset) {
-		;
+		
 	}
 	
 	public function offsetExists($offset) {
-		;
+		
 	}
 	
 	public function offsetUnset($offset) {
-		;
+		
 	}
 	
 	public function getIterator() {
-		return $this->_propertities;
+		return $this->_children;
 	}
 	
 }

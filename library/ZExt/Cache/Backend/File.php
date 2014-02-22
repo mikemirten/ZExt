@@ -29,6 +29,9 @@ namespace ZExt\Cache\Backend;
 use ZExt\Components\OptionsTrait;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 
+use ZExt\Cache\Topology\TopologyInterface;
+use ZExt\Topology\Descriptor;
+
 /**
  * Files based backend adapter
  * 
@@ -38,7 +41,7 @@ use ZExt\Cache\Backend\Exceptions\OperationFailed;
  * @author     Mike.Mirten
  * @version    1.0
  */
-class File implements BackendInterface {
+class File implements BackendInterface, TopologyInterface {
 	
 	use OptionsTrait;
 	
@@ -580,6 +583,19 @@ class File implements BackendInterface {
 	 */
 	public function getCompressionLevel() {
 		return $this->compressionLevel;
+	}
+	
+	/**
+	 * Get the cache topology
+	 * 
+	 * @return Descriptor
+	 */
+	public function getTopology() {
+		$descriptor = new Descriptor('File', self::TOPOLOGY_BACKEND);
+		
+		$descriptor->path = $this->path;
+		
+		return $descriptor;
 	}
 	
 }

@@ -385,17 +385,25 @@ class Taggable extends DecoratorAbstract implements TaggableInterface {
 	 * @return Descriptor
 	 */
 	public function getTopology() {
-		$descriptor = new Descriptor('Taggable', Descriptor::TYPE_SUCCESS);
-		$backend    = $this->getBackend();
-		
-		if ($backend instanceof TopologyInterface) {
-			$descriptor['data'] = $backend->getTopology();
-		}
-		
+		$descriptor  = new Descriptor('Taggable', Descriptor::TYPE_SUCCESS);
+		$backend     = $this->getBackend();
 		$tagsBackend = $this->getTagHolderBackend();
 		
-		if ($tagsBackend instanceof TopologyInterface) {
-			$descriptor['tags'] = $tagsBackend->getTopology();
+		if ($backend instanceof TopologyInterface) {
+			if ($tagsBackend instanceof TopologyInterface) {
+				if ($backend->getId() === $tagsBackend->getId()) {
+					$descriptor[] = $backend->getTopology();
+					
+					return $descriptor;
+				}
+				
+				$descriptor['data'] = $backend->getTopology();
+				$descriptor['tags'] = $tagsBackend->getTopology();
+				
+				return $descriptor;
+			}
+			
+			$descriptor[] = $backend->getTopology();
 		}
 		
 		return $descriptor;

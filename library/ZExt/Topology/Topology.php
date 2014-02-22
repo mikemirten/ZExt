@@ -26,6 +26,8 @@
 
 namespace ZExt\Topology;
 
+use ZExt\Di\Container;
+
 use ZExt\Html\Tag;
 use ZExt\Html\Table;
 
@@ -47,6 +49,13 @@ class Topology {
 		Descriptor::TYPE_WARNING => 'topology-warning',
 		Descriptor::TYPE_ALERT   => 'topology-alert'
 	];
+	
+	/**
+	 * Tags' locator
+	 *
+	 * @var Container 
+	 */
+	protected $tagsLocator;
 	
 	/**
 	 * Render the topology
@@ -73,71 +82,19 @@ class Topology {
 	 * @param  string     $linkTitle
 	 * @return string
 	 */
-	protected function renderElement(Descriptor $descriptor, $isChild = false, $linkTitle = null) {
-		$elementTag = new Tag();
-		$elementTag->addClass('topology-element');
-		
-		$type = $descriptor->getType();
-		
-		if (isset(static::$types[$type])) {
-			$elementTag->addClass(static::$types[$type]);
-		}
-		
-		$headerTag = new Tag();
-		$headerTag->addClass('topology-header');
-		$headerTag->setHtml(htmlspecialchars($descriptor->getTitle()));
-		
-		$bodyTag = new Tag();
-		$bodyTag->addClass('topology-body');
-		
-		if ($descriptor->hasPropertities()) {
-			$bodyTag->setHtml($this->renderBodyContent($descriptor));
-		}
-		
-		$footerTag = new Tag();
-		$footerTag->addClass('topology-footer');
-		
-		$parts = $headerTag->render() . $bodyTag->render() . $footerTag->render();
-		
-		if ($isChild) {
-			$rightLinkTag = new Tag();
-			$rightLinkTag->addClass('topology-link');
-			
-			if ($linkTitle !== null) {
-				$rightLinkTag->setHtml($linkTitle);
-			}
-		}
+	protected function renderElement(Descriptor $descriptor) {
+		$element = $this->renderElementInner($descriptor);
 		
 		if ($descriptor->hasChildren()) {
+			$tagsLocator = $this->getTagsLocator();
+			
 			$children = $this->renderChildren($descriptor);
+			$element  = $tagsLocator->link->render() . $element;
 			
-			$linkTag = new Tag();
-			$linkTag->addClass('topology-link');
-			
-			if ($descriptor->getChildrenNumber() > 1) {
-				$linkUpTag = new Tag();
-				$linkUpTag->addClass('topology-link-up');
-				
-				$element = $linkUpTag->render() . $linkTag->render() . $elementTag->render($parts);
-			} else {
-				$element = $linkTag->render() . $elementTag->render($parts);
-			}
-			
-			$elementWrapperTag = new Tag();
-			$elementWrapperTag->addClass('topology-wrapper');
-			
-			if ($isChild) {
-				return $children . $elementWrapperTag->render($element . $rightLinkTag->render());
-			}
-			
-			return $children . $elementWrapperTag->render($element);
+			return $children . $tagsLocator->wrapper->render($element);
 		}
 		
-		if ($isChild) {
-			return $elementTag->render($parts) . $rightLinkTag->render();
-		}
-		
-		return $elementTag->render($parts);
+		return $element;
 	}
 	
 	/**
@@ -147,16 +104,91 @@ class Topology {
 	 * @return string
 	 */
 	protected function renderChildren(Descriptor $descriptor) {
-		$parts = [];
+		$counter = 1;
+		$parts   = [];
+		$total   = $descriptor->getChildrenNumber();
 		
-		foreach ($descriptor->getChildren() as $linkTitle => $child) {
-			$parts[] = $this->renderElement($child, true, is_numeric($linkTitle) ? null : $linkTitle);
+		$tagsLocator = $this->getTagsLocator();
+		$linkUp      = $tagsLocator->linkUp->render();
+		$linkDown    = $tagsLocator->linkDown->render();
+		$wrapper     = $tagsLocator->wrapper;
+		
+		foreach ($descriptor as $linkTitle => $child) {
+			$element = $this->renderChildElement($child, $linkTitle);
+			
+			if ($counter > 1) {
+				$element .= $linkUp;
+			}
+			
+			if ($counter < $total) {
+				$element .= $linkDown;
+			}
+			
+			if ($total > 1) {
+				$element = $wrapper->render($element);
+			}
+			
+			$parts[] = $element;
+			
+			++ $counter;
 		}
 		
-		$elementWrapperTag = new Tag();
-		$elementWrapperTag->addClass('topology-wrapper');
+		return $wrapper->render(implode('<br>', $parts));
+	}
+	
+	/**
+	 * Render the element as a child
+	 * 
+	 * @param  Descriptor   $descriptor
+	 * @param  string | int $linkTitle
+	 * @return string
+	 */
+	protected function renderChildElement(Descriptor $descriptor, $linkTitle) {
+		$element = $this->renderElement($descriptor);
+		$link    = $this->getTagsLocator()->get('link');
+
+		if (is_string($linkTitle)) {
+			return $element . $link->render($linkTitle);
+		}
+
+		return $element . $link->render();
+	}
+	
+	/**
+	 * Render the element's inner parts
+	 * 
+	 * @param  Descriptor $descriptor
+	 * @return string
+	 */
+	protected function renderElementInner(Descriptor $descriptor) {
+		$tagsLocator = $this->getTagsLocator();
 		
-		return $elementWrapperTag->render(implode('<br>', $parts));
+		// Element's main
+		$elementTag = new Tag();
+		$elementTag->addClass('topology-element');
+		
+		$type = $descriptor->getType();
+		
+		if (isset(static::$types[$type])) {
+			$elementTag->addClass(static::$types[$type]);
+		}
+		
+		// Header
+		$title = htmlspecialchars($descriptor->getTitle());
+		$elementTag->appendHtml($tagsLocator->header->render($title));
+		
+		// Body
+		if ($descriptor->hasPropertities()) {
+			$content = $this->renderBodyContent($descriptor);
+			$elementTag->appendHtml($tagsLocator->body->render($content));
+		} else {
+			$elementTag->appendHtml($tagsLocator->body->render());
+		}
+		
+		// Footer
+		$elementTag->appendHtml($tagsLocator->footer->render());
+		
+		return $elementTag->render();
 	}
 	
 	/**
@@ -169,16 +201,63 @@ class Topology {
 		$content = new Table();
 		$content->addClass('topology-props');
 		
-		foreach ($descriptor as $property => $value) {
+		foreach ($descriptor->getProperties() as $property => $value) {
+			$value = htmlspecialchars($value);
+			
 			if (is_numeric($property)) {
 				$content[] = [$value, ''];
 				continue;
 			}
 			
+			$property  = htmlspecialchars($property);
 			$content[] = [$property . ':', $value];
 		}
 		
 		return $content->render();
+	}
+	
+	/**
+	 * Grt the tags' locator
+	 * 
+	 * @return Container
+	 */
+	protected function getTagsLocator() {
+		if ($this->tagsLocator !== null) {
+			return $this->tagsLocator;
+		}
+		
+		$container = new Container();
+
+		$container->header = function() {
+			return new Tag('div', null, 'topology-header');
+		};
+		
+		$container->body = function() {
+			return new Tag('div', null, 'topology-body');
+		};
+		
+		$container->footer = function() {
+			return new Tag('div', null, 'topology-footer');
+		};
+		
+		$container->link = function() {
+			return new Tag('div', null, 'topology-link');
+		};
+		
+		$container->linkUp = function() {
+			return new Tag('div', null, 'topology-link-up');
+		};
+		
+		$container->linkDown = function() {
+			return new Tag('div', null, 'topology-link-down');
+		};
+		
+		$container->wrapper = function() {
+			return new Tag('div', null, 'topology-wrapper');
+		};
+
+		$this->tagsLocator = $container;
+		return $container;
 	}
 	
 }

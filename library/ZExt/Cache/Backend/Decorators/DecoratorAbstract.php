@@ -44,6 +44,13 @@ use ZExt\Topology\Descriptor;
 abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterface {
 	
 	/**
+	 * Unique IDs counter
+	 *
+	 * @var type 
+	 */
+	static private $_idCounter = 0;
+	
+	/**
 	 * Cache topology title
 	 *
 	 * @var string
@@ -56,6 +63,22 @@ abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterfac
 	 * @var BackendInterface 
 	 */
 	protected $backend;
+	
+	/**
+	 * Unique backend ID
+	 *
+	 * @var int
+	 */
+	protected $backendId;
+	
+	/**
+	 * Create the freash unique ID
+	 * 
+	 * @return int
+	 */
+	static protected function createId() {
+		return self::$_idCounter ++;
+	}
 	
 	/**
 	 * Constructor
@@ -105,6 +128,19 @@ abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterfac
 		}
 		
 		return $descriptor;
+	}
+	
+	/**
+	 * Get the unique decorator ID
+	 * 
+	 * @return int
+	 */
+	public function getId() {
+		if ($this->backendId === null) {
+			$this->backendId = self::createId();
+		}
+		
+		return $this->backendId;
 	}
 	
 }

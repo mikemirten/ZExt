@@ -18,19 +18,30 @@
 	position:       relative;
 	display:        inline-block;
 	border-bottom:  1px solid #333;
-	bottom:         2em;
+	bottom:         3em;
 	font-size:      smaller;
 	padding:        0 0.5em;
 	vertical-align: bottom;
 }
 
 .topology-link-up {
-	position:    absolute;
-	left:        0;
-	top:         0;
-	bottom:      2em;
-	width:       1em;
-	border-left: 1px solid #333;
+	position:     absolute;
+	right:        0;
+	top:          0;
+	bottom:       3em;
+	width:        1em;
+	border-right: 1px solid #333;
+	font-size:    smaller;
+}
+
+.topology-link-down {
+	position:     absolute;
+	right:        0;
+	bottom:       0;
+	height:       3em;
+	width:        1em;
+	border-right: 1px solid #333;
+	font-size:    smaller;
 }
 
 .topology-element {
@@ -112,10 +123,9 @@
 
 .topology-footer {
 	border-top: 1px solid #eee;
-	padding:    0.1em 0.5em;
 	background: #ddd;
 	min-width:  4em;
-	min-height: 0.5em;
+	height:     0.25em;
 	text-align: left;
 }
 
@@ -146,9 +156,16 @@
 /* Body */
 
 .topology-body {
-	padding:    0.5em;
+	padding:    0.35em;
 	min-height: 2em;
+	max-height: 12.25em;
 	font-size:  smaller;
+	overflow:   hidden;
+	transition: height 2s;
+}
+
+.topology-element:hover .topology-body {
+	max-height: none;
 }
 
 .topology-props {
