@@ -26,7 +26,7 @@
 
 namespace ZExt\Html;
 
-use ZExt\Html\DescriptionList\ListElement;
+use ZExt\Html\DescriptionList\ListElement as DescListElement;
 
 /**
  * Html list's abstraction
@@ -34,12 +34,12 @@ use ZExt\Html\DescriptionList\ListElement;
  * @package    Html
  * @subpackage List
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.0.1
  * 
- * @method DescriptionList addElements(array $elements) Add an elements
- * @method ListElement[]   getElements()                Get an elements
- * @method ListElement     getElement(string $name)     Get an element
- * @method DescriptionList removeElement(string $name)  Remove an element
+ * @method DescriptionList   addElements(array $elements) Add an elements
+ * @method DescListElement[] getElements()                Get an elements
+ * @method DescListElement   getElement(string $name)     Get an element
+ * @method DescriptionList   removeElement(string $name)  Remove an element
  */
 class DescriptionList extends MultiElementsAbstract {
 	
@@ -58,7 +58,7 @@ class DescriptionList extends MultiElementsAbstract {
 	 * @return ListUnordered
 	 */
 	public function addElement($element, $name = null, $attrsTerm = null, $attrsDesc = null) {
-		if ($element instanceof ListElement) {
+		if ($element instanceof DescListElement) {
 			return parent::addElement($element, $name);
 		}
 		
@@ -70,7 +70,7 @@ class DescriptionList extends MultiElementsAbstract {
 			throw new Exception('Element definition array must contain "0" and "1" offsets');
 		}
 		
-		$newElement = new ListElement($element[0], $element[1], $attrsTerm, $attrsDesc);
+		$newElement = new DescListElement($element[0], $element[1], $attrsTerm, $attrsDesc);
 		
 		return parent::addElement($newElement, $name);
 	}

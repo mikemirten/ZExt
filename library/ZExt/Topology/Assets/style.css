@@ -1,0 +1,178 @@
+
+.topology {
+	text-align:  center;
+	border:      1px solid #eee;
+	padding:     1em;
+	font-family: sans-serif;
+}
+
+.topology-wrapper {
+	text-align: right;
+	position:   relative;
+	display:    inline-block;
+}
+
+/* Element */
+
+.topology-link {
+	position:       relative;
+	display:        inline-block;
+	border-bottom:  1px solid #333;
+	bottom:         2em;
+	font-size:      smaller;
+	padding:        0 0.5em;
+	vertical-align: bottom;
+}
+
+.topology-link-up {
+	position:    absolute;
+	left:        0;
+	top:         0;
+	bottom:      2em;
+	width:       1em;
+	border-left: 1px solid #333;
+}
+
+.topology-element {
+	display:       inline-block;
+	border:        1px solid #eee;
+	border-radius: 0.5em;
+	overflow:      hidden;
+	margin:        0.5em 0;
+	box-shadow:    0 0 0.3em rgba(0, 0, 0, 0.3);
+}
+
+.topology-default {
+	border-color: #bbb;
+}
+
+.topology-primary {
+	border-color: #79b;
+}
+
+.topology-warning {
+	border-color: #a97;
+}
+
+.topology-success {
+	border-color: #9b9;
+}
+
+.topology-alert {
+	border-color: #b88;
+}
+
+/* Header */
+
+.topology-header {
+	border-bottom: 1px solid #eee;
+	padding:       0 0.5em;
+	background:    #ddd;
+	min-width:     4em;
+	min-height:    1em;
+	text-align:    center;
+	font-size:     small;
+	font-weight:   bold;
+	color:         #555;
+}
+
+.topology-default .topology-header {
+	border-color: #ccc;
+	background:   linear-gradient(#eee, #bbb);
+}
+
+.topology-primary .topology-header {
+	border-color: #8ac;
+	background:   #9bd;
+	background:   linear-gradient(#acf, #8ac);
+	color:        #356;
+}
+
+.topology-success .topology-header {
+	border-color: #aca;
+	background:   #bdb;
+	background:   linear-gradient(#cec, #9b9);
+	color:        #262;
+}
+
+.topology-warning .topology-header {
+	border-color: #ba8;
+	background:   linear-gradient(#edb, #cb9);
+	color:        #652;
+}
+
+.topology-alert .topology-header {
+	border-color: #b88;
+	background:   #daa;
+	background:   linear-gradient(#ebb, #c99);
+	color:        #522;
+}
+
+/* Footer */
+
+.topology-footer {
+	border-top: 1px solid #eee;
+	padding:    0.1em 0.5em;
+	background: #ddd;
+	min-width:  4em;
+	min-height: 0.5em;
+	text-align: left;
+}
+
+.topology-default .topology-footer {
+	border-color: #ccc;
+}
+
+.topology-primary .topology-footer {
+	border-color: #8ac;
+	background:   #9bd;
+}
+
+.topology-success .topology-footer {
+	border-color: #aca;
+	background:   #bdb;
+}
+
+.topology-warning .topology-footer {
+	border-color: #ba8;
+	background:   #dca;
+}
+
+.topology-alert .topology-footer {
+	border-color: #c99;
+	background:   #daa;
+}
+
+/* Body */
+
+.topology-body {
+	padding:    0.5em;
+	min-height: 2em;
+	font-size:  smaller;
+}
+
+.topology-props {
+	width:           100%;
+	padding:         0;
+	margin:          0;
+	font-size:       smaller;
+	border-collapse: collapse;
+}
+
+.topology-props tr>td:first-child {
+	padding-right: 1em;
+	color:         #36b;
+	text-align:    left;
+}
+
+.topology-props tr>td:last-child {
+	text-align: right;
+}
+
+.topology-label {
+	
+}
+
+.topology-badge {
+	
+}

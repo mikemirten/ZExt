@@ -38,7 +38,7 @@ use IteratorAggregate, Countable;
  * @package    Paginator
  * @subpackage Paginator
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  * 
  * @method int Count() Get the number of an items of the current page
  */
@@ -120,7 +120,7 @@ interface PaginatorInterface extends IteratorAggregate, Countable {
 	 * 
 	 * @return int
 	 */
-	public function getItemsNumberPerPage();
+	public function getItemsPerPage();
 	
 	/**
 	 * Get the entire pages number
@@ -128,6 +128,13 @@ interface PaginatorInterface extends IteratorAggregate, Countable {
 	 * @return int
 	 */
 	public function getPagesNumber();
+	
+	/**
+	 * Get the entire items number
+	 * 
+	 * @retirn int
+	 */
+	public function getItemsNumber();
 	
 	/**
 	 * Get an items of the current page
@@ -142,5 +149,26 @@ interface PaginatorInterface extends IteratorAggregate, Countable {
 	 * @return array
 	 */
 	public function getPaginationControl();
+	
+	/**
+	 * Is the paginator data empty ?
+	 * 
+	 * @return bool
+	 */
+	public function isEmpty();
+	
+	/**
+	 * Set the name of the page param
+	 * 
+	 * @param string $name
+	 */
+	public function setPageParam($name);
+	
+	/**
+	 * Set the name of the page param
+	 * 
+	 * @return string
+	 */
+	public function getPageParam();
 	
 }

@@ -49,6 +49,7 @@ class Infoset implements IteratorAggregate, ArrayAccess, Countable {
 	const TYPE_TABLE    = 'table';
 	const TYPE_LIST     = 'list';
 	const TYPE_DESCLIST = 'desc';
+	const TYPE_TOPOLOGY = 'topology';
 	
 	const ICON_ASSET  = 'asset';
 	const ICON_PATH   = 'url';

@@ -35,7 +35,7 @@ use SplStack;
  * @package    Highlighter
  * @subpackage Languages
  * @author     Mike.Mirten
- * @version    1.0beta
+ * @version    1.0.1
  */
 class Php implements LanguageInterface {
 
@@ -52,6 +52,11 @@ class Php implements LanguageInterface {
 	const STATE_PNT = 9;
 	const STATE_KEY = 10;
 	
+	/**
+	 * PHP keywords
+	 *
+	 * @var array
+	 */
 	static protected $keywords = [
 		'abstract', 'and', 'array', 'as', 'break', 'callable', 'case', 'catch',
 		'class', 'clone', 'const', 'continue', 'declare', 'default', 'die', 'do',
@@ -158,7 +163,7 @@ class Php implements LanguageInterface {
 				}
 				
 				// Keyword
-				if (preg_match('/[a-z]/i', $char)) {
+				if (preg_match('/[a-z]/i', $char)  && $source[$pos - 1] !== '_') {
 					$keyword = $char;
 					$state   = self::STATE_KEY;
 					continue;
@@ -340,7 +345,7 @@ class Php implements LanguageInterface {
 			
 			// State: Keyword
 			if ($state === self::STATE_KEY) {
-				if (preg_match('/[a-z]/i', $char)) {
+				if (preg_match('/[a-z_]/i', $char)) {
 					$keyword .= $char;
 					continue;
 				}

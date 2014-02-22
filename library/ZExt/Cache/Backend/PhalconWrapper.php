@@ -41,7 +41,7 @@ use ZExt\Cache\Backend\Exceptions\OperationFailed;
  * @package    Cache
  * @subpackage Backend
  * @author     Mike.Mirten
- * @version    1.0beta
+ * @version    1.0.1beta
  */
 class PhalconWrapper implements BackendInterface {
 	
@@ -73,7 +73,7 @@ class PhalconWrapper implements BackendInterface {
 	 * 
 	 * Parameters:
 	 * param name          | datatype         | default | description
-	 * ======================================================
+	 * ===========================================================================================
 	 * namespace           | string           | null    | Namespace of an IDs
 	 * operationExceptions | bool             | true    | Throw the exceptions by operation errors
 	 * backend             | BackendInterface | null    | Configured Phalcon backend instance
@@ -416,6 +416,10 @@ class PhalconWrapper implements BackendInterface {
 	protected function prepareId($id) {
 		if (! is_scalar($id)) {
 			$id = json_encode($id);
+			
+			if (isset($id[33])) {
+				$id = md5($id);
+			}
 		}
 		
 		if ($this->namespace === null) {

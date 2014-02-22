@@ -34,6 +34,10 @@ use ZExt\Cache\Backend\Exceptions\NoPhpExtension;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 use ZExt\Cache\Backend\Exceptions\ServerParamsError;
 
+use ZExt\Cache\Topology\TopologyInterface;
+use ZExt\Topology\Descriptor;
+
+
 /**
  * Memcache backend adapter
  * 
@@ -41,9 +45,9 @@ use ZExt\Cache\Backend\Exceptions\ServerParamsError;
  * @package    Cache
  * @subpackage Backend
  * @author     Mike.Mirten
- * @version    1.0.1
+ * @version    1.0.2
  */
-class Memcache implements BackendInterface {
+class Memcache implements BackendInterface, TopologyInterface {
 	
 	use OptionsTrait;
 	
@@ -139,7 +143,7 @@ class Memcache implements BackendInterface {
 	 * 
 	 * Parameters:
 	 * param name          | datatype | default | description
-	 * ======================================================
+	 * ===========================================================================================
 	 * servers             | array    | null    | Memcache servers params
 	 * namespace           | string   | null    | Namespace of an IDs
 	 * compression         | bool     | false   | Use compression of a data
@@ -148,7 +152,7 @@ class Memcache implements BackendInterface {
 	 * 
 	 * Servers parameters:
 	 * param name    | datatype | default     | description
-	 * ======================================================
+	 * ===========================================================================================
 	 * host          | string   | '127.0.0.1' | IP address or the host name or the socket path
 	 * port          | int      | 11211       | TCP port number
 	 * persistent    | bool     | true        | Persistent connection (Will not be closed on script end, and can be reused)
@@ -376,6 +380,10 @@ class Memcache implements BackendInterface {
 	protected function prepareId($id) {
 		if (! is_scalar($id)) {
 			$id = json_encode($id);
+			
+			if (isset($id[33])) {
+				$id = md5($id);
+			}
 		}
 		
 		if ($this->namespace === null) {
@@ -529,6 +537,32 @@ class Memcache implements BackendInterface {
 	 */
 	public function getOperationExceptions() {
 		return $this->operationsExceptions;
+	}
+	
+	/**
+	 * Get the cache topology
+	 * 
+	 * @return Descriptor
+	 */
+	public function getTopology() {
+		$descriptor = new Descriptor('Memcache', self::TOPOLOGY_BACKEND);
+		
+		if ($this->memcacheClient === null) {
+			return $descriptor;
+		}
+		
+		foreach($this->memcacheClient->getextendedstats() as $serverKey => $serverInfo) {
+			$descriptor->setProperty(null, $serverKey);
+			
+			$filled = $serverInfo['bytes'] / $serverInfo['limit_maxbytes'] * 100;
+			
+			$descriptor->version = $serverInfo['version'];
+			$descriptor->used    = $serverInfo['bytes'];
+			$descriptor->total   = $serverInfo['limit_maxbytes'];
+			$descriptor->filled  = round($filled, 2) . '%';
+		}
+		
+		return $descriptor;
 	}
 	
 }

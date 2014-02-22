@@ -75,7 +75,7 @@ trait ConfigAwareTrait {
 	 *
 	 * @var string
 	 */
-	private $_configServiceId = 'defaultConfig';
+	private $_configServiceId = 'config';
 	
 	/**
 	 * Set a service id of the config

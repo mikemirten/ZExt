@@ -7,6 +7,8 @@ use PDO;
 
 class SqlTableSelect implements AdapterInterface {
 	
+	const COUNT_COLUMN = 'zext_paginator_count';
+	
 	/**
 	 * Datagate
 	 * 
@@ -59,16 +61,51 @@ class SqlTableSelect implements AdapterInterface {
 	 */
 	public function count() {
 		if ($this->count === null) {
-			$select = clone $this->select;
-			$select->reset(Select::COLUMNS)
-				   ->reset(Select::LIMIT_OFFSET)
-				   ->reset(Select::LIMIT_COUNT)
-				   ->columns(['count' => 'count(*)']);
-
-			$this->count = $select->query(PDO::FETCH_OBJ)->fetch()->count;
+			$groupPart = $this->select->getPart(Select::GROUP);
+			
+			$select = empty($groupPart)
+				? $this->prepareSelect(clone $this->select)
+				: $this->prepareSubquerySelect(clone $this->select);
+			
+			$this->count = (int) $select->query(PDO::FETCH_OBJ)->fetch()->{self::COUNT_COLUMN};
 		}
 		
 		return $this->count;
+	}
+	
+	/**
+	 * Prepare the simple count select
+	 * 
+	 * @param  Select $select
+	 * @return Select
+	 */
+	protected function prepareSelect(Select $select) {
+		$select->reset(Select::COLUMNS)
+		       ->reset(Select::LIMIT_OFFSET)
+		       ->reset(Select::LIMIT_COUNT)
+		       ->reset(Select::ORDER)
+		       ->columns([self::COUNT_COLUMN => 'count(*)']);
+
+		return $select;
+	}
+	
+	/**
+	 * Prepare the subquery based count select
+	 * 
+	 * @param  Select $select
+	 * @return Select
+	 */
+	protected function prepareSubquerySelect(Select $select) {
+		$select->reset(Select::LIMIT_OFFSET)
+		       ->reset(Select::LIMIT_COUNT)
+		       ->reset(Select::ORDER);
+
+		$countSelect = $select->getAdapter()->select()
+			->from($select)
+			->reset(Select::COLUMNS)
+			->columns([self::COUNT_COLUMN => 'count(1)']);
+
+		return $countSelect;
 	}
 	
 }

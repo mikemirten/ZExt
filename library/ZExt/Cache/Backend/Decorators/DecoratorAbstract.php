@@ -29,6 +29,9 @@ namespace ZExt\Cache\Backend\Decorators;
 use ZExt\Cache\Backend\BackendInterface;
 use ZExt\Cache\Backend\Exceptions\NoBackend;
 
+use ZExt\Cache\Topology\TopologyInterface;
+use ZExt\Topology\Descriptor;
+
 /**
  * Decorator abstract
  * 
@@ -36,9 +39,16 @@ use ZExt\Cache\Backend\Exceptions\NoBackend;
  * @package    Cache
  * @subpackage Decorators
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
-abstract class DecoratorAbstract implements DecoratorInterface {
+abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterface {
+	
+	/**
+	 * Cache topology title
+	 *
+	 * @var string
+	 */
+	protected $topologyTitle = 'Decorator';
 	
 	/**
 	 * Backend
@@ -78,6 +88,23 @@ abstract class DecoratorAbstract implements DecoratorInterface {
 		}
 		
 		return $this->backend;
+	}
+	
+	/**
+	 * Get the cache topology
+	 * 
+	 * @return Descriptor
+	 */
+	public function getTopology() {
+		$descriptor = new Descriptor($this->topologyTitle, self::TOPOLOGY_DECORATOR);
+		
+		$backend = $this->getBackend();
+		
+		if ($backend instanceof TopologyInterface) {
+			$descriptor[] = $backend->getTopology();
+		}
+		
+		return $descriptor;
 	}
 	
 }

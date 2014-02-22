@@ -37,7 +37,7 @@ use ZExt\Cache\Frontend\Exceptions\NoTagsSupported;
  * @package    Cache
  * @subpackage Frontend
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.0.1
  */
 class Wrapper extends FrontendAbstract {
 	
@@ -285,6 +285,10 @@ class Wrapper extends FrontendAbstract {
 	protected function prepareId($id) {
 		if (! is_scalar($id)) {
 			$id = json_encode($id);
+			
+			if (isset($id[33])) {
+				$id = md5($id);
+			}
 		}
 		
 		if ($this->_namespace === null) {

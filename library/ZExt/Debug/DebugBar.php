@@ -258,7 +258,7 @@ class DebugBar {
 	 * @param  string                      $name
 	 * @param  array                       $params
 	 * 
-	 * @return DebugBar
+	 * @return CollectorInterface
 	 */
 	public function addCollector($collector, $name = null, array $params = null) {
 		// Collector instance
@@ -333,7 +333,7 @@ class DebugBar {
 			$this->collectors[$name] = $collector;
 		}
 		
-		return $this;
+		return $collector;
 	}
 	
 	/**
