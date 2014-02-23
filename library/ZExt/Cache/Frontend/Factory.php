@@ -35,6 +35,9 @@ use ZExt\Cache\Frontend\Exceptions\NoBackend;
 use ZExt\Profiler\ProfileableInterface;
 use ZExt\Profiler\ProfilerInterface;
 
+use ZExt\Cache\Topology\TopologyInterface;
+use ZExt\Topology\Descriptor;
+
 /**
  * Cache frontend's factory
  * 
@@ -44,7 +47,7 @@ use ZExt\Profiler\ProfilerInterface;
  * @author     Mike.Mirten
  * @version    1.1
  */
-class Factory implements FactoryInterface, ProfileableInterface {
+class Factory implements FactoryInterface, ProfileableInterface, TopologyInterface {
 	
 	/**
 	 * Backend
@@ -219,6 +222,11 @@ class Factory implements FactoryInterface, ProfileableInterface {
 	 * @return ProfilerInterface
 	 */
 	public function getProfiler() {
+		$this->_profiler->addAdditionalInfo(
+			'__TOPOLOGY__',
+			$this->getTopology()
+		);
+		
 		return $this->_profiler;
 	}
 	
@@ -250,6 +258,31 @@ class Factory implements FactoryInterface, ProfileableInterface {
 	 */
 	public function __get($name) {
 		return $this->createWrapper($name);
+	}
+	
+	/**
+	 * Get the cache topology
+	 * 
+	 * @return Descriptor
+	 */
+	public function getTopology() {
+		$descriptor = new Descriptor('Factory', self::TOPOLOGY_FRONTEND);
+		
+		if ($this->_defaultLifetime === null) {
+			$descriptor->lifetime = 'n/a';
+		} else {
+			$descriptor->lifetime = $this->_defaultLifetime;
+		}
+		
+		$descriptor->created = count($this->_wrappers);
+		
+		$backend = $this->getBackend();
+		
+		if ($backend instanceof TopologyInterface) {
+			$descriptor[] = $backend->getTopology();
+		}
+		
+		return $descriptor;
 	}
 	
 }
