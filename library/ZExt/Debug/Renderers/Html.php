@@ -402,7 +402,7 @@ class Html implements RendererInterface {
 	protected function createDump(Infoset $info) {
 		$content = '';
 		
-		foreach ($info->getContent() as $part) {
+		foreach ($info as $part) {
 			$content .= Dump::getDump($part);
 		}
 		
@@ -415,9 +415,15 @@ class Html implements RendererInterface {
 	 * @param Infoset $into
 	 */
 	protected function createTopology(Infoset $into) {
-		/**
-		 * @todo Implement the method
-		 */
+		$topology = $this->getTagsLocator()->get('topology');
+		
+		$html = '';
+		
+		foreach ($into as $descriptor) {
+			$html .= $topology->render($descriptor);
+		}
+		
+		return $html;
 	}
 	
 	/**
@@ -523,6 +529,8 @@ class Html implements RendererInterface {
 			$di->title = function() {
 				return new Tag('h4', null, 'content-title');
 			};
+			
+			$di->topology = 'ZExt\Topology\Topology';
 			
 			$this->tagsLocator = $di;
 		}
