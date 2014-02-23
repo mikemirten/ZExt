@@ -129,6 +129,13 @@ interface ProfilerInterface extends IteratorAggregate, Countable {
 	public function getProfiles();
 	
 	/**
+	 * Has the profiles
+	 * 
+	 * @return bool
+	 */
+	public function hasProfiles();
+	
+	/**
 	 * Get the total elapsed time of an events in seconds
 	 * 
 	 * @return int

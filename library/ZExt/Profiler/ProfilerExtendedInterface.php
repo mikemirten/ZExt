@@ -68,15 +68,30 @@ interface ProfilerExtendedInterface extends ProfilerInterface {
 	/**
 	 * Get an additional info about a profiling object
 	 * 
-	 * @return string | array
+	 * @return array
 	 */
 	public function getAdditionalInfo();
 	
 	/**
 	 * Set an additional info about a profiling object
 	 * 
-	 * @param string $info
+	 * @param array $info
 	 */
-	public function setAdditionalInfo($info);
+	public function setAdditionalInfo(array $info);
+	
+	/**
+	 * Add the additional info
+	 * 
+	 * @param string $name
+	 * @param mixed  $info
+	 */
+	public function addAdditionalInfo($name, $info);
+	
+	/**
+	 * Has the additional info
+	 * 
+	 * @return bool
+	 */
+	public function hasAdditionalInfo();
 	
 }

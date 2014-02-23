@@ -64,9 +64,9 @@ class Profiler implements ProfilerExtendedInterface {
 	/**
 	 * Additional info about a profiling object
 	 * 
-	 * @var string | array
+	 * @var array
 	 */
-	protected $_info;
+	protected $_info = [];
 	
 	/**
 	 * Last started profile
@@ -218,6 +218,15 @@ class Profiler implements ProfilerExtendedInterface {
 	}
 	
 	/**
+	 * Has the profiles
+	 * 
+	 * @return bool
+	 */
+	public function hasProfiles() {
+		return ! empty($this->_profiles);
+	}
+	
+	/**
 	 * Get the total elapsed time of an events
 	 * 
 	 * @return int
@@ -293,15 +302,35 @@ class Profiler implements ProfilerExtendedInterface {
 	}
 	
 	/**
-	 * Set an additional info about a profiling object
+	 * Set the additional info about a profiling object 
+	 * Owerrides current info
 	 * 
-	 * @param  string | array $info
+	 * @param  array $info
 	 * @return Profiler
 	 */
-	public function setAdditionalInfo($info) {
+	public function setAdditionalInfo(array $info) {
 		$this->_info = $info;
 		
 		return $this;
+	}
+	
+	/**
+	 * Add the additional info
+	 * 
+	 * @param string $name
+	 * @param mixed  $info
+	 */
+	public function addAdditionalInfo($name, $info) {
+		$this->_info[$name] = $info;
+	}
+	
+	/**
+	 * Has the additional info
+	 * 
+	 * @return bool
+	 */
+	public function hasAdditionalInfo() {
+		return ! empty($this->_info);
 	}
 	
 	/**
