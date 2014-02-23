@@ -35,6 +35,8 @@ use ZExt\Profiler\ProfileInterface,
 
 use ZExt\Debug\Collectors\Exceptions\NoProfiler;
 
+use ZExt\Topology\Descriptor;
+
 /**
  * Profiler information collector
  * 
@@ -125,8 +127,19 @@ class Profiler extends CollectorAbstract {
 		$profiler = $this->getProfiler();
 		
 		// Info
-		if ($profiler instanceof ProfilerExtendedInterface) {
-			$this->additionalInfo($info, $profiler);
+		if ($profiler instanceof ProfilerExtendedInterface
+		&&  $profiler->hasAdditionalInfo()) {
+			$profilerInfo = $profiler->getAdditionalInfo();
+			
+			if (isset($profilerInfo['__TOPOLOGY__'])
+			&&  $profilerInfo['__TOPOLOGY__'] instanceof Descriptor) {
+				$topology = $profilerInfo['__TOPOLOGY__'];
+				unset($profilerInfo['__TOPOLOGY__']);
+			}
+			
+			if (! empty($profilerInfo)) {
+				$this->additionalInfo($info, $profilerInfo);
+			}
 		}
 		
 		if ($profiler->getTotalEvents() === 0) {
@@ -134,6 +147,23 @@ class Profiler extends CollectorAbstract {
 		}
 		
 		// Events
+		if ($profiler->hasProfiles()) {
+			$this->eventsInfo($info, $profiler->getProfiles());
+		}
+		
+		// Topology
+		if (isset($topology)) {
+			$this->topologyInfo($info, $topology);
+		}
+	}
+	
+	/**
+	 * Create the events info
+	 * 
+	 * @param Infoset $info
+	 * @param array   $profiles
+	 */
+	protected function eventsInfo(Infoset $info, array $profiles) {
 		$table = $this->createTable()
 			->setColsWidths([1, 1, 1, 94])
 			->setHeadContent(['', '', 'Time', 'Action'])
@@ -143,7 +173,7 @@ class Profiler extends CollectorAbstract {
 		$info[] = $table;
 		$number = 1;
 		
-		foreach ($profiler->getProfiles() as $profile) {
+		foreach ($profiles as $profile) {
 			$status = $this->handleProfileStatus($profile);
 			$time   = '[strong]' . $this->formatTime($profile->getElapsedTime()) . '[/strong]';
 			
@@ -214,25 +244,31 @@ class Profiler extends CollectorAbstract {
 	 * 
 	 * @param Infoset $info
 	 */
-	protected function additionalInfo(Infoset $info, ProfilerExtendedInterface $profiler) {
-		$profilerInfo = $profiler->getAdditionalInfo();
-			
-		if (is_string($profilerInfo)) {
-			$info[] = $profilerInfo;
-			return;
-		}
-		
-		if (is_array($profilerInfo)) {
-			$infoTable = $this->createTable()
-				->enableBbCodes()
-				->setTitle('Info');
+	protected function additionalInfo(Infoset $info, array $profilerInfo) {
+		$infoTable = $this->createTable()
+			->enableBbCodes()
+			->setTitle('Info');
 
-			$info[] = $infoTable;
+		$info[] = $infoTable;
 
-			foreach ($profilerInfo as $key => $value) {
-				$infoTable[] = [$key . ':', $value];
-			}
+		foreach ($profilerInfo as $key => $value) {
+			$infoTable[] = [$key . ':', $value];
 		}
+	}
+	
+	/**
+	 * Create the topology info
+	 * 
+	 * @param Infoset    $info
+	 * @param Descriptor $topology
+	 */
+	protected function topologyInfo(Infoset $info, Descriptor $topology) {
+		$topologyInfo = $this->createInfoset();
+		$topologyInfo->setTitle('Topology');
+		$topologyInfo->setContentType(Infoset::TYPE_TOPOLOGY);
+
+		$topologyInfo[] = $topology;
+		$info[]         = $topologyInfo;
 	}
 	
 	/**
