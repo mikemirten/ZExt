@@ -26,7 +26,8 @@
 
 namespace ZExt\Topology;
 
-use ZExt\Di\Container;
+use ZExt\Di\Container,
+    ZExt\Di\LocatorInterface;
 
 use ZExt\Html\Tag;
 use ZExt\Html\Table;
@@ -71,7 +72,7 @@ class Topology {
 		$topologyTag = new Tag();
 		$topologyTag->addClass('topology');
 		
-		echo $styleTag->render() . $topologyTag->render($this->renderElement($descriptor));
+		return $styleTag->render() . $topologyTag->render($this->renderElement($descriptor));
 	}
 	
 	/**
@@ -174,8 +175,7 @@ class Topology {
 		}
 		
 		// Header
-		$title = htmlspecialchars($descriptor->getTitle());
-		$elementTag->appendHtml($tagsLocator->header->render($title));
+		$elementTag->appendHtml($this->renderHeaderContent($descriptor));
 		
 		// Body
 		if ($descriptor->hasPropertities()) {
@@ -189,6 +189,32 @@ class Topology {
 		$elementTag->appendHtml($tagsLocator->footer->render());
 		
 		return $elementTag->render();
+	}
+	
+	/**
+	 * Rebder the element's header content
+	 * 
+	 * @param  Descriptor $descriptor
+	 * @return string
+	 */
+	protected function renderHeaderContent(Descriptor $descriptor) {
+		$tagsLocator = $this->getTagsLocator();
+		
+		$title = '';
+		
+		if ($descriptor->hasLabel()) {
+			$label  = htmlspecialchars($descriptor->getLabel());
+			$title .= $tagsLocator->label->render($label);
+		}
+		
+		$title .= htmlspecialchars($descriptor->getTitle());
+		
+		if ($descriptor->hasBadge()) {
+			$badge  = htmlspecialchars($descriptor->getBadge());
+			$title .= $tagsLocator->badge->render($badge);
+		}
+		
+		return $tagsLocator->header->render($title);
 	}
 	
 	/**
@@ -217,11 +243,20 @@ class Topology {
 	}
 	
 	/**
-	 * Grt the tags' locator
+	 * Set the tags' locator
 	 * 
-	 * @return Container
+	 * @param LocatorInterface $locator
 	 */
-	protected function getTagsLocator() {
+	public function setTagsLocator(LocatorInterface $locator) {
+		$this->tagsLocator = $locator;
+	}
+	
+	/**
+	 * Get the tags' locator
+	 * 
+	 * @return LocatorInterface
+	 */
+	public function getTagsLocator() {
 		if ($this->tagsLocator !== null) {
 			return $this->tagsLocator;
 		}
@@ -254,6 +289,14 @@ class Topology {
 		
 		$container->wrapper = function() {
 			return new Tag('div', null, 'topology-wrapper');
+		};
+		
+		$container->label = function() {
+			return new Tag('span', null, 'topology-label'); 
+		};
+		
+		$container->badge = function() {
+			return new Tag('span', null, 'topology-badge'); 
 		};
 
 		$this->tagsLocator = $container;

@@ -1,9 +1,13 @@
 
 .topology {
 	text-align:  center;
-	border:      1px solid #eee;
-	padding:     1em;
+	padding:     0.5em 1em;
 	font-family: sans-serif;
+	font-size:   small;
+	line-height: 1.2em;
+	background:  #fff;
+	overflow:    auto;
+	white-space: nowrap;
 }
 
 .topology-wrapper {
@@ -13,6 +17,15 @@
 }
 
 /* Element */
+
+.topology-element {
+	display:       inline-block;
+	border:        1px solid #eee;
+	border-radius: 0.5em;
+	overflow:      hidden;
+	margin:        0.5em 0;
+	box-shadow:    0 0 0.3em rgba(0, 0, 0, 0.3);
+}
 
 .topology-link {
 	position:       relative;
@@ -44,15 +57,6 @@
 	font-size:    smaller;
 }
 
-.topology-element {
-	display:       inline-block;
-	border:        1px solid #eee;
-	border-radius: 0.5em;
-	overflow:      hidden;
-	margin:        0.5em 0;
-	box-shadow:    0 0 0.3em rgba(0, 0, 0, 0.3);
-}
-
 .topology-default {
 	border-color: #bbb;
 }
@@ -73,6 +77,26 @@
 	border-color: #b88;
 }
 
+.topology-label {
+	margin-right: 0.35em;
+	padding:      0 0.35em;
+	float:        left;
+	background:   #888;
+	color:        #fff;
+	text-shadow:  0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.topology-badge {
+	margin-left:   0.35em;
+	padding:       0 0.35em;
+	float:         right;
+	font-weight:   normal;
+	background:    #555;
+	color:         #fff;
+	border-radius: 1em;
+	box-shadow:    inset 0 0 1px #000;
+}
+
 /* Header */
 
 .topology-header {
@@ -85,6 +109,7 @@
 	font-size:     small;
 	font-weight:   bold;
 	color:         #555;
+	overflow:      hidden;
 }
 
 .topology-default .topology-header {
@@ -101,13 +126,14 @@
 
 .topology-success .topology-header {
 	border-color: #aca;
-	background:   #bdb;
+	background:   #aca;
 	background:   linear-gradient(#cec, #9b9);
 	color:        #262;
 }
 
 .topology-warning .topology-header {
 	border-color: #ba8;
+	background:   #dca;
 	background:   linear-gradient(#edb, #cb9);
 	color:        #652;
 }
@@ -117,6 +143,46 @@
 	background:   #daa;
 	background:   linear-gradient(#ebb, #c99);
 	color:        #522;
+}
+
+.topology-primary .topology-header .topology-badge {
+	background: #467;
+}
+
+.topology-success .topology-header .topology-badge {
+	background: #373;
+}
+
+.topology-warning .topology-header .topology-badge {
+	background: #761;
+}
+
+.topology-alert .topology-header .topology-badge {
+	background: #633;
+}
+
+.topology-default .topology-header .topology-label {
+	background: linear-gradient(#bbb, #666);
+}
+
+.topology-primary .topology-header .topology-label {
+	background: #79b;
+	background: linear-gradient(#9bd, #468);
+}
+
+.topology-success .topology-header .topology-label {
+	background: #8a8;
+	background: linear-gradient(#aca, #686);
+}
+
+.topology-warning .topology-header .topology-label {
+	background: #ba8;
+	background: linear-gradient(#cb9, #975);
+}
+
+.topology-alert .topology-header .topology-label {
+	background: #b88;
+	background: linear-gradient(#d99, #955);
 }
 
 /* Footer */
@@ -184,12 +250,4 @@
 
 .topology-props tr>td:last-child {
 	text-align: right;
-}
-
-.topology-label {
-	
-}
-
-.topology-badge {
-	
 }

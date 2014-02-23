@@ -161,6 +161,24 @@ class Descriptor implements IteratorAggregate, ArrayAccess, Countable {
 	}
 	
 	/**
+	 * Get the descriptor label
+	 * 
+	 * @return string
+	 */
+	public function getLabel() {
+		return $this->_label;
+	}
+	
+	/**
+	 * Has the descriptor label
+	 * 
+	 * @return bool
+	 */
+	public function hasLabel() {
+		return $this->_label !== null;
+	}
+	
+	/**
 	 * Set the descriptor badge
 	 * 
 	 * @param  string $badge
@@ -172,6 +190,25 @@ class Descriptor implements IteratorAggregate, ArrayAccess, Countable {
 		return $this;
 	}
 	
+	/**
+	 * Get the descriptor badge
+	 * 
+	 * @return string
+	 */
+	public function getBadge() {
+		return $this->_badge;
+	}
+	
+	/**
+	 * Has the descriptor badge
+	 * 
+	 * @return bool;
+	 */
+	public function hasBadge() {
+		return $this->_badge !== null;
+	}
+
+
 	/**
 	 * Set the property
 	 * 
