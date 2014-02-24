@@ -32,6 +32,7 @@ use ZExt\Profiler\ProfilerExtendedInterface,
 
 use ZExt\Cache\Topology\TopologyInterface;
 use ZExt\Topology\Descriptor;
+use ZExt\Formatter\Time;
 
 /**
  * Profiling ability decorator
@@ -244,12 +245,13 @@ class Profileable extends DecoratorAbstract implements ProfileableInterface {
 	 * @return Descriptor
 	 */
 	public function getTopology() {
-		$descriptor = new Descriptor('Profileable', self::TOPOLOGY_DECORATOR);
+		$descriptor    = new Descriptor('Profileable', self::TOPOLOGY_DECORATOR);
+		$timeFormatter = new Time();
 		
 		$profiler = $this->getProfiler();
 		
 		$descriptor->events = $profiler->getTotalEvents();
-		$descriptor->time   = round($profiler->getTotalElapsedTime(), 4) . 's';
+		$descriptor->time   = $timeFormatter->format($profiler->getTotalElapsedTime());
 		
 		$backend = $this->getBackend();
 		

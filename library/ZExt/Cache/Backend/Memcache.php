@@ -36,6 +36,7 @@ use ZExt\Cache\Backend\Exceptions\ServerParamsError;
 
 use ZExt\Cache\Topology\TopologyInterface;
 use ZExt\Topology\Descriptor;
+use ZExt\Formatter\Memory;
 
 
 /**
@@ -551,14 +552,16 @@ class Memcache implements BackendInterface, TopologyInterface {
 			return $descriptor;
 		}
 		
+		$memoryFormatter = new Memory();
+		
 		foreach($this->memcacheClient->getextendedstats() as $serverKey => $serverInfo) {
 			$descriptor->setProperty(null, $serverKey);
 			
 			$filled = $serverInfo['bytes'] / $serverInfo['limit_maxbytes'] * 100;
 			
 			$descriptor->version = $serverInfo['version'];
-			$descriptor->used    = $serverInfo['bytes'];
-			$descriptor->total   = $serverInfo['limit_maxbytes'];
+			$descriptor->used    = $memoryFormatter->format($serverInfo['bytes']);
+			$descriptor->limit   = $memoryFormatter->format($serverInfo['limit_maxbytes']);
 			$descriptor->filled  = round($filled, 2) . '%';
 		}
 		
