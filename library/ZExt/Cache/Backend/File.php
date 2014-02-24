@@ -84,6 +84,29 @@ class File extends BackendAbstract {
 	protected $compressionLevel = 1;
 	
 	/**
+	 * Is system function available
+	 *
+	 * @var bool 
+	 */
+	static $_execAvailable;
+	
+	/**
+	 * Is system function available
+	 * 
+	 * @return bool
+	 */
+	static protected function isExecAvailable() {
+		if (self::$_execAvailable === null) {
+			$disabled = explode(',', ini_get('disable_functions'));
+			$disabled = array_map('trim', $disabled);
+			
+			self::$_execAvailable = ! in_array('exec', $disabled, true);
+		}
+		
+		return self::$_execAvailable;
+	}
+	
+	/**
 	 * Constructor
 	 * 
 	 * Parameters:
@@ -462,7 +485,7 @@ class File extends BackendAbstract {
 	 * @throws NoPath
 	 */
 	public function setCachePath($path) {
-		$path = (string) $path;
+		$path = rtrim($path, DIRECTORY_SEPARATOR);
 		
 		if (! is_dir($path)) {
 			throw new NoPath('Path must be a directory');
@@ -483,7 +506,7 @@ class File extends BackendAbstract {
 	 */
 	public function getCachePath() {
 		if ($this->path === null) {
-			$this->path = sys_get_temp_dir();
+			$this->path = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR);
 		}
 		
 		return $this->path;
@@ -602,6 +625,71 @@ class File extends BackendAbstract {
 		$descriptor->filled = round($filled, 2) . '%';
 		
 		return $descriptor;
+	}
+	
+	/**
+	 * Flush all the cache data
+	 * 
+	 * @return bool
+	 */
+	public function flush() {
+		$pattern = $this->getCachePath() . DIRECTORY_SEPARATOR . $this->prefix . '_*';
+		
+		if (self::isExecAvailable()) {
+			exec('rm ' . $pattern);
+			return true;
+		}
+		
+		$list = glob($pattern);
+		
+		if ($list === false) {
+			return false;
+		}
+		
+		if (empty($list)) {
+			return true;
+		}
+		
+		$result = true;
+		
+		foreach ($list as $path) {
+			if (! unlink($path)) {
+				$result = false;
+			}
+		}
+		
+		return $result;
+	}
+	
+	/**
+	 * Run the garbage collection cycle
+	 */
+	protected function gcCycle() {
+		$pattern = $this->getCachePath() . DIRECTORY_SEPARATOR . $this->prefix . '_*';
+		$list    = glob($pattern);
+		
+		if ($list === false) {
+			trigger_error('Garbage collection failure');
+			return;
+		}
+		
+		if (empty($list)) {
+			return;
+		}
+		
+		$current = time();
+		
+		foreach ($list as $path) {
+			$expire = (int) file_get_contents($path, false, null, -1, 10);
+			
+			if ($expire === 0) {
+				continue;
+			}
+			
+			if ($current >= $expire) {
+				unlink($path);
+			}
+		}
 	}
 	
 }

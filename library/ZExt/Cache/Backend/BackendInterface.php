@@ -114,4 +114,11 @@ interface BackendInterface {
 	 */
 	public function dec($id, $value = 1);
 	
+	/**
+	 * Flush all the cache data
+	 * 
+	 * @return bool
+	 */
+	public function flush();
+	
 }

@@ -240,6 +240,24 @@ class Profileable extends DecoratorAbstract implements ProfileableInterface {
 	}
 	
 	/**
+	 * Flush all the cache data
+	 * 
+	 * @return bool
+	 */
+	public function flush() {
+		$event  = $this->getProfiler()->startDelete('Flush');
+		$result = $this->getBackend()->flush();
+		
+		if ($result === false) {
+			$event->stopError();
+		} else {
+			$event->stopSuccess();
+		}
+		
+		return $result;
+	}
+	
+	/**
 	 * Get the cache topology
 	 * 
 	 * @return Descriptor

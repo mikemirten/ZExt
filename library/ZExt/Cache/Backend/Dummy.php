@@ -163,4 +163,13 @@ class Dummy extends BackendAbstract {
 		return 0;
 	}
 	
+	/**
+	 * Flush all the cache data
+	 * 
+	 * @return bool
+	 */
+	public function flush() {
+		return true;
+	}
+	
 }

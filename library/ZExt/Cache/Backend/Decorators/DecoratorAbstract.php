@@ -114,6 +114,15 @@ abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterfac
 	}
 	
 	/**
+	 * Flush all the cache data
+	 * 
+	 * @return bool
+	 */
+	public function flush() {
+		return $this->getBackend()->flush();
+	}
+	
+	/**
 	 * Get the cache topology
 	 * 
 	 * @return Descriptor

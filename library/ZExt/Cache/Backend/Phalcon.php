@@ -487,6 +487,15 @@ class Phalcon extends BackendAbstract {
 	}
 	
 	/**
+	 * Flush all the cache data
+	 * 
+	 * @return bool
+	 */
+	public function flush() {
+		return false;
+	}
+	
+	/**
 	 * Get the cache topology
 	 * 
 	 * @return Descriptor

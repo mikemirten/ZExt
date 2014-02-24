@@ -536,6 +536,19 @@ class Memcache extends BackendAbstract {
 	}
 	
 	/**
+	 * Flush all the cache data
+	 * 
+	 * @return bool
+	 */
+	public function flush() {
+		if (! $this->connectionCheckStatus) {
+			$this->addServer();
+		}
+		
+		return $this->getClient()->flush();
+	}
+	
+	/**
 	 * Get the cache topology
 	 * 
 	 * @return Descriptor

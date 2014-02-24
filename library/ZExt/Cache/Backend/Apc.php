@@ -156,6 +156,15 @@ class Apc extends BackendAbstract {
 	}
 	
 	/**
+	 * Flush all the cache data
+	 * 
+	 * @return bool
+	 */
+	public function flush() {
+		return apc_clear_cache('user');
+	}
+	
+	/**
 	 * Get the cache topology
 	 * 
 	 * @return Descriptor

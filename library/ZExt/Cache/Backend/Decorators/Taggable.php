@@ -380,6 +380,18 @@ class Taggable extends DecoratorAbstract implements TaggableInterface {
 	}
 	
 	/**
+	 * Flush all the cache data
+	 * 
+	 * @return bool
+	 */
+	public function flush() {
+		$result1 = $this->getBackend()->flush();
+		$result2 = $this->getTagHolderBackend()->flush();
+		
+		return $result1 && $result2;
+	}
+	
+	/**
 	 * Get the cache topology
 	 * 
 	 * @return Descriptor
