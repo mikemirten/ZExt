@@ -50,7 +50,7 @@ use Traversable;
  * @package    Cache
  * @subpackage Factory
  * @author     Mike.Mirten
- * @version    1.0.2
+ * @version    1.1
  */
 class Factory {
 	
@@ -113,6 +113,7 @@ class Factory {
 		// Tags backend
 		if (isset($options[self::PARAM_TAGS_BACKEND])) {
 			$tagsBackendOptions = $options[self::PARAM_TAGS_BACKEND];
+			$tagsBackendOptions = self::normalizeOptions($tagsBackendOptions);
 			unset($options[self::PARAM_TAGS_BACKEND]);
 		}
 		
