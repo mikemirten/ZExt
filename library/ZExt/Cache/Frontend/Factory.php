@@ -285,4 +285,8 @@ class Factory implements FactoryInterface, ProfileableInterface, TopologyInterfa
 		return $descriptor;
 	}
 	
+	public function getTopologyId() {
+		return 'frontend_factory';
+	}
+	
 }

@@ -46,7 +46,7 @@ abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterfac
 	/**
 	 * Unique IDs counter
 	 *
-	 * @var type 
+	 * @var int 
 	 */
 	static private $_idCounter = 0;
 	
@@ -67,7 +67,7 @@ abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterfac
 	/**
 	 * Unique backend ID
 	 *
-	 * @var int
+	 * @var string
 	 */
 	protected $backendId;
 	
@@ -77,7 +77,7 @@ abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterfac
 	 * @return int
 	 */
 	static protected function createId() {
-		return self::$_idCounter ++;
+		return 'd' . dechex(self::$_idCounter ++);
 	}
 	
 	/**
@@ -120,6 +120,7 @@ abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterfac
 	 */
 	public function getTopology() {
 		$descriptor = new Descriptor($this->topologyTitle, self::TOPOLOGY_DECORATOR);
+		$descriptor->id = $this->getTopologyId();
 		
 		$backend = $this->getBackend();
 		
@@ -133,9 +134,9 @@ abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterfac
 	/**
 	 * Get the unique decorator ID
 	 * 
-	 * @return int
+	 * @return string
 	 */
-	public function getId() {
+	public function getTopologyId() {
 		if ($this->backendId === null) {
 			$this->backendId = self::createId();
 		}

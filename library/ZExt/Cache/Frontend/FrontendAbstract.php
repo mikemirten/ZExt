@@ -137,4 +137,13 @@ abstract class FrontendAbstract implements TopologyInterface {
 		return $descriptor;
 	}
 	
+	/**
+	 * Get the unique ID of the Topology element
+	 * 
+	 * @return string Hexadecimal ID
+	 */
+	public function getTopologyId() {
+		return $this->_namespace;
+	}
+	
 }

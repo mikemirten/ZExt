@@ -28,13 +28,10 @@ namespace ZExt\Cache\Backend;
 
 use Memcache as MemcacheClient;
 
-use ZExt\Components\OptionsTrait;
-
 use ZExt\Cache\Backend\Exceptions\NoPhpExtension;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 use ZExt\Cache\Backend\Exceptions\ServerParamsError;
 
-use ZExt\Cache\Topology\TopologyInterface;
 use ZExt\Topology\Descriptor;
 use ZExt\Formatter\Memory;
 
@@ -46,11 +43,9 @@ use ZExt\Formatter\Memory;
  * @package    Cache
  * @subpackage Backend
  * @author     Mike.Mirten
- * @version    1.0.2
+ * @version    1.1
  */
-class Memcache implements BackendInterface, TopologyInterface {
-	
-	use OptionsTrait;
+class Memcache extends BackendAbstract {
 	
 	// Server params names
 	const SRV_PARAM_HOST           = 'host';
@@ -547,6 +542,7 @@ class Memcache implements BackendInterface, TopologyInterface {
 	 */
 	public function getTopology() {
 		$descriptor = new Descriptor('Memcache', self::TOPOLOGY_BACKEND);
+		$descriptor->id = $this->getTopologyId();
 		
 		if ($this->memcacheClient === null) {
 			return $descriptor;
@@ -555,10 +551,9 @@ class Memcache implements BackendInterface, TopologyInterface {
 		$memoryFormatter = new Memory();
 		
 		foreach($this->memcacheClient->getextendedstats() as $serverKey => $serverInfo) {
-			$descriptor->setProperty(null, $serverKey);
-			
 			$filled = $serverInfo['bytes'] / $serverInfo['limit_maxbytes'] * 100;
 			
+			$descriptor->host    = $serverKey;
 			$descriptor->version = $serverInfo['version'];
 			$descriptor->used    = $memoryFormatter->format($serverInfo['bytes']);
 			$descriptor->limit   = $memoryFormatter->format($serverInfo['limit_maxbytes']);

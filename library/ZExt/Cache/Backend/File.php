@@ -26,11 +26,10 @@
 
 namespace ZExt\Cache\Backend;
 
-use ZExt\Components\OptionsTrait;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 
-use ZExt\Cache\Topology\TopologyInterface;
 use ZExt\Topology\Descriptor;
+use ZExt\Formatter\Memory;
 
 /**
  * Files based backend adapter
@@ -41,9 +40,7 @@ use ZExt\Topology\Descriptor;
  * @author     Mike.Mirten
  * @version    1.0
  */
-class File implements BackendInterface, TopologyInterface {
-	
-	use OptionsTrait;
+class File extends BackendAbstract {
 	
 	const OPTIONS_OFFSET = 11;
 	const DATA_OFFSET    = 15;
@@ -591,9 +588,18 @@ class File implements BackendInterface, TopologyInterface {
 	 * @return Descriptor
 	 */
 	public function getTopology() {
-		$descriptor = new Descriptor('File', self::TOPOLOGY_BACKEND);
+		$descriptor      = new Descriptor('File', self::TOPOLOGY_BACKEND);
+		$memoryFormatter = new Memory();
 		
-		$descriptor->path = $this->path;
+		$totalSpace = disk_total_space($this->path);
+		$freeSpace  = disk_free_space($this->path);
+		$filled     = $freeSpace / $totalSpace * 100;
+		
+		$descriptor->id     = $this->getTopologyId();
+		$descriptor->path   = $this->path;
+		$descriptor->size   = $memoryFormatter->format($totalSpace);
+		$descriptor->free   = $memoryFormatter->format($freeSpace);
+		$descriptor->filled = round($filled, 2) . '%';
 		
 		return $descriptor;
 	}

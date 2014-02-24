@@ -24,38 +24,79 @@
  * @version   1.0
  */
 
-namespace ZExt\Cache\Topology;
+namespace ZExt\Cache\Backend;
 
+use ZExt\Components\OptionsTrait;
+
+use ZExt\Cache\Topology\TopologyInterface;
 use ZExt\Topology\Descriptor;
 
 /**
- * Topology interface
+ * Backend adapter interface
  * 
  * @category   ZExt
  * @package    Cache
- * @subpackage Topology
+ * @subpackage Backend
  * @author     Mike.Mirten
  * @version    1.0
  */
-interface TopologyInterface {
+abstract class BackendAbstract implements BackendInterface, TopologyInterface {
 	
-	const TOPOLOGY_FRONTEND  = Descriptor::TYPE_PRIMARY;
-	const TOPOLOGY_BACKEND   = Descriptor::TYPE_WARNING;
-	const TOPOLOGY_DECORATOR = Descriptor::TYPE_DEFAULT;
-	const TOPOLOGY_SPECIAL   = Descriptor::TYPE_ALERT;
+	use OptionsTrait;
+	
+	/**
+	 * Unique IDs counter
+	 *
+	 * @var int 
+	 */
+	static private $_idCounter = 0;
+	
+	/**
+	 * Unique backend ID
+	 *
+	 * @var string
+	 */
+	protected $backendId;
+	
+	/**
+	 * Cache topology title
+	 *
+	 * @var string
+	 */
+	protected $topologyTitle = 'Backend';
+	
+	/**
+	 * Create the freash unique ID
+	 * 
+	 * @return int
+	 */
+	static protected function createId() {
+		return 'b' . dechex(self::$_idCounter ++);
+	}
 	
 	/**
 	 * Get the cache topology
 	 * 
 	 * @return Descriptor
 	 */
-	public function getTopology();
+	public function getTopology() {
+		$descriptor = new Descriptor($this->topologyTitle, self::TOPOLOGY_BACKEND);
+		$descriptor->id = $this->getTopologyId();
+		
+		return $descriptor;
+	}
 	
 	/**
-	 * Get the unique ID of the Topology element
+	 * Get the unique decorator ID
 	 * 
-	 * @return string Hexadecimal ID
+	 * @return string
 	 */
-	public function getTopologyId();
+	public function getTopologyId() {
+		if ($this->backendId === null) {
+			$this->backendId = self::createId();
+		}
+		
+		return $this->backendId;
+	}
 	
 }

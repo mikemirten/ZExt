@@ -28,6 +28,9 @@ namespace ZExt\Cache\Backend;
 
 use ZExt\Cache\Backend\Exceptions\NoPhpExtension;
 
+use ZExt\Topology\Descriptor;
+use ZExt\Formatter\Memory;
+
 /**
  * APC backend adapter
  * 
@@ -37,7 +40,7 @@ use ZExt\Cache\Backend\Exceptions\NoPhpExtension;
  * @author     Mike.Mirten
  * @version    1.0
  */
-class Apc implements BackendInterface {
+class Apc extends BackendAbstract {
 	
 	public function __construct() {
 		if (! extension_loaded('apc')) {
@@ -150,6 +153,29 @@ class Apc implements BackendInterface {
 	 */
 	public function dec($id, $value = 1) {
 		return apc_dec($id, $value);
+	}
+	
+	/**
+	 * Get the cache topology
+	 * 
+	 * @return Descriptor
+	 */
+	public function getTopology() {
+		$descriptor      = new Descriptor('APC', self::TOPOLOGY_BACKEND);
+		$memoryFormatter = new Memory();
+				
+		$info = apc_sma_info(true);
+		
+		$limit  = $info['seg_size'] * $info['num_seg'];
+		$used   = $limit - $info['avail_mem'];
+		$filled = $used / $limit * 100;
+		
+		$descriptor->id     = $this->getTopologyId();
+		$descriptor->used   = $memoryFormatter->format($used);
+		$descriptor->limit  = $memoryFormatter->format($limit);
+		$descriptor->filled = round($filled, 2) . '%';
+		
+		return $descriptor;
 	}
 	
 }

@@ -29,10 +29,11 @@ namespace ZExt\Cache\Backend;
 use Phalcon\Cache\BackendInterface as PhalconBackendInterface;
 use Phalcon\Cache\Exception        as PhalconCacheException;
 
-use ZExt\Components\OptionsTrait;
-
 use ZExt\Cache\Backend\Exceptions\NoBackend;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
+
+use ZExt\Topology\Descriptor;
+use ZExt\Formatter\Memory;
 
 /**
  * Phalcon cache backend adapter
@@ -43,9 +44,7 @@ use ZExt\Cache\Backend\Exceptions\OperationFailed;
  * @author     Mike.Mirten
  * @version    1.0.1beta
  */
-class PhalconWrapper implements BackendInterface {
-	
-	use OptionsTrait;
+class PhalconWrapper extends BackendAbstract {
 	
 	/**
 	 * Phalcon cache backend instance
@@ -486,6 +485,54 @@ class PhalconWrapper implements BackendInterface {
 	 */
 	public function getOperationExceptions() {
 		return $this->operationsExceptions;
+	}
+	
+	/**
+	 * Get the cache topology
+	 * 
+	 * @return Descriptor
+	 */
+	public function getTopology() {
+		$descriptor = new Descriptor('Phalcon', self::TOPOLOGY_BACKEND);
+		$descriptor->id = $this->getTopologyId();
+		
+		$backend = $this->getBackend();
+		$class   = get_class($backend);
+		$title   = substr($class, strrpos($class, '\\') + 1);
+		
+		$descBackend = new Descriptor($title, self::TOPOLOGY_SPECIAL);
+		
+		$options = $backend->getOptions();
+		
+		if (! empty($options)) {
+			$this->handleBackendOptions($descBackend, $options);
+		}
+		
+		$descriptor[] = $descBackend;
+		
+		return $descriptor;
+	}
+	
+	/**
+	 * Handle the Phalcon backend options
+	 * 
+	 * @param Descriptor $descriptor
+	 * @param array      $options
+	 */
+	protected function handleBackendOptions(Descriptor $descriptor, array $options) {
+		if (isset($options['host'])) {
+			$host = $options['host'];
+			
+			if (isset($options['port'])) {
+				$host .= ':' . $options['port'];
+			}
+			
+			$descriptor->host = $host;
+		}
+		
+		if (isset($options['persistent'])) {
+			$descriptor->persist = $options['persistent'] ? 'On' : 'Off';
+		}
 	}
 	
 }

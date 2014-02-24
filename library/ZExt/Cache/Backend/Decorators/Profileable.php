@@ -248,6 +248,8 @@ class Profileable extends DecoratorAbstract implements ProfileableInterface {
 		$descriptor    = new Descriptor('Profileable', self::TOPOLOGY_DECORATOR);
 		$timeFormatter = new Time();
 		
+		$descriptor->id = $this->getTopologyId();
+		
 		$profiler = $this->getProfiler();
 		
 		$descriptor->events = $profiler->getTotalEvents();

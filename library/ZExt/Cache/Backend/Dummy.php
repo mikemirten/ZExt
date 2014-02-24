@@ -35,7 +35,14 @@ namespace ZExt\Cache\Backend;
  * @author     Mike.Mirten
  * @version    1.0
  */
-class Dummy implements TaggableInterface {
+class Dummy extends BackendAbstract {
+	
+	/**
+	 * Cache topology title
+	 *
+	 * @var string
+	 */
+	protected $topologyTitle = 'Dummy';
 	
 	/**
 	 * Fetch the data from the cache
