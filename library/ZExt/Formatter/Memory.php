@@ -67,7 +67,11 @@ class Memory implements FormatterInterface {
 			return round($memory / 1048576, 1) . 'M';
 		}
 
-		return round($memory / 1048576) . 'M';
+		if ($memory < 10737418240) {
+			return round($memory / 1073741824, 2) . 'G';
+		}
+		
+		return round($memory / 1073741824, 1) . 'G';
 	}
 	
 }
