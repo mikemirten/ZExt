@@ -33,7 +33,6 @@ use ZExt\Cache\Backend\Exceptions\NoBackend;
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
 
 use ZExt\Topology\Descriptor;
-use ZExt\Formatter\Memory;
 
 /**
  * Phalcon cache backend adapter
@@ -44,7 +43,7 @@ use ZExt\Formatter\Memory;
  * @author     Mike.Mirten
  * @version    1.0.1beta
  */
-class PhalconWrapper extends BackendAbstract {
+class Phalcon extends BackendAbstract {
 	
 	/**
 	 * Phalcon cache backend instance
