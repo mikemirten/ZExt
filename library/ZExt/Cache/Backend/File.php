@@ -38,7 +38,7 @@ use ZExt\Formatter\Memory;
  * @package    Cache
  * @subpackage Backend
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
 class File extends BackendAbstract {
 	

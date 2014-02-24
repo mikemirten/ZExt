@@ -39,7 +39,7 @@ use ZExt\Topology\Descriptor;
  * @package    Cache
  * @subpackage Decorators
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
 class Taggable extends DecoratorAbstract implements TaggableInterface {
 	

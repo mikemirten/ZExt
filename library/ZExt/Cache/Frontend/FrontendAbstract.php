@@ -32,6 +32,15 @@ use ZExt\Cache\Frontend\Exceptions\NoBackend;
 use ZExt\Cache\Topology\TopologyInterface;
 use ZExt\Topology\Descriptor;
 
+/**
+ * Cache frontend abstract
+ * 
+ * @category   ZExt
+ * @package    Cache
+ * @subpackage Frontend
+ * @author     Mike.Mirten
+ * @version    1.1
+ */
 abstract class FrontendAbstract implements TopologyInterface {
 	
 	/**

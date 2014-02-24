@@ -39,7 +39,7 @@ use ZExt\Topology\Descriptor;
  * @package    Cache
  * @subpackage Decorators
  * @author     Mike.Mirten
- * @version    1.1
+ * @version    1.2
  */
 abstract class DecoratorAbstract implements DecoratorInterface, TopologyInterface {
 	

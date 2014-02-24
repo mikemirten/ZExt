@@ -41,7 +41,7 @@ use ZExt\Formatter\Time;
  * @package    Cache
  * @subpackage Decorators
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
 class Profileable extends DecoratorAbstract implements ProfileableInterface {
 	

@@ -45,7 +45,7 @@ use ZExt\Topology\Descriptor;
  * @package    Cache
  * @subpackage Frontend
  * @author     Mike.Mirten
- * @version    1.1
+ * @version    1.2
  */
 class Factory implements FactoryInterface, ProfileableInterface, TopologyInterface {
 	
