@@ -80,9 +80,10 @@ class Factory {
 	 * Other params will be passed to the backend's constructor (see backend constructors phpdocs)
 	 * 
 	 * @param  array | Traversable $options
+	 * @param  \ZExt\Cache\Backend\BackendInterface $backend
 	 * @return \ZExt\Cache\Backend\BackendInterface
 	 */
-	static function createBackend($options = []) {
+	static function createBackend($options = [], $backend = null) {
 		$options = self::normalizeOptions($options);
 		
 		// Backend type
@@ -97,6 +98,8 @@ class Factory {
 		if (isset($options[self::PARAM_PROFILER])) {
 			$profiler = (bool) $options[self::PARAM_PROFILER];
 			unset($options[self::PARAM_PROFILER]);
+		} else {
+			$profiler = false;
 		}
 		
 		// Tags ability
@@ -119,11 +122,14 @@ class Factory {
 			unset($options[self::PARAM_SERIALIZE]);
 		}
 		
-		$backendClass = self::BACKENDS_NAMESPACE . '\\' . ucfirst($backendType);
-		$backend      = new $backendClass($options);
+		// If has not been specified
+		if ($backend === null) {
+			$backendClass = self::BACKENDS_NAMESPACE . '\\' . ucfirst($backendType);
+			$backend      = new $backendClass($options);
+		}
 		
 		// Wrap to a profiler
-		if (isset($profiler) && $profiler === true) {
+		if ($profiler) {
 			if (! $backend instanceof ProfileableInterface) {
 				$backend = new Profileable($backend);
 			}
@@ -145,7 +151,13 @@ class Factory {
 		$tagsDecorator = new Taggable($backend);
 		
 		if (isset($tagsBackendOptions)) {
-			$tagsDecorator->setTagHolderBackend(self::createBackend($tagsBackendOptions));
+			if (isset($tagsBackendOptions[self::PARAM_TYPE])) {
+				$tagsBackend = self::createBackend($tagsBackendOptions);
+			} else {
+				$tagsBackend = self::createBackend($tagsBackendOptions, $backend);
+			}
+			
+			$tagsDecorator->setTagHolderBackend($tagsBackend);
 		}
 		
 		return $tagsDecorator;
