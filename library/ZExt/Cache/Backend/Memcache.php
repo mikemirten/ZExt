@@ -279,7 +279,7 @@ class Memcache extends BackendAbstract {
 			$this->addServer();
 		}
 		
-		return $this->getClient()->get($this->prepareId($id));
+		return $this->getClient()->get($this->prepareId($id)) !== false;
 	}
 	
 	/**
