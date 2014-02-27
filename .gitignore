@@ -1,2 +1,4 @@
 log/*
 public/*
+vendor/*
+composer.lock
