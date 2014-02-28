@@ -241,7 +241,7 @@ trait CacheAwareTrait {
 	 * @return string
 	 */
 	protected function getCacheFrontendFactoryServiceId() {
-		return 'defaultCacheFrontendFactory';
+		return 'cacheFrontendFactory';
 	}
 	
 }
