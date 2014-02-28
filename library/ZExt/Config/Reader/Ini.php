@@ -36,7 +36,7 @@ use ZExt\Config\Reader\Exceptions\InvalidIniSection,
  * @package    Config
  * @subpackage Reader
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.0.1
  */
 class Ini implements ReaderInterface {
 	
@@ -79,7 +79,7 @@ class Ini implements ReaderInterface {
 		
 		// Parse with sections as the root of an array
 		if ($mode === self::SECTIONS_ROOT) {
-			return $this->parseData(parse_ini_string($source, true));
+			return array_map([$this, 'parseData'], parse_ini_string($source, true));
 		}
 		
 		// Parse with section(s) specify
@@ -200,16 +200,16 @@ class Ini implements ReaderInterface {
 			}
 			
 			return [$key => $value];
-		} else {
-			$keyCurrent = trim(substr($key, 0, $point));
-			$keyRemains = trim(substr($key, $point + 1));
-			
-			if (! isset($keyCurrent[0], $keyRemains[0])) {
-				throw new InvalidIniKey('Invalid definition of the key "' . $key . '"');
-			}
-			
-			return [$keyCurrent => $this->parseKey($keyRemains, $value)];
 		}
+		
+		$keyCurrent = trim(substr($key, 0, $point));
+		$keyRemains = trim(substr($key, $point + 1));
+
+		if (! isset($keyCurrent[0], $keyRemains[0])) {
+			throw new InvalidIniKey('Invalid definition of the key "' . $key . '"');
+		}
+
+		return [$keyCurrent => $this->parseKey($keyRemains, $value)];
 	}
 	
 }
