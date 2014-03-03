@@ -9,3 +9,6 @@ install:
 
 before_script:
   - phpenv config-add travis/php.ini
+
+services:
+  - memcached
