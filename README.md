@@ -1,5 +1,7 @@
 ##ZExt framework 1.0
 
+[![Build Status](https://travis-ci.org/mikemirten/ZExt.png?branch=master)](https://travis-ci.org/mikemirten/ZExt)
+
 ###Requirements
 
 PHP 5.4 or later
