@@ -17,11 +17,6 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 		}
 	}
 	
-	public function tearDown() {
-		// Flush all data
-		$this->getCleanClient();
-	}
-	
 	public function testInitParams() {
 		$backend = new MemcacheBackend();
 		$backend->addServer('127.0.0.1', 11211);
