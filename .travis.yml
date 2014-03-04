@@ -1,0 +1,14 @@
+language: php
+
+php:
+  - 5.5
+  - 5.4
+
+services:
+  - memcached
+
+install:
+  - composer install
+
+before_script:
+  - phpenv config-add travis/php.ini
