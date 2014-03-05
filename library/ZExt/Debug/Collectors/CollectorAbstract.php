@@ -47,7 +47,7 @@ abstract class CollectorAbstract implements CollectorInterface {
 	/**
 	 * Constructor
 	 * 
-	 * @param array $params
+	 * @param array | Traversable $options
 	 */
 	public function __construct(array $options = null) {
 		if ($options !== null) {
