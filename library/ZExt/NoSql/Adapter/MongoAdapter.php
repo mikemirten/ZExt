@@ -341,10 +341,11 @@ class MongoAdapter implements ProfileableInterface {
 	/**
 	 * Update the data of the collection
 	 * 
-	 * @param string $collectionName
-	 * @param array  $criteria
-	 * @param array  $data
-	 * @param array  $options
+	 * @param  string $collectionName
+	 * @param  array  $criteria
+	 * @param  array  $data
+	 * @param  array  $options
+	 * @return bool
 	 */
 	public function update($collectionName, array $criteria, array $data, array $options = []) {
 		$collection = $this->getCollection($collectionName);
@@ -357,19 +358,22 @@ class MongoAdapter implements ProfileableInterface {
 			$event = $this->getProfiler()->startWrite($message);
 		}
 
-		$collection->update($criteria, $data, $options);
+		$result = $collection->update($criteria, $data, $options);
 
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
 		}
+		
+		return $result;
 	}
 
 	/**
 	 * Remove the data from the collection
 	 * 
-	 * @param string $collectionName
-	 * @param array  $criteria
-	 * @param array  $options
+	 * @param  string $collectionName
+	 * @param  array  $criteria
+	 * @param  array  $options
+	 * @return bool
 	 */
 	public function remove($collectionName, array $criteria = [], array $options = []) {
 		$collection = $this->getCollection($collectionName);
@@ -379,11 +383,13 @@ class MongoAdapter implements ProfileableInterface {
 			$event   = $this->getProfiler()->startDelete($message);
 		}
 
-		$collection->remove($criteria, $options);
+		$result = $collection->remove($criteria, $options);
 
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
 		}
+		
+		return $result;
 	}
 
 	/**
