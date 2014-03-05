@@ -261,12 +261,14 @@ class MongoAdapter implements ProfileableInterface {
 	 * @param array  $options
 	 */
 	public function insert($collectionName, array $data, array $options = []) {
+		$collection = $this->getCollection($collectionName);
+		
 		if ($this->_profilerEnabled) {
 			$message = 'db.' . $collectionName . '.insert(' . json_encode($data) . ');';
 			$event   = $this->getProfiler()->startInsert($message);
 		}
 
-		$this->getCollection($collectionName)->insert($data, $options);
+		$collection->insert($data, $options);
 
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
@@ -282,6 +284,8 @@ class MongoAdapter implements ProfileableInterface {
 	 * @return MongoCursor
 	 */
 	public function find($collectionName, array $criteria = [], array $fields = []) {
+		$collection = $this->getCollection($collectionName);
+		
 		if ($this->_profilerEnabled) {
 			$message = 'db.' . $collectionName . '.find(';
 
@@ -294,7 +298,7 @@ class MongoAdapter implements ProfileableInterface {
 			$event = $this->getProfiler()->startRead($message);
 		}
 
-		$cursor = $this->getCollection($collectionName)->find($criteria, $fields);
+		$cursor = $collection->find($criteria, $fields);
 
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
@@ -311,6 +315,8 @@ class MongoAdapter implements ProfileableInterface {
 	 * @param array  $fields
 	 */
 	public function findFirst($collectionName, array $criteria = [], array $fields = []) {
+		$collection = $this->getCollection($collectionName);
+		
 		if ($this->_profilerEnabled) {
 			$message = 'db.' . $collectionName . '.findOne(';
 
@@ -323,7 +329,7 @@ class MongoAdapter implements ProfileableInterface {
 			$event = $this->getProfiler()->startRead($message);
 		}
 
-		$result = $this->getCollection($collectionName)->findOne($criteria);
+		$result = $collection->findOne($criteria, $fields);
 
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
@@ -341,6 +347,8 @@ class MongoAdapter implements ProfileableInterface {
 	 * @param array  $options
 	 */
 	public function update($collectionName, array $criteria, array $data, array $options = []) {
+		$collection = $this->getCollection($collectionName);
+		
 		if ($this->_profilerEnabled) {
 			$message = 'db.' . $collectionName . '.update(' .
 				json_encode($criteria) . ',' . 
@@ -349,7 +357,7 @@ class MongoAdapter implements ProfileableInterface {
 			$event = $this->getProfiler()->startWrite($message);
 		}
 
-		$this->getCollection($collectionName)->update($criteria, $data, $options);
+		$collection->update($criteria, $data, $options);
 
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
@@ -364,12 +372,14 @@ class MongoAdapter implements ProfileableInterface {
 	 * @param array  $options
 	 */
 	public function remove($collectionName, array $criteria = [], array $options = []) {
+		$collection = $this->getCollection($collectionName);
+		
 		if ($this->_profilerEnabled) {
 			$message = 'db.remove(' . json_encode($criteria) . ');';
 			$event   = $this->getProfiler()->startDelete($message);
 		}
 
-		$this->getCollection($collectionName)->remove($criteria, $options);
+		$collection->remove($criteria, $options);
 
 		if ($this->_profilerEnabled) {
 			$event->stopSuccess();
