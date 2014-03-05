@@ -72,7 +72,7 @@ interface DatagateInterface {
 	 * @param  mixed $id The primary key or an array of the primary keys
 	 * @return ModelInterface | Collection | Iterator
 	 */
-	public function findByPrimaryId($id = null);
+	public function findByPrimaryId($id);
 
 	/**
 	 * Save the model or the collection of the models

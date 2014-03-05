@@ -146,11 +146,7 @@ class PhalconTable extends DatagateAbstract {
 	 * @param  mixed $id The primary key or an array of the primary keys
 	 * @return ModelInterface | Collection | Iterator
 	 */
-	public function findByPrimaryId($id = null) {
-		if ($id === null) {
-			return $this->find();
-		}
-		
+	public function findByPrimaryId($id) {
 		if (is_array($id)) {
 			$primaty  = $this->getPrimaryName();
 			$criteria = $this->getTableModel()->query()->inWhere($primaty, $id);
