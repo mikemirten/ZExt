@@ -94,7 +94,7 @@ class Html {
 				$encoding = mb_detect_encoding($var);
 				
 				$varType  =  $encodingTag->render($encoding);
-				$varType .= ' (' . $typeTagInt->render(mb_strlen($var, $encoding)) . ')';
+				$varType .= '&nbsp;(' . $typeTagInt->render(mb_strlen($var, $encoding)) . ')';
 				
 				$varValue = htmlspecialchars($var);
 				
