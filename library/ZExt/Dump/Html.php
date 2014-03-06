@@ -111,7 +111,7 @@ class Html {
 			case 'array':
 				$count = count($var);
 				if ($count > 0) {
-					$varType  = 'Array (' . $typeTagInt->render($count) . ')';
+					$varType  = 'Array&nbsp;(' . $typeTagInt->render($count) . ')';
 					
 					if ($recursion > 0) {
 						$varValue = self::_dumpArray($var, $recursion - 1);
@@ -119,7 +119,7 @@ class Html {
 						$varValue = '';
 					}
 				} else {
-					$varType  = 'Array (empty)';
+					$varType  = 'Array&nbsp;(empty)';
 					$varValue = '';
 				}
 				break;
