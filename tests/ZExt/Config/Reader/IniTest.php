@@ -155,4 +155,59 @@ class IniTest extends PHPUnit_Framework_TestCase {
 		$this->assertArrayNotHasKey('value3', $config);
 	}
 	
+	public function testInheritanceExtendChain() {
+		$reader  = new Ini();
+		$options = [
+			Ini::OPTION_INHERITANCE => true,
+			Ini::OPTION_MODE        => Ini::SECTIONS_PICK,
+			Ini::OPTION_SECTION     => 'test2'
+		];
+		
+		$config = $reader->parse(file_get_contents(__DIR__ . '/Ini/inheritance.ini'), $options);
+		
+		$this->assertSame(1, $config['value1']);
+		$this->assertSame(2, $config['value2']);
+		$this->assertSame(3, $config['value3']);
+		$this->assertSame(2, $config['development']);
+		$this->assertSame([16, 17], $config['dbs']);
+		$this->assertSame([
+			['host' => '127.0.0.1'],
+			['host' => '127.0.0.2'],
+			['host' => '127.0.0.3']
+		], $config['srv']);
+	}
+	
+	public function testInvalidSection() {
+		$reader  = new Ini();
+		$options = [
+			Ini::OPTION_MODE    => Ini::SECTIONS_PICK,
+			Ini::OPTION_SECTION => 'test'
+		];
+		
+		$this->setExpectedException('ZExt\Config\Reader\Exceptions\InvalidIniSection');
+		
+		$reader->parse('[app]', $options);
+	}
+	
+	public function testInvalidSectionDefinition() {
+		$reader  = new Ini();
+		$options = [
+			Ini::OPTION_INHERITANCE => true,
+			Ini::OPTION_MODE        => Ini::SECTIONS_PICK,
+			Ini::OPTION_SECTION     => 'test'
+		];
+		
+		$this->setExpectedException('ZExt\Config\Reader\Exceptions\InvalidIniSection');
+		
+		$reader->parse('[:]', $options);
+	}
+	
+	public function testInvalidKeyDefinition() {
+		$reader = new Ini();
+		
+		$this->setExpectedException('ZExt\Config\Reader\Exceptions\InvalidIniKey');
+		
+		$reader->parse('path..tmp = /tmp');
+	}
+	
 }
