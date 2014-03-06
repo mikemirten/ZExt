@@ -147,7 +147,7 @@ class Ini implements ReaderInterface {
 				}
 
 				return array_replace(
-					$this->getSection($sections, $parent),
+					$this->getSection($sections, $parent, true),
 					$sections[$part]
 				);
 			}
