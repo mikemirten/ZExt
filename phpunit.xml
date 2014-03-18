@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit bootstrap="./tests/bootstrap.php" colors="true">
 	
-	<testsuite name="All">
-		<directory>./tests/ZExt/</directory>
-	</testsuite>
+	<testsuites>
+		<testsuite name="Cache">
+			<directory>./tests/ZExt/Cache</directory>
+		</testsuite>
+
+		<testsuite name="Config">
+			<directory>./tests/ZExt/Config</directory>
+		</testsuite>
+	</testsuites>
 	
 </phpunit>

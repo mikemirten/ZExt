@@ -137,7 +137,7 @@ class Ini implements ReaderInterface {
 
 				$successor = trim(substr($part, 0, $colon));
 				$parent    = trim(substr($part, $colon + 1));
-
+				
 				if (! isset($successor[0], $parent[0])) {
 					throw new InvalidIniSection('Invalid definition of the section "' . $part . '"');
 				}
@@ -147,7 +147,7 @@ class Ini implements ReaderInterface {
 				}
 
 				return array_replace(
-					$this->getSection($sections, $parent),
+					$this->getSection($sections, $parent, true),
 					$sections[$part]
 				);
 			}
@@ -184,22 +184,11 @@ class Ini implements ReaderInterface {
 		$point = strpos($key, '.');
 		
 		if ($point === false) {
-			if (is_numeric($value)) {
-				$valueOrigin = trim($value);
-				
-				if (strpos($value, '.') === false) {
-					$value = (int) $value;
-				} else {
-					$value = (float) $value;
-				}
-				
-				// Overflow checking
-				if ($valueOrigin !== (string) $value) {
-					$value = $valueOrigin;
-				}
+			if (is_array($value)) {
+				return [$key => array_map([$this, 'parseValue'], $value)];
 			}
 			
-			return [$key => $value];
+			return [$key => $this->parseValue($value)];
 		}
 		
 		$keyCurrent = trim(substr($key, 0, $point));
@@ -210,6 +199,31 @@ class Ini implements ReaderInterface {
 		}
 
 		return [$keyCurrent => $this->parseKey($keyRemains, $value)];
+	}
+	
+	/**
+	 * Parse a value
+	 * 
+	 * @param  string $value
+	 * @return mixed
+	 */
+	public function parseValue($value) {
+		if (is_numeric($value)) {
+			$valueOrigin = trim($value);
+
+			if (strpos($value, '.') === false) {
+				$value = (int) $value;
+			} else {
+				$value = (float) $value;
+			}
+
+			// Overflow checking
+			if ($valueOrigin !== (string) $value) {
+				$value = $valueOrigin;
+			}
+		}
+		
+		return $value;
 	}
 	
 }
