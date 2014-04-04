@@ -26,6 +26,9 @@
 
 namespace ZExt\Translator\Resource;
 
+use ZExt\Components\OptionsTrait;
+use Traversable;
+
 use ZExt\Translator\Resource\Exceptions\InvalidParameter;
 use ZExt\Translator\Resource\Exceptions\ReadError;
 use ZExt\Translator\Resource\Exceptions\NoPath;
@@ -40,6 +43,8 @@ use ZExt\Translator\Resource\Exceptions\NoPath;
  * @version    1.0
  */
 abstract class FilesBasedAbstract extends ResourceAbstract {
+	
+	use OptionsTrait;
 	
 	const TPL_LOCALE = 'locale';
 	const TPL_DOMAIN = 'domain';
@@ -89,11 +94,15 @@ abstract class FilesBasedAbstract extends ResourceAbstract {
 	/**
 	 * Constructor
 	 * 
-	 * @param string $basePath Base path of the translations' catalogs
+	 * @param string $basePath Base path of the translations' catalogs | Options as an array or a traversable implementation
 	 */
 	public function __construct($basePath = null) {
 		if ($basePath !== null) {
-			$this->setBasePath($basePath);
+			if (is_array($basePath) || $basePath instanceof Traversable) {
+				$this->setOptions($basePath);
+			} else {
+				$this->setBasePath($basePath);
+			}
 		}
 	}
 	

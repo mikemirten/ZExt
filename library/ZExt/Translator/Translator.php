@@ -28,10 +28,14 @@ namespace ZExt\Translator;
 
 use ZExt\Translator\Resource\ResourceInterface;
 use ZExt\Translator\Cache\StrategyInterface;
+use ZExt\Translator\Plugin\PluginInterface;
 
 use ZExt\Translator\Exceptions\NoLocale;
 use ZExt\Translator\Exceptions\NoResources;
 use ZExt\Translator\Exceptions\NoTranslation;
+
+use ZExt\Components\OptionsTrait;
+use Traversable;
 
 /**
  * Translator
@@ -44,7 +48,7 @@ use ZExt\Translator\Exceptions\NoTranslation;
  */
 class Translator implements TranslatorInterface {
 	
-	const DEFAULT_DOMAIN = 'default';
+	use OptionsTrait;
 	
 	/**
 	 * Default locale
@@ -65,7 +69,7 @@ class Translator implements TranslatorInterface {
 	 *
 	 * @var string
 	 */
-	protected $domain = self::DEFAULT_DOMAIN;
+	protected $domain = 'default';
 	
 	/**
 	 * Provided resources
@@ -125,15 +129,40 @@ class Translator implements TranslatorInterface {
 	protected $preinitNeed = false;
 	
 	/**
+	 * Use the char as a domain delimiter
+	 *
+	 * @var string
+	 */
+	protected $idDelimiter = '.';
+	
+	/**
+	 * Translation processing plugins
+	 *
+	 * @var PluginInterface[] 
+	 */
+	protected $plugins = [];
+	
+	/**
+	 * Parameters' definition pattern
+	 *
+	 * @var string
+	 */
+	protected $paramsPattern = '{{%s}}';
+	
+	/**
 	 * Constructor
 	 * 
-	 * @param string            $locale   Default locale
+	 * @param string            $locale   Default locale | Options as an array or a traversable implementation
 	 * @param ResourceInterface $resource A resource instance or an array of instances
 	 * @param LocatorInterface  $locator  Cache strategy instance
 	 */
 	public function __construct($locale = null, $resource = null, StrategyInterface $cache = null) {
 		if ($locale !== null) {
-			$this->setLocale($locale);
+			if (is_array($locale) || $locale instanceof Traversable) {
+				$this->setOptions($locale);
+			} else {
+				$this->setLocale($locale);
+			}
 		}
 		
 		if ($resource !== null) {
@@ -181,39 +210,81 @@ class Translator implements TranslatorInterface {
 	 */
 	public function translate($id, $params = null, $domain = null, $locale = null) {
 		if ($domain === null) {
-			$domain = $this->domain;
+			$domain = $this->handleDomain($id);
 		}
 		
 		if ($locale === null) {
 			$locale = $this->getLocale();
+		} else {
+			$locale = $this->normalizeLocale($locale);
 		}
 		
-		$translation = $this->getTranslation($id, $params, $domain, $locale, $this->fallbackLocales);
+		$translation = $this->getTranslation($id, $domain, $locale, $this->fallbackLocales);
 		
 		if ($translation === null) {
-			return $this->failureHandle($id);
+			return $this->handleFailure($id);
+		}
+		
+		if (! empty($this->plugins)) {
+			$translation = $this->handlePlugins($locale, $translation, $params);
 		}
 		
 		if ($params === null) {
 			return $translation;
 		}
 		
-		array_unshift($params, $translation);
+		return strtr($translation, $this->normalizeParams($params));
+	}
+	
+	/**
+	 * Handle the translation's domain
+	 * 
+	 * @param  string $id
+	 * @return string
+	 */
+	protected function handleDomain(&$id) {
+		if ($this->idDelimiter === null) {
+			return $this->domain;
+		}
 		
-		return call_user_func_array('sprintf', $params);
+		$delimiterPos = strpos($id, $this->idDelimiter);
+		
+		if ($delimiterPos === false) {
+			return $this->domain;
+		}
+		
+		$domain = substr($id, 0, $delimiterPos);
+		$id     = substr($id, $delimiterPos + 1);
+		
+		return $domain;
+	}
+	
+	/**
+	 * Normalize the parameters by pattern
+	 * 
+	 * @param  array $params
+	 * @return array
+	 */
+	protected function normalizeParams(array $params) {
+		$processed = [];
+		
+		foreach ($params as $param => $value) {
+			$processed[sprintf($this->paramsPattern, $param)] = $value;
+		}
+		
+		return $processed;
 	}
 	
 	/**
 	 * Get the translation
 	 * 
 	 * @param  string $id
-	 * @param  array  $params
 	 * @param  string $domain
 	 * @param  string $locale
 	 * @param  array  $fallbacks
 	 * @return string
 	 */
-	protected function getTranslation($id, $params, $domain, $locale, $fallbacks) {
+	protected function getTranslation($id, $domain, $locale, $fallbacks) {
 		// Is initialize of the catalog need ?
 		if (! isset($this->initializedCatalogs[$locale][$domain])) {
 			$this->initCatalogs($locale, $domain);
@@ -227,7 +298,7 @@ class Translator implements TranslatorInterface {
 			
 			$fallbackLocale = array_shift($fallbacks);
 			
-			return $this->getTranslation($id, $params, $domain, $fallbackLocale, $fallbacks);
+			return $this->getTranslation($id, $domain, $fallbackLocale, $fallbacks);
 		}
 		
 		return $this->catalogs[$locale][$domain][$id];
@@ -240,7 +311,7 @@ class Translator implements TranslatorInterface {
 	 * @return string
 	 * @throws NoTranslation
 	 */
-	protected function failureHandle($id) {
+	protected function handleFailure($id) {
 		if ($this->failBehaviour & self::NOTFOUND_NOTICE) {
 			trigger_error('Translation absent for the ID "' . $id . '" in the catalogs');
 		}
@@ -252,6 +323,168 @@ class Translator implements TranslatorInterface {
 		if ($this->failBehaviour & self::NOTFOUND_EXCEPTION) {
 			throw new NoTranslation('Translation absent for the ID "' . $id . '" in the catalogs');
 		}
+	}
+	
+	/**
+	 * Set the parameters' definition pattern
+	 * 
+	 * @param  string $pattern
+	 * @return Translator
+	 */
+	public function setParamsPattern($pattern) {
+		$this->paramsPattern = (string) $pattern;
+		
+		return $this;
+	}
+	
+	/**
+	 * Get the parameters' definition pattern
+	 * 
+	 * @param  string $pattern
+	 * @return Translator
+	 */
+	public function getParamsPattern() {
+		return $this->paramsPattern;
+	}
+	
+	/**
+	 * Handle the plugins
+	 * 
+	 * @param  string       $translation
+	 * @param  array | null $params
+	 * @return string
+	 */
+	protected function handlePlugins($locale, $translation, $params) {
+		foreach ($this->plugins as $plugin) {
+			$translation = $plugin->handle($locale, $translation, $params);
+		}
+		
+		return $translation;
+	}
+	
+	/**
+	 * Set the plugins (overrides the current)
+	 * 
+	 * @param  array $plugins
+	 * @return Translator
+	 */
+	public function setPlugins(array $plugins) {
+		$this->resetPlugins();
+		$this->addPlugins($plugins);
+		
+		return $this;
+	}
+	
+	/**
+	 * Add the plugins
+	 * 
+	 * @param  array $plugins
+	 * @return Translator
+	 */
+	public function addPlugins(array $plugins) {
+		foreach ($plugins as $name => $plugin) {
+			if (is_numeric($name)) {
+				$this->addPlugin($plugin);
+				continue;
+			}
+			
+			$this->addPlugin($plugin, $name);
+		}
+		
+		return $this;
+	}
+	
+	/**
+	 * Add the plugin
+	 * 
+	 * @param  PluginInterface $plugin
+	 * @param  string $name
+	 * @return Translator
+	 */
+	public function addPlugin(PluginInterface $plugin, $name = null) {
+		if ($name === null) {
+			$this->plugins[] = $plugin;
+			
+			return $this;
+		}
+		
+		$this->plugins[$name] = $plugin;
+		
+		return $this;
+	}
+	
+	/**
+	 * Get the plugin
+	 * 
+	 * @param  string $name
+	 * @return PluginInterface | null
+	 */
+	public function getPlugin($name) {
+		if (isset($this->plugins[$name])) {
+			return $this->plugins[$name];
+		}
+	}
+	
+	/**
+	 * Get all the plugins
+	 * 
+	 * @return PluginInterface[]
+	 */
+	public function getPlugins() {
+		return $this->plugins;
+	}
+	
+	/**
+	 * Has the plugin in the translator
+	 * 
+	 * @return bool
+	 */
+	public function hasPlugin($name) {
+		return isset($this->plugins[$name]);
+	}
+	
+	/**
+	 * Remove the plugin
+	 * 
+	 * @param  string $name
+	 * @return Translator
+	 */
+	public function removePlugin($name) {
+		unset($this->plugins[$name]);
+		
+		return $this;
+	}
+	
+	/**
+	 * Remove all the plugins
+	 * 
+	 * @return Translator
+	 */
+	public function resetPlugins() {
+		$this->plugins = [];
+		
+		return $this;
+	}
+
+	/**
+	 * Set the domain delimiter
+	 * 
+	 * @param  string $delimiter
+	 * @return Translator
+	 */
+	public function setDomainDelimiter($delimiter = '.') {
+		$this->idDelimiter = (string) $delimiter;
+		
+		return $this;
+	}
+	
+	/**
+	 * Get the domain delimiter
+	 * 
+	 * @return string | null
+	 */
+	public function getDomainDelimiter() {
+		return $this->idDelimiter;
 	}
 	
 	/**
@@ -277,6 +510,35 @@ class Translator implements TranslatorInterface {
 		}
 		
 		return $this->locale;
+	}
+	
+	/**
+	 * Set the fallback locales (overrides the exists)
+	 * 
+	 * @param  array $locales
+	 * @param  bool  $preinit
+	 * @return Translator
+	 */
+	public function setFallbackLocales(array $locales, $preinit = false) {
+		$this->resetFallbackLocales();
+		$this->addFallbackLocales($locales, $preinit);
+		
+		return $this;
+	}
+	
+	/**
+	 * Add the fallback locales
+	 * 
+	 * @param  array $locales
+	 * @param  bool  $preinit
+	 * @return Translator
+	 */
+	public function addFallbackLocales(array $locales, $preinit = false) {
+		foreach ($locales as $locale) {
+			$this->addFallbackLocale($locale, $preinit);
+		}
+		
+		return $this;
 	}
 	
 	/**
@@ -441,6 +703,15 @@ class Translator implements TranslatorInterface {
 		if (isset($this->resources[$name])) {
 			return $this->resources[$name];
 		}
+	}
+	
+	/**
+	 * Get al the resources
+	 * 
+	 * @return ResourceInterface[]
+	 */
+	public function getResources() {
+		return $this->resources;
 	}
 	
 	/**

@@ -157,7 +157,7 @@ class Csv extends FilesBasedAbstract {
 			$line = str_getcsv($lineRaw, $this->csvDelimiter, $this->csvEnclosure);
 			
 			if (count($line) < 2) {
-				$template = 'Error has occurred while parsing CSV file for the locale: "%s" and the domain: "%s" on line %s';
+				$template = 'Error has occurred while parsing CSV file for the file: "%s" on line %s';
 				throw new ParseError(sprintf($template, $this->lastFilePath, $lineNm));
 			}
 			
