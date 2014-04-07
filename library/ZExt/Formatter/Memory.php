@@ -39,10 +39,11 @@ class Memory implements FormatterInterface {
 	/**
 	 * Format the memory
 	 * 
-	 * @param  int $memory Memory in bytes
+	 * @param  int    $memory Memory in bytes
+	 * @param  string $locale
 	 * @return string
 	 */
-	public function format($memory) {
+	public function format($memory, $params = null, $locale = null) {
 		if ($memory == 0) {
 			return 0;
 		}
