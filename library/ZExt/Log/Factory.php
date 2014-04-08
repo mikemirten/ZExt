@@ -143,14 +143,15 @@ class Factory implements FactoryInterface {
 			return $this->_loggers[$serviceName];
 		}
 		
-		$logger = $this->getCreateCallback()->__invoke($path);
+		$adapter = $this->getCreateCallback()->__invoke($path);
+		$logger  = new Logger($adapter);
 		
 		$this->_loggers[$serviceName] = $logger;
 		return $logger;
 	}
 	
 	/**
-	 * Set callback, which will create a logger
+	 * Set callback, which will create an adapter
 	 * 
 	 * @param  Closure $callback
 	 * @return Factory
@@ -162,14 +163,14 @@ class Factory implements FactoryInterface {
 	}
 	
 	/**
-	 * Get callback, which will create a logger
+	 * Get callback, which will create an adapter
 	 * 
 	 * @return Closure
 	 */
 	public function getCreateCallback() {
 		if ($this->_createCallback === null) {
 			$this->_createCallback = function($path) {
-				return new Logger(new Dummy());
+				return new Dummy();
 			};
 		}
 		
