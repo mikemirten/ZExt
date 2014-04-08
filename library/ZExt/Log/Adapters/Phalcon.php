@@ -24,12 +24,9 @@
  * @version   1.0
  */
 
-namespace ZExt\Log\Phalcon;
+namespace ZExt\Log\Adapters;
 
-use ZExt\Log\LoggerInterface;
-
-use Phalcon\Logger;
-use Phalcon\Logger\Adapter\File;
+use Phalcon\Logger\AdapterInterface as PhalconAdapterInterface;
 
 /**
  * Logger based on Phalcon\Logger\Adapter\File;
@@ -40,28 +37,32 @@ use Phalcon\Logger\Adapter\File;
  * @author     Mike.Mirten
  * @version    1.0
  */
-class LoggerFile extends File implements LoggerInterface {
+class Phalcon implements AdapterInterface {
 	
 	/**
-	 * Log a critical
-	 * 
-	 * @param string $message
+	 * Phalcon file adapter
+	 *
+	 * @var PhalconAdapterInterface
 	 */
-	public function critical($message) {
-		$this->log($message, Logger::CRITICAL);
-		
-		return $this;
-	}
+	protected $adapter;
 	
 	/**
-	 * Log an emergency
+	 * Constructor
+	 * 
+	 * @param PhalconAdapterInterface $adapter
+	 */
+	public function __construct(PhalconAdapterInterface $adapter) {
+		$this->adapter = $adapter;
+	}
+
+	/**
+	 * Log the message
 	 * 
 	 * @param string $message
+	 * @param int    $code
 	 */
-	public function emergency($message) {
-		$this->log($message, Logger::EMERGENCE);
-		
-		return $this;
+	public function log($message, $code = self::INFO) {
+		$this->adapter->log($code, $message);
 	}
-	
+
 }
