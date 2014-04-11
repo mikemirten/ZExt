@@ -125,7 +125,7 @@ class Memcache extends BackendAbstract {
 	 *
 	 * @var bool 
 	 */
-	protected $operationsExceptions = true;
+	protected $operationsExceptions = false;
 	
 	/**
 	 * Has at least one server in the connection pool
