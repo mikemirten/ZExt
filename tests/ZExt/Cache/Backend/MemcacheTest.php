@@ -89,10 +89,8 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(11, $backend->dec('testInt'));
 		$this->assertEquals(10, $backend->dec('testInt'));
 		
-		$this->setExpectedException('ZExt\Cache\Backend\Exceptions\OperationFailed');
-		
-		$this->assertNull($backend->inc('testNot'));
-		$this->assertNull($backend->dec('testNot'));
+		$this->assertFalse($backend->inc('testNot'));
+		$this->assertFalse($backend->dec('testNot'));
 	}
 	
 	public function testRemove() {
