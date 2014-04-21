@@ -41,7 +41,7 @@ use ZExt\Helper\Exceptions\NoHelper,
  * @package    Helper
  * @subpackage Broker
  * @author     Mike.Mirten
- * @version    1.0rc1
+ * @version    1.1
  */
 class HelpersBroker implements HelpersBrokerInterface, LocatorAwareInterface {
 	
@@ -199,6 +199,19 @@ class HelpersBroker implements HelpersBrokerInterface, LocatorAwareInterface {
 	 */
 	public function __isset($name) {
 		return $this->has($name);
+	}
+	
+	/**
+	 * Call the helper
+	 * 
+	 * @param  string $method
+	 * @param  array  $args
+	 * @return mixed
+	 */
+	public function __call($method, $args) {
+		$helper = $this->get($method);
+
+		return call_user_func_array([$helper, $method], $args);
 	}
 	
 }

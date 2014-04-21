@@ -33,7 +33,7 @@ namespace ZExt\Helper;
  * @package    Helper
  * @subpackage Broker
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
 interface HelpersLocatorInterface {
 	
@@ -52,5 +52,30 @@ interface HelpersLocatorInterface {
 	 * @return bool
 	 */
 	public function has($id);
+	
+	/**
+	 * Get the helper
+	 * 
+	 * @param  string $id
+	 * @return HelperInterface
+	 */
+	public function __get($id);
+	
+	/**
+	 * Has the helper
+	 * 
+	 * @param  string $id
+	 * @return bool
+	 */
+	public function __isset($id);
+	
+	/**
+	 * Call the helper
+	 * 
+	 * @param  string $id
+	 * @param  array  $args
+	 * @return mixed
+	 */
+	public function __call($id, $args);
 	
 }
