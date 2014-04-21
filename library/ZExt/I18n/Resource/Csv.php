@@ -35,7 +35,7 @@ use ZExt\I18n\Resource\Exceptions\ParseError;
  * @package    I18n
  * @subpackage Resource
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.0.1
  */
 class Csv extends FilesBasedAbstract {
 	
@@ -156,12 +156,21 @@ class Csv extends FilesBasedAbstract {
 			
 			$line = str_getcsv($lineRaw, $this->csvDelimiter, $this->csvEnclosure);
 			
+			// Lack of data detection
 			if (count($line) < 2) {
 				$template = 'Error has occurred while parsing CSV file for the file: "%s" on line %s';
 				throw new ParseError(sprintf($template, $this->lastFilePath, $lineNm));
 			}
 			
-			$result[trim($line[0])] = trim($line[1]);
+			$id = trim($line[0]);
+			
+			// Override detection
+			if (isset($result[$id])) {
+				$template = 'Translation with ID "%s" is already defined in the file "%s"';
+				throw new ParseError(sprintf($template, $id, $this->lastFilePath));
+			}
+			
+			$result[$id] = trim($line[1]);
 		}
 		
 		return $result;
