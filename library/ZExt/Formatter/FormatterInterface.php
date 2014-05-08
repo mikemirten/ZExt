@@ -39,9 +39,11 @@ interface FormatterInterface {
 	/**
 	 * Format the value
 	 * 
-	 * @param  mixed $value
+	 * @param  mixed  $value
+	 * @param  array  $params
+	 * @param  string $locale
 	 * @return string
 	 */
-	public function format($value);
+	public function format($value, $params = null, $locale = null);
 	
 }

@@ -24,48 +24,45 @@
  * @version   1.0
  */
 
-namespace ZExt\Formatter;
+namespace ZExt\I18n\Cache;
 
 /**
- * Time formatter
+ * Cache strategy interface
+ * 
+ * Catalogs have the form: [locale][domain][id]
  * 
  * @category   ZExt
- * @package    Formatter
+ * @package    I18n
+ * @subpackage Cache
  * @author     Mike.Mirten
  * @version    1.0
  */
-class Time implements FormatterInterface {
+interface StrategyInterface {
 	
 	/**
-	 * Format the time
+	 * Get the catalog(s) from the cache by the locale and/or the domain
 	 * 
-	 * @param  int    $value Time in seconds
-	 * @param  array  $params
-	 * @param  string $locale
-	 * @return string
+	 * @param  array | string $locale
+	 * @param  array | string $domain
+	 * @return array | null
 	 */
-	public function format($seconds, $params = null, $locale = null) {
-		if ($seconds == 0) {
-			return 0;
-		}
-			
-		if ($seconds < 0.01) {
-			return round($seconds * 1000, 2) . 'ms';
-		}
-
-		if ($seconds < 0.1) {
-			return round($seconds * 1000, 1) . 'ms';
-		}
-
-		if ($seconds < 1) {
-			return round($seconds * 1000) . 'ms';
-		}
-
-		if ($seconds < 10) {
-			return round($seconds, 2) . 's';
-		}	
-			
-		return round($seconds, 1) . 's';
-	}
+	public function getCatalogs($locale = null, $domain = null);
+	
+	/**
+	 * Store the catalog in the cache by the locale and/or the domain
+	 * 
+	 * @param  array $catalog
+	 * @return bool
+	 */
+	public function setCatalogs(array $catalog);
+	
+	/**
+	 * Remove the catalog(s) from the cache
+	 * 
+	 * @param  array | string $locale
+	 * @param  array | string $domain
+	 * @return bool
+	 */
+	public function removeCatalogs($locale = null, $domain = null);
 	
 }

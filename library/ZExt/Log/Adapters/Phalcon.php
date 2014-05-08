@@ -24,48 +24,45 @@
  * @version   1.0
  */
 
-namespace ZExt\Formatter;
+namespace ZExt\Log\Adapters;
+
+use Phalcon\Logger\AdapterInterface as PhalconAdapterInterface;
 
 /**
- * Time formatter
+ * Logger based on Phalcon\Logger\Adapter\File;
  * 
  * @category   ZExt
- * @package    Formatter
+ * @package    Logger
+ * @subpackage Logger
  * @author     Mike.Mirten
  * @version    1.0
  */
-class Time implements FormatterInterface {
+class Phalcon implements AdapterInterface {
 	
 	/**
-	 * Format the time
-	 * 
-	 * @param  int    $value Time in seconds
-	 * @param  array  $params
-	 * @param  string $locale
-	 * @return string
+	 * Phalcon file adapter
+	 *
+	 * @var PhalconAdapterInterface
 	 */
-	public function format($seconds, $params = null, $locale = null) {
-		if ($seconds == 0) {
-			return 0;
-		}
-			
-		if ($seconds < 0.01) {
-			return round($seconds * 1000, 2) . 'ms';
-		}
-
-		if ($seconds < 0.1) {
-			return round($seconds * 1000, 1) . 'ms';
-		}
-
-		if ($seconds < 1) {
-			return round($seconds * 1000) . 'ms';
-		}
-
-		if ($seconds < 10) {
-			return round($seconds, 2) . 's';
-		}	
-			
-		return round($seconds, 1) . 's';
-	}
+	protected $adapter;
 	
+	/**
+	 * Constructor
+	 * 
+	 * @param PhalconAdapterInterface $adapter
+	 */
+	public function __construct(PhalconAdapterInterface $adapter) {
+		$this->adapter = $adapter;
+	}
+
+	/**
+	 * Log the message
+	 * 
+	 * @param string $message
+	 * @param int    $code
+	 */
+	public function log($message, $code = self::INFO) {
+		$this->adapter->log($code, $message);
+	}
+
 }

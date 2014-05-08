@@ -24,48 +24,26 @@
  * @version   1.0
  */
 
-namespace ZExt\Formatter;
+namespace ZExt\I18n\Resource;
 
 /**
- * Time formatter
+ * Translator resource interface
  * 
  * @category   ZExt
- * @package    Formatter
+ * @package    I18n
+ * @subpackage Resource
  * @author     Mike.Mirten
  * @version    1.0
  */
-class Time implements FormatterInterface {
+interface ResourceInterface {
 	
 	/**
-	 * Format the time
+	 * Get the translation's catalog for the locale [and domain]
 	 * 
-	 * @param  int    $value Time in seconds
-	 * @param  array  $params
-	 * @param  string $locale
-	 * @return string
+	 * @param  string | array $domain
+	 * @param  string | array $locale
+	 * @return array
 	 */
-	public function format($seconds, $params = null, $locale = null) {
-		if ($seconds == 0) {
-			return 0;
-		}
-			
-		if ($seconds < 0.01) {
-			return round($seconds * 1000, 2) . 'ms';
-		}
-
-		if ($seconds < 0.1) {
-			return round($seconds * 1000, 1) . 'ms';
-		}
-
-		if ($seconds < 1) {
-			return round($seconds * 1000) . 'ms';
-		}
-
-		if ($seconds < 10) {
-			return round($seconds, 2) . 's';
-		}	
-			
-		return round($seconds, 1) . 's';
-	}
+	public function getCatalogs($locale = null, $domain = null);
 	
 }

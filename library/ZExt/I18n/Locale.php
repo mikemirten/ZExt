@@ -24,48 +24,79 @@
  * @version   1.0
  */
 
-namespace ZExt\Formatter;
+namespace ZExt\I18n;
+
+use Locale as IntlLocale;
 
 /**
- * Time formatter
+ * Locale holder
  * 
  * @category   ZExt
- * @package    Formatter
+ * @package    I18n
+ * @subpackage Locale
  * @author     Mike.Mirten
  * @version    1.0
  */
-class Time implements FormatterInterface {
+class Locale {
 	
 	/**
-	 * Format the time
+	 * Locale
+	 *
+	 * @var string
+	 */
+	protected $locale;
+	
+	/**
+	 * Primary language
+	 *
+	 * @var string
+	 */
+	protected $primaryLanguage;
+	
+	/**
+	 * Constructor
 	 * 
-	 * @param  int    $value Time in seconds
-	 * @param  array  $params
-	 * @param  string $locale
+	 * @param string $locale
+	 */
+	public function __construct($locale) {
+		$this->setLocale($locale);
+	}
+	
+	/**
+	 * Get the locale
+	 * 
 	 * @return string
 	 */
-	public function format($seconds, $params = null, $locale = null) {
-		if ($seconds == 0) {
-			return 0;
-		}
-			
-		if ($seconds < 0.01) {
-			return round($seconds * 1000, 2) . 'ms';
-		}
-
-		if ($seconds < 0.1) {
-			return round($seconds * 1000, 1) . 'ms';
-		}
-
-		if ($seconds < 1) {
-			return round($seconds * 1000) . 'ms';
-		}
-
-		if ($seconds < 10) {
-			return round($seconds, 2) . 's';
-		}	
-			
-		return round($seconds, 1) . 's';
+	public function getLocale() {
+		return $this->locale;
+	}
+	
+	/**
+	 * Set the locale
+	 * 
+	 * @param string $locale
+	 */
+	public function setLocale($locale) {
+		$this->locale          = trim($locale);
+		$this->primaryLanguage = IntlLocale::getPrimaryLanguage($this->locale);
+	}
+	
+	/**
+	 * Get the primary language
+	 * 
+	 * @return string
+	 */
+	public function getPrimaryLanguage() {
+		return $this->primaryLanguage;
+	}
+	
+	/**
+	 * Get the primary language
+	 * 
+	 * @return string
+	 */
+	public function __toString() {
+		return $this->primaryLanguage;
 	}
 	
 }

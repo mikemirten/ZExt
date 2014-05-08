@@ -26,46 +26,53 @@
 
 namespace ZExt\Formatter;
 
+use NumberFormatter;
+
 /**
- * Time formatter
+ * Number formatter
  * 
  * @category   ZExt
  * @package    Formatter
  * @author     Mike.Mirten
  * @version    1.0
  */
-class Time implements FormatterInterface {
+class Number implements FormatterInterface {
 	
 	/**
-	 * Format the time
+	 * Intl NumberFormatter instances for each locale
+	 *
+	 * @var NumberFormatter 
+	 */
+	protected $formatters = [];
+	
+	/**
+	 * Format the number
 	 * 
-	 * @param  int    $value Time in seconds
+	 * @param  int    $value
 	 * @param  array  $params
 	 * @param  string $locale
 	 * @return string
 	 */
-	public function format($seconds, $params = null, $locale = null) {
-		if ($seconds == 0) {
-			return 0;
+	public function format($value, $params = null, $locale = null) {
+		if ($locale === null) {
+			$locale = 'en';
 		}
-			
-		if ($seconds < 0.01) {
-			return round($seconds * 1000, 2) . 'ms';
+		
+		return $this->getFormatter($locale)->format($value);
+	}
+	
+	/**
+	 * Get the formatter for the locale
+	 * 
+	 * @param  string $locale
+	 * @return NumberFormatter
+	 */
+	protected function getFormatter($locale) {
+		if (! isset($this->formatters[$locale])) {
+			$this->formatters[$locale] = new NumberFormatter($locale, NumberFormatter::DECIMAL);
 		}
-
-		if ($seconds < 0.1) {
-			return round($seconds * 1000, 1) . 'ms';
-		}
-
-		if ($seconds < 1) {
-			return round($seconds * 1000) . 'ms';
-		}
-
-		if ($seconds < 10) {
-			return round($seconds, 2) . 's';
-		}	
-			
-		return round($seconds, 1) . 's';
+		
+		return $this->formatters[$locale];
 	}
 	
 }

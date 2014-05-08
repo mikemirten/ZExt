@@ -23,45 +23,39 @@
  * @category  ZExt
  * @version   1.0
  */
+namespace ZExt\Components;
 
-namespace ZExt\Log\Phalcon;
-
-use ZExt\Log\LoggerInterface;
-
-use Phalcon\Logger;
-use Phalcon\Logger\Adapter\File;
+use Traversable;
 
 /**
- * Logger based on Phalcon\Logger\Adapter\File;
+ * Standart functions library
  * 
  * @category   ZExt
- * @package    Logger
- * @subpackage Logger
+ * @package    Components
+ * @subpackage Options
  * @author     Mike.Mirten
  * @version    1.0
  */
-class LoggerFile extends File implements LoggerInterface {
+class Std {
 	
 	/**
-	 * Log a critical
+	 * Recursively iterator to array converter
 	 * 
-	 * @param string $message
+	 * @param  Traversable $iterator
+	 * @return array
 	 */
-	public function critical($message) {
-		$this->log($message, Logger::CRITICAL);
+	static function iteratorToArray(Traversable $iterator) {
+		$array = [];
 		
-		return $this;
-	}
-	
-	/**
-	 * Log an emergency
-	 * 
-	 * @param string $message
-	 */
-	public function emergency($message) {
-		$this->log($message, Logger::EMERGENCE);
+		foreach ($iterator as $key => $value) {
+			if ($value instanceof Traversable) {
+				$value = self::iteratorToArray($value);
+			}
+			
+			$array[$key] = $value;
+		}
 		
-		return $this;
+		return $array;
 	}
 	
 }

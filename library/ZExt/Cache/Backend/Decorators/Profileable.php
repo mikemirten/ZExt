@@ -172,7 +172,7 @@ class Profileable extends DecoratorAbstract implements ProfileableInterface {
 	 * @return bool
 	 */
 	public function removeMany(array $ids) {
-		$event  = $this->getProfiler()->startRead('Remove (' . count($ids) . '): ' . implode(', ', $ids));
+		$event  = $this->getProfiler()->startDelete('Remove (' . count($ids) . '): ' . implode(', ', $ids));
 		$result = $this->getBackend()->removeMany($ids);
 		
 		if ($result === false) {

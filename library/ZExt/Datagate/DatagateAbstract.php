@@ -433,7 +433,7 @@ abstract class DatagateAbstract
 	 * 
 	 * @return object
 	 */
-	private function getIntrospectiveData() {
+	protected function getIntrospectiveData() {
 		if ($this->_introspectiveData === null) {
 			$reflection = new ReflectionObject($this);
 

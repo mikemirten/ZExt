@@ -24,48 +24,27 @@
  * @version   1.0
  */
 
-namespace ZExt\Formatter;
+namespace ZExt\I18n\Plugin;
 
 /**
- * Time formatter
+ * Translation handling plugin interface
  * 
  * @category   ZExt
- * @package    Formatter
+ * @package    I18n
+ * @subpackage Plugin
  * @author     Mike.Mirten
  * @version    1.0
  */
-class Time implements FormatterInterface {
+interface PluginInterface {
 	
 	/**
-	 * Format the time
+	 * Handle the translation and/or parameters
 	 * 
-	 * @param  int    $value Time in seconds
-	 * @param  array  $params
-	 * @param  string $locale
+	 * @param  string       $locale
+	 * @param  string       $translation
+	 * @param  array | null $params
 	 * @return string
 	 */
-	public function format($seconds, $params = null, $locale = null) {
-		if ($seconds == 0) {
-			return 0;
-		}
-			
-		if ($seconds < 0.01) {
-			return round($seconds * 1000, 2) . 'ms';
-		}
-
-		if ($seconds < 0.1) {
-			return round($seconds * 1000, 1) . 'ms';
-		}
-
-		if ($seconds < 1) {
-			return round($seconds * 1000) . 'ms';
-		}
-
-		if ($seconds < 10) {
-			return round($seconds, 2) . 's';
-		}	
-			
-		return round($seconds, 1) . 's';
-	}
+	public function handle($locale, $translation, $params = null);
 	
 }

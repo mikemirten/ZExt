@@ -43,7 +43,7 @@ use Closure;
  * @package    Helper
  * @subpackage Loader
  * @author     Mike.Mirten
- * @version    1.0rc1
+ * @version    1.1
  */
 class LoaderNamespace implements LoaderInterface, HelpersLocatorInterface, LocatorAwareInterface {
 	
@@ -294,6 +294,19 @@ class LoaderNamespace implements LoaderInterface, HelpersLocatorInterface, Locat
 	 */
 	public function __isset($name) {
 		return $this->loadHelper($name, true);
+	}
+	
+	/**
+	 * Call the helper
+	 * 
+	 * @param  string $method
+	 * @param  array  $args
+	 * @return mixed
+	 */
+	public function __call($method, $args) {
+		$helper = $this->get($method);
+
+		return call_user_func_array([$helper, $method], $args);
 	}
 	
 }
