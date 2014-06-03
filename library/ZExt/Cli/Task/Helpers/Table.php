@@ -35,7 +35,7 @@ use ZExt\Helper\HelperAbstract;
  * @package    Cli
  * @subpackage Helpers
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
 class Table extends HelperAbstract {
 	
@@ -45,7 +45,7 @@ class Table extends HelperAbstract {
 	 * @param array $data
 	 * @param int   $cellPadding
 	 */
-	public function table(array $data, $cellPadding = 1) {
+	public function table(array $data, $title = null, $cellPadding = 1) {
 		if ($cellPadding < 0) {
 			$cellPadding = 0;
 		}
@@ -62,7 +62,7 @@ class Table extends HelperAbstract {
 			}
 			
 			foreach (array_values($row) as $key => $col) {
-				$length = strlen($col);
+				$length = $this->strlen($col);
 				
 				if (isset($columnsWidths[$key])) {
 					if ($length > $columnsWidths[$key]) {
@@ -74,17 +74,62 @@ class Table extends HelperAbstract {
 			}
 		}
 		
-		// Table rendering
+		$content = '';
+		
+		if ($title !== null) {
+			$content .= $this->renderTitle($title, $cellPadding, $columnsWidths);
+			$content .= PHP_EOL;
+		}
+		
+		$content .= $this->renderTable($data, $cellPadding, $columnsWidths);
+		
+		return $content;
+	}
+	
+	/**
+	 * Render the table's title
+	 * 
+	 * @param  string $title
+	 * @param  int    $cellPadding
+	 * @param  array  $columnsWidths
+	 * @return string
+	 */
+	protected function renderTitle($title, $cellPadding, $columnsWidths) {
+		$columnsNumber = count($columnsWidths);
+		$tableWidth    = array_sum($columnsWidths) + $columnsNumber + ($columnsNumber * $cellPadding * 2) - 1;
+		
+		$content = '+' . str_repeat('-', $tableWidth) . '+' . PHP_EOL;
+		
+		$content .= '|';
+		$content .= str_repeat(' ', $cellPadding);
+		$content .= $title;
+		$content .= str_repeat(' ', $tableWidth - $this->strlen($title) - $cellPadding);
+		$content .= '|';
+		
+		return $content;
+	}
+	
+	/**
+	 * Render the table's content
+	 * 
+	 * @param  array $data
+	 * @param  int   $cellPadding
+	 * @param  int   $columnsWidths
+	 * @return string
+	 */
+	protected function renderTable($data, $cellPadding, $columnsWidths) {
 		$tableRows = [];
 		
 		foreach ($data as $row) {
 			$row      = array_values($row);
 			$tableCol = '|';
 			
+			$columnsNumber = count($columnsWidths);
+			
 			for ($colNm = 0; $colNm < $columnsNumber; ++ $colNm) {
 				$colWidth = $columnsWidths[$colNm];
 				$col      = isset($row[$colNm]) ? $row[$colNm] : '';
-				$len      = strlen($col);
+				$len      = $this->strlen($col);
 				
 				if ($colWidth > $len) {
 					$col .= str_repeat(' ', $colWidth - $len);
@@ -105,7 +150,19 @@ class Table extends HelperAbstract {
 		
 		$body = implode(PHP_EOL . $delimLine . PHP_EOL, $tableRows);
 		
-		echo $delimLine . PHP_EOL . $body . PHP_EOL . $delimLine;
+		return $delimLine . PHP_EOL . $body . PHP_EOL . $delimLine;
+	}
+	
+	/**
+	 * Count string string length
+	 * 
+	 * @param  string $str
+	 * @return int
+	 */
+	protected function strlen($str) {
+		$str = preg_replace('/\033\[\d+(?:;\d+)?m/', '', $str);
+		
+		return strlen($str);
 	}
 	
 }
