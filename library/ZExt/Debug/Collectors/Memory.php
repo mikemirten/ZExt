@@ -49,6 +49,10 @@ class Memory extends CollectorAbstract {
 		$memory = memory_get_peak_usage();
 		$limit  = ini_get('memory_limit');
 		
+		if ($limit < 0) {
+			$limit = 'unlimited';
+		}
+		
 		$info->setIcon('chip')
 		     ->setName('Memory usage')
 		     ->setTitle($this->formatMemory($memory) . ' of ' . $limit);
