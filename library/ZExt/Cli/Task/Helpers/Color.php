@@ -35,7 +35,7 @@ use ZExt\Helper\HelperAbstract;
  * @package    Cli
  * @subpackage Helpers
  * @author     Mike.Mirten
- * @version    1.0rc1
+ * @version    1.0.1
  */
 class Color extends HelperAbstract {
 	
@@ -71,14 +71,24 @@ class Color extends HelperAbstract {
 	 * @var array
 	 */
 	protected $_backgroundColors = [
-		'black'      => '40',
-		'red'        => '41',
-		'green'      => '42',
-		'yellow'     => '43',
-		'blue'       => '44',
-		'magenta'    => '45',
-		'cyan'       => '46',
-		'light_gray' => '47'
+		'default'       => '49',
+		'black'         => '40',
+		'red'           => '41',
+		'green'         => '42',
+		'yellow'        => '43',
+		'blue'          => '44',
+		'magenta'       => '45',
+		'cyan'          => '46',
+		'light_gray'    => '47',
+		'dark_gray'     => '100',
+		'light_red'     => '101',
+		'light_green'   => '102',
+		'light_yellow'  => '103',
+		'light_blue'    => '104',
+		'light_magenta' => '105',
+		'light_cyan'    => '106',
+		'white'         => '107'
+		
 	];
 	
 	/**
