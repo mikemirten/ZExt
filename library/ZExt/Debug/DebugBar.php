@@ -40,7 +40,10 @@ use ZExt\Html\Script;
 use ZExt\Debug\Infosets\Infoset,
     ZExt\Debug\Collectors\CollectorInterface,
     ZExt\Debug\Renderers\RendererInterface,
-    ZExt\Debug\Renderers\Html as RendererHtml;
+    ZExt\Debug\Renderers\Html as RendererHtml,
+    ZExt\Debug\Renderers\Cli  as RendererCli;
+
+use ZExt\Cli\Task\HelpersBroker as CliHelperBrocker;
 
 use ZExt\Dump\Html as Dump;
 
@@ -497,6 +500,13 @@ class DebugBar {
 	 */
 	public function getRenderer() {
 		if ($this->renderer === null) {
+			if (php_sapi_name() === 'cli') {
+				$this->renderer = new RendererCli();
+				$this->renderer->setHelpersBroker(new CliHelperBrocker());
+				
+				return $this->renderer;
+			}
+			
 			$this->renderer = new RendererHtml();
 			$this->renderer->setAssetsPath(__DIR__ . DIRECTORY_SEPARATOR . 'Assets');
 		}
