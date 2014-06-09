@@ -152,7 +152,7 @@ class Php extends CollectorAbstract {
 				continue;
 			}
 			
-			$extensions[] = [$extension, ' [success]' . $version . '[/success]'];
+			$extensions[] = [$extension, '[success]' . $version . '[/success]'];
 		}
 		
 		if (extension_loaded('Zend OPcache')) {
