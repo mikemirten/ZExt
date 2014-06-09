@@ -83,15 +83,29 @@ class Request extends CollectorAbstract {
 			->setName('Request info')
 			->setIcon('arrowdown');
 		
-		if (isset($_SERVER['REQUEST_METHOD'])) {
-			$info->setTitle(preg_replace('/[^a-z]+/i', '', $_SERVER['REQUEST_METHOD']));
-		} else {
-			$info->setTitle('Request');
-		}
-		
+		$this->createTitle($info);
 		$this->createContent($info);
 		
 		return $info;
+	}
+	
+	/**
+	 * Create the title
+	 * 
+	 * @param Infoset $info
+	 */
+	protected function createTitle(Infoset $info) {
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			$info->setTitle(preg_replace('/[^a-z]+/i', '', $_SERVER['REQUEST_METHOD']));
+			return;
+		}
+		
+		if (php_sapi_name() === 'cli') {
+			$info->setTitle('[success]CLI[/success]');
+			return;
+		}
+		
+		$info->setTitle('Unknown API');
 	}
 	
 	/**

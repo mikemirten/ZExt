@@ -60,6 +60,11 @@ class Response extends CollectorAbstract {
 	 * @param Infoset $info
 	 */
 	protected function createTitle(Infoset $info) {
+		if (php_sapi_name() === 'cli') {
+			$info->setTitle('[success]CLI[/success]');
+			return;
+		}
+		
 		$code = http_response_code();
 		
 		$title = ($code < 400)
@@ -79,6 +84,10 @@ class Response extends CollectorAbstract {
 	 * @param Infoset $info
 	 */
 	protected function createContent(Infoset $info) {
+		if (php_sapi_name() === 'cli') {
+			return;
+		}
+		
 		$headersList = $this->createList();
 		$headersList->setTitle('Headers');
 		
