@@ -28,9 +28,10 @@ namespace ZExt\Mvc\View\Helpers;
 
 use ZExt\Components\OptionsTrait;
 use ZExt\Helper\HelperAbstract;
-use ZExt\Html\Tag;
 
-use Exception;
+use ZExt\Mvc\View\Helpers\Exceptions\MetadataError;
+
+use Exception, stdClass;
 
 /**
  * Head elements helper
@@ -39,51 +40,60 @@ use Exception;
  * @package    Mvc
  * @subpackage ViewHelper
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    2.0
  */
 class Head extends HelperAbstract {
 	
 	use OptionsTrait;
 	
+	use Head\Description,
+	    Head\Keywords,
+	    Head\Encoding,
+	    Head\Title,
+	    Head\Style,
+	    Head\Script;
+	
+	const META_FILENAME = '.zstaticmeta';
+	
 	/**
-	 * Meta description
+	 * Files' metadata
+	 *
+	 * @var array
+	 */
+	protected $metadata;
+	
+	/**
+	 * Metadata was changed
+	 *
+	 * @var bool
+	 */
+	protected $metadataChanged = false;
+	
+	/**
+	 * Static files' base URL
 	 *
 	 * @var string
 	 */
-	protected $description;
+	protected $staticUrl = '';
 	
 	/**
-	 * Meta keywords
-	 *
-	 * @var 
-	 */
-	protected $keywords = [];
-	
-	/**
-	 * Meta charset
+	 * Static files' base path
 	 *
 	 * @var string
 	 */
-	protected $encoding;
+	protected $staticPath;
 	
 	/**
-	 * Title content
-	 * 
-	 * @var string
-	 */
-	protected $titleContent = [];
-	
-	/**
-	 * Title delimiter
+	 * Static files' checksum handle
 	 *
 	 * @var string
 	 */
-	protected $titleDelimiter = ' ';
+	protected $staticHash = false;
 	
 	/**
 	 * The helper "main"
 	 * 
-	 * @return Meta
+	 * @return Head
 	 */
 	public function head($options = null) {
 		if ($options !== null) {
@@ -94,197 +104,74 @@ class Head extends HelperAbstract {
 	}
 	
 	/**
-	 * Set the description
+	 * Set the base URL of the static files
 	 * 
-	 * @param  string $description
-	 * @return Meta
+	 * @param  string $url
+	 * @return Head
 	 */
-	public function setDescription($description) {
-		$this->description = trim($description);
+	public function setBaseStaticUrl($url) {
+		$this->staticUrl = rtrim($url, '/');
 		
 		return $this;
 	}
 	
 	/**
-	 * Get the description
+	 * Get the base URL of the static files
 	 * 
 	 * @return string
 	 */
-	public function getDescription() {
-		return $this->description;
+	public function getBaseStaticUrl() {
+		return $this->staticUrl;
 	}
 	
 	/**
-	 * Set the keywords (owerrides the current keywords)
+	 * Set the base path of the static files
 	 * 
-	 * @param  array | Traversable $keywords
-	 * @return Meta
+	 * @param  string $path
+	 * @return Head
 	 */
-	public function setKeywords($keywords) {
-		$this->resetKeywords();
-		$this->addKeywords($keywords);
+	public function setBaseStaticPath($path) {
+		$this->staticPath = realpath($path);
 		
 		return $this;
 	}
 	
 	/**
-	 * Add many of the keywords
+	 * Get the base path of the static files
 	 * 
-	 * @param  array | Traversable $keywords
-	 * @return Meta
+	 * @return string
 	 */
-	public function addKeywords($keywords) {
-		foreach ($keywords as $keyword) {
-			$this->addKeyword($keyword);
+	public function getBaseStaticPath() {
+		if ($this->staticPath === null) {
+			if (isset($_SERVER['DOCUMENT_ROOT'])) {
+				$this->staticPath = $_SERVER['DOCUMENT_ROOT'];
+			} else {
+				$this->staticPath = realpath('.');
+			}
 		}
 		
-		return $this;
+		return $this->staticPath;
 	}
 	
 	/**
-	 * Add the keyword
+	 * Calculate hashes for the static files and append their
 	 * 
-	 * @param  string $keyword
-	 * @return Meta
+	 * @param  bool $enable
+	 * @return Head
 	 */
-	public function addKeyword($keyword) {
-		$this->keywords[] = trim($keyword);
+	public function setStaticHashing($enable = true) {
+		$this->staticHash = (bool) $enable;
 		
 		return $this;
 	}
 	
 	/**
-	 * Reset the keywords
+	 * Is the hashes for the static files enabled ?
 	 * 
-	 * @return Meta
+	 * @return bool
 	 */
-	public function resetKeywords() {
-		$this->keywords = [];
-	}
-	
-	/**
-	 * Get the keywords
-	 * 
-	 * @return string
-	 */
-	public function getKeywords() {
-		return implode(',', $this->keywords);
-	}
-	
-	/**
-	 * Get the raw keywords content
-	 * 
-	 * @return array
-	 */
-	public function getKeywordsRaw() {
-		return $this->keywords;
-	}
-	
-	/**
-	 * Set the encoding
-	 * 
-	 * @param  string $encoding
-	 * @return Meta
-	 */
-	public function setEncoding($encoding) {
-		$this->encoding = trim($encoding);
-		
-		return $this;
-	}
-	
-	/**
-	 * Get the encoding
-	 * 
-	 * @return string
-	 */
-	public function getEncoding() {
-		return $this->encoding;
-	}
-	
-	/**
-	 * Set the title (owerrides the current title)
-	 * 
-	 * @param  string $title
-	 * @return Meta
-	 */
-	public function setTitle($title) {
-		$this->resetTitle();
-		$this->appendTitle($title);
-		
-		return $this;
-	}
-	
-	/**
-	 * Append the part to the title
-	 * 
-	 * @param  string $title
-	 * @return Meta
-	 */
-	public function appendTitle($title) {
-		$this->titleContent[] = trim($title);
-		
-		return $this;
-	}
-	
-	/**
-	 * Prepend the part to the title
-	 * 
-	 * @param  string $title
-	 * @return Meta
-	 */
-	public function prependTitle($title) {
-		array_unshift($this->titleContent, trim($title));
-		
-		return $this;
-	}
-	
-	/**
-	 * 
-	 * @return Meta
-	 */
-	public function resetTitle() {
-		$this->titleContent = [];
-		
-		return $this;
-	}
-	
-	/**
-	 * Set the title delimiter
-	 * 
-	 * @param  string $delimiter
-	 * @return Meta
-	 */
-	public function setTitleDelimiter($delimiter) {
-		$this->titleDelimiter = (string) $delimiter;
-		
-		return $this;
-	}
-	
-	/**
-	 * Get the title delimiter
-	 * 
-	 * @return string
-	 */
-	public function getTitleDelimiter() {
-		return $this->titleDelimiter;
-	}
-	
-	/**
-	 * Get the title
-	 * 
-	 * @return string
-	 */
-	public function getTitle() {
-		return implode($this->titleDelimiter, $this->titleContent);
-	}
-	
-	/**
-	 * Get the raw title content
-	 * 
-	 * @return array
-	 */
-	public function getTitleRaw() {
-		return $this->titleContent;
+	public function isStaticHashing() {
+		return $this->staticHash;
 	}
 	
 	/**
@@ -297,86 +184,101 @@ class Head extends HelperAbstract {
 		
 		// Encoding
 		if ($this->encoding !== null) {
-			$parts[] = $this->renderEncoding($this->encoding);
-		}
-		
-		// Description
-		if ($this->description !== null) {
-			$parts[] = $this->renderDescription($this->description);
-		}
-		
-		// Keywords
-		if (! empty($this->keywords)) {
-			$parts[] = $this->renderKeywords($this->keywords);
+			$parts[] = $this->renderEncoding();
 		}
 		
 		// Title
 		if (! empty($this->titleContent)) {
-			$parts[] = $this->renderTitle($this->titleDelimiter, $this->titleContent);
+			$parts[] = $this->renderTitle();
+		}
+		
+		// Description
+		if ($this->description !== null) {
+			$parts[] = $this->renderDescription();
+		}
+		
+		// Keywords
+		if (! empty($this->keywords)) {
+			$parts[] = $this->renderKeywords();
+		}
+		
+		// Style
+		if (! empty($this->styleLinks)) {
+			$parts[] = $this->renderStyle();
+		}
+		
+		// Scripts
+		if (! empty($this->scriptSources)) {
+			$parts[] = $this->renderScripts();
 		}
 		
 		return implode(PHP_EOL, $parts);
 	}
 	
 	/**
-	 * Render the encoding tag
+	 * Return file's metadata
 	 * 
-	 * @param  string $encoding
-	 * @return string
+	 * @param  string $path
+	 * @return stdObject
 	 */
-	protected function renderEncoding($encoding) {
-		$encTag = new Tag('meta');
-		$encTag->setClosed();
+	protected function getFileMeta($path) {
+		$meta = $this->getMetadata();
 		
-		$encTag->charset = $encoding;
+		$filePath  = $this->getBaseStaticPath();
+		$filePath .= DIRECTORY_SEPARATOR . $path;
 		
-		return $encTag->render();
+		// Modification time
+		$fileMtime = filemtime($filePath);
+		
+		if (isset($meta[$path]) && $fileMtime === $meta[$path]->mtime) {
+			return $meta[$path];
+		}
+		
+		$fileMeta = new stdClass();
+		$fileMeta->mtime = $fileMtime;
+		$fileMeta->hash  = substr(md5_file($filePath), 24);
+		
+		$this->metadata[$path] = $fileMeta;
+		$this->metadataChanged = true;
+		
+		return $fileMeta;
 	}
 	
 	/**
-	 * Render the keywords tag
+	 * Get the files metadata
 	 * 
-	 * @param  array $keywords
-	 * @return string
+	 * @return array
+	 * @throws MetadataError
 	 */
-	protected function renderKeywords(array $keywords) {
-		$keysTag = new Tag('meta');
-		$keysTag->setClosed();
-
-		$keysTag->name    = 'keywords';
-		$keysTag->content = implode(',', $keywords);
-
-		return $keysTag->render();
-	}
-	
-	/**
-	 * Render the description tag
-	 * 
-	 * @param  string $description
-	 * @return string
-	 */
-	protected function renderDescription($description) {
-		$descTag = new Tag('meta');
-		$descTag->setClosed();
-
-		$descTag->name    = 'description';
-		$descTag->content = $description;
-
-		return $descTag->render();
-	}
-	
-	/**
-	 * Render the title
-	 * 
-	 * @param  string $delimiter
-	 * @param  array  $content
-	 * @return string
-	 */
-	protected function renderTitle($delimiter, array $content) {
-		$title    = implode($delimiter, $content);
-		$titleTag = new Tag('title', $title);
+	protected function getMetadata() {
+		if ($this->metadata !== null) {
+			return $this->metadata;
+		}
 		
-		return $titleTag->render();
+		$metaPath  = $this->getBaseStaticPath();
+		$metaPath .= DIRECTORY_SEPARATOR . self::META_FILENAME;
+		
+		if (is_file($metaPath)) {
+			$metaRaw = file_get_contents($metaPath);
+			
+			if ($metaRaw === false) {
+				throw new MetadataError('Unable to read the metadata');
+			}
+			
+			$meta = json_decode($metaRaw);
+			
+			if ($meta === null) {
+				throw new MetadataError('Error in the metadata; Errorcode: ' . json_last_error());
+			}
+			
+			$this->metadata = (array) $meta;
+			
+			return $this->metadata;
+		}
+		
+		$this->metadata = [];
+		
+		return $this->metadata;
 	}
 	
 	/**
@@ -385,11 +287,31 @@ class Head extends HelperAbstract {
 	 * @return string
 	 */
 	public function __toString() {
-		// toString() must not throw an exception
 		try {
 			return $this->render();
 		} catch (Exception $e) {
-			return '<!-- Error has occurred -->';
+			return '<!-- Head helper exception: ' . $e->getMessage() . ' -->';
+		}
+	}
+	
+	/**
+	 * Destructor
+	 * 
+	 * Writes the metadata at the end
+	 */
+	public function __destruct() {
+		if (! $this->metadataChanged) {
+			return;
+		}
+		
+		$metaPath  = $this->getBaseStaticPath();
+		$metaPath .= DIRECTORY_SEPARATOR . self::META_FILENAME;
+		
+		$meta   = json_encode($this->metadata);
+		$result = file_put_contents($metaPath, $meta);
+		
+		if ($result === false) {
+			throw new MetadataError('Unable to write the metadata');
 		}
 	}
 	
