@@ -123,11 +123,11 @@ class Factory implements FactoryInterface {
 	 * @return string
 	 * @throws UnableToRead
 	 */
-	protected static function readFile($path) {
-		$path = realpath($path);
+	protected static function readFile($pathRaw) {
+		$path = realpath($pathRaw);
 		
 		if ($path === false) {
-			throw new UnableToRead('File "' . $path . '" wasn\'t found or inaccessible');
+			throw new UnableToRead('File "' . $pathRaw . '" not found or inaccessible');
 		}
 		
 		$content = file_get_contents($path);
