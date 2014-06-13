@@ -138,6 +138,25 @@ class ConfigTest extends PHPUnit_Framework_TestCase {
 		], $config->toFlatArray());
 	}
 	
+	/**
+	 * @dataProvider configSourceProvider
+	 */
+	public function testConfigClone($source) {
+		$config = new Config($source);
+		
+		$clonedConfig = clone $config;
+		
+		$clonedConfig->item1          = 100;
+		$clonedConfig->section->item3 = 300;
+		$clonedConfig->section->item5 = 500;
+		
+		$this->assertFalse($clonedConfig->isReadOnly());
+		
+		$this->assertSame(1, $config->item1);
+		$this->assertSame(3, $config->section->item3);
+		$this->assertNull($config->section->item5);
+	}
+	
 	public function configSourceProvider() {
 		return [
 			[
