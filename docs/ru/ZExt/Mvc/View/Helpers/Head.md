@@ -37,7 +37,7 @@ $this->head->script = 'myapp.js';
 ## Базовые методы
 
 ```java
-void setBaseStaticUrl(string $url)
+Head setBaseStaticUrl(string $url)
 ```
 
 Задаёт базовый URL для всех статических ресурсов, т.е. скриптов, стилей, по умолчанию.
@@ -116,6 +116,8 @@ ElementInterface getElement(string $name)
 **К элементу можно так же обратиться как к свойству объекта**
 
 ## Элементы
+
+*Все элементы имеют действие по умолчанию при обращении к ним как к свойству помощника "Head"*
 
 ###Title
 
@@ -266,3 +268,29 @@ array getKeywordsRaw()
 ```
 
 Получить текущие ключевые слова в виде массива
+
+###Description
+
+Элемент отвечает за тег передающий описание к странице
+
+```php
+$this->head->description = 'Some description for my application';
+```
+
+```html
+<meta name="description" content="Some description for my application" />
+```
+
+**Методы**
+
+```java
+ElementDescription setDescription(string $description)
+```
+
+Задать описание
+
+```java
+string getDescription()
+```
+
+Получить описание
