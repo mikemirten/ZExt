@@ -117,13 +117,8 @@ abstract class ElementAbstract implements ElementInterface, IteratorAggregate, C
 	 * @param string $url
 	 */
 	protected function setBaseUrl($url) {
-		if ($url === '/') {
-			$this->baseUrl = '';
-			return;
-		}
-		
-		if ($url === '//') {
-			$this->baseUrl = '/';
+		if ($url === '/' || $url === '//') {
+			$this->baseUrl = $url;
 			return;
 		}
 		

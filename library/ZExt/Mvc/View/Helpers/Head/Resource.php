@@ -126,17 +126,12 @@ class Resource {
 	 * @return Resource
 	 */
 	protected function setBaseUrl($url) {
-		if ($url === '/') {
-			$this->baseUrl = '';
+		if ($url === '/' || $url === '//') {
+			$this->baseUrl = $url;
 			return;
 		}
 		
-		if ($url === '//') {
-			$this->baseUrl = '/';
-			return;
-		}
-		
-		$this->baseUrl = rtrim($url, '/');
+		$this->baseUrl = rtrim($url, '/') . '/';
 		
 		return $this;
 	}
@@ -190,7 +185,7 @@ class Resource {
 			return $this->basePath . DIRECTORY_SEPARATOR . $this->name;
 		}
 		
-		return $this->basePath . '/' . $this->name;
+		return $this->basePath . $this->name;
 	}
 	
 	/**
@@ -199,7 +194,7 @@ class Resource {
 	 * @return string
 	 */
 	public function getUrl() {
-		$url = $this->baseUrl . '/' . $this->name;
+		$url = $this->baseUrl . $this->name;
 		
 		if ($this->hashAppend) {
 			$meta = $this->getMetadata();

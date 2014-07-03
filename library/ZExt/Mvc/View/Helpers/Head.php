@@ -106,6 +106,11 @@ class Head extends HelperAbstract {
 	 * @return Head
 	 */
 	public function setBaseStaticUrl($url) {
+		if ($url === '/' || $url === '//') {
+			$this->staticBaseUrl = $url;
+			return;
+		}
+		
 		$this->staticBaseUrl = rtrim($url, '/');
 		
 		return $this;
@@ -230,7 +235,7 @@ class Head extends HelperAbstract {
 		}
 		
 		$class = 'ZExt\Mvc\View\Helpers\Head\Element' . ucfirst($name);
-
+		
 		$element = new $class(
 			$this->getBaseStaticPath(),
 			$this->getBaseStaticUrl(),
