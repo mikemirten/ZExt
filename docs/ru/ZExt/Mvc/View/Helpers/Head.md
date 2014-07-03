@@ -150,7 +150,7 @@ ElementTitle setTitle(string $title)
 ElementTitle appendTitle(string $title)
 ```
 
-Добавить значение в конец
+Добавить значение в конец. **Действие по умолчанию**
 
 ```java
 ElementTitle prependTitle(string $title)
