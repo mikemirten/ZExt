@@ -29,7 +29,7 @@ namespace ZExt\Mvc\View\Helpers\Head;
 use ZExt\Html\Tag;
 
 /**
- * Title element trait
+ * Title element
  * 
  * @category   ZExt
  * @package    Mvc
@@ -37,7 +37,7 @@ use ZExt\Html\Tag;
  * @author     Mike.Mirten
  * @version    1.0
  */
-trait Title {
+class ElementTitle implements ElementInterface {
 	
 	/**
 	 * Title content
@@ -141,11 +141,20 @@ trait Title {
 	}
 	
 	/**
-	 * Render the title
+	 * Is the title empty ?
+	 * 
+	 * @return bool
+	 */
+	public function isEmpty() {
+		return empty($this->titleContent);
+	}
+	
+	/**
+	 * Assemble the title
 	 * 
 	 * @return string
 	 */
-	protected function renderTitle() {
+	public function assemble() {
 		$titleTag = new Tag('title', $this->getTitle());
 		
 		return $titleTag->render();

@@ -24,10 +24,34 @@
  * @version   1.0
  */
 
-namespace ZExt\Mvc\View\Helpers;
+namespace ZExt\Mvc\View\Helpers\Head;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Html\Tag;
 
-class MetadataError extends ExceptionAbstract {
+/**
+ * Script element
+ * 
+ * @category   ZExt
+ * @package    Mvc
+ * @subpackage ViewHelper
+ * @author     Mike.Mirten
+ * @version    1.0
+ */
+class ElementScript extends ElementAbstract {
+	
+	/**
+	 * Render a tag by the resource
+	 * 
+	 * @param  Resource $resource
+	 * @return string
+	 */
+	protected function renderTag(Resource $resource) {
+		$tag = new Tag('script');
+		
+		$tag->type = 'text/javascript';
+		$tag->src  = $resource->getUrl();
+		
+		return $tag->render();
+	}
 	
 }

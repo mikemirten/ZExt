@@ -29,9 +29,7 @@ namespace ZExt\Mvc\View\Helpers;
 use ZExt\Components\OptionsTrait;
 use ZExt\Helper\HelperAbstract;
 
-use ZExt\Mvc\View\Helpers\Exceptions\MetadataError;
-
-use Exception, stdClass;
+use Exception;
 
 /**
  * Head elements helper
@@ -40,55 +38,53 @@ use Exception, stdClass;
  * @package    Mvc
  * @subpackage ViewHelper
  * @author     Mike.Mirten
- * @version    2.0
+ * @version    3.0
+ * 
+ * @property \ZExt\Mvc\View\Helpers\Head\ElementTitle       $title       Title element
+ * @property \ZExt\Mvc\View\Helpers\Head\ElementEncoding    $encoding    Encoding element
+ * @property \ZExt\Mvc\View\Helpers\Head\ElementDescription $description Description element
+ * @property \ZExt\Mvc\View\Helpers\Head\ElementKeywords    $keywords    Keywords element
+ * @property \ZExt\Mvc\View\Helpers\Head\ElementStyle       $style       Style element
+ * @property \ZExt\Mvc\View\Helpers\Head\ElementScript      $script      Script element
  */
 class Head extends HelperAbstract {
 	
 	use OptionsTrait;
-	
-	use Head\Description,
-	    Head\Keywords,
-	    Head\Encoding,
-	    Head\Title,
-	    Head\Style,
-	    Head\Script;
-	
-	const META_FILENAME = '.zstaticmeta';
-	
-	/**
-	 * Files' metadata
-	 *
-	 * @var array
-	 */
-	protected $metadata;
-	
-	/**
-	 * Metadata was changed
-	 *
-	 * @var bool
-	 */
-	protected $metadataChanged = false;
 	
 	/**
 	 * Static files' base URL
 	 *
 	 * @var string
 	 */
-	protected $staticUrl = '';
+	protected $staticBaseUrl = '/';
 	
 	/**
 	 * Static files' base path
 	 *
 	 * @var string
 	 */
-	protected $staticPath;
+	protected $staticBasePath;
 	
 	/**
 	 * Static files' checksum handle
 	 *
 	 * @var string
 	 */
-	protected $staticHash = false;
+	protected $staticHashAppend = false;
+	
+	/**
+	 * Manager of resources' metadata
+	 *
+	 * @var Head\MetadataManagerInterface
+	 */
+	protected $metadataManager;
+	
+	/**
+	 * Elements list
+	 *
+	 * @var Head\ElementInterface
+	 */
+	protected $elements = [];
 	
 	/**
 	 * The helper "main"
@@ -110,7 +106,7 @@ class Head extends HelperAbstract {
 	 * @return Head
 	 */
 	public function setBaseStaticUrl($url) {
-		$this->staticUrl = rtrim($url, '/');
+		$this->staticBaseUrl = rtrim($url, '/');
 		
 		return $this;
 	}
@@ -121,7 +117,7 @@ class Head extends HelperAbstract {
 	 * @return string
 	 */
 	public function getBaseStaticUrl() {
-		return $this->staticUrl;
+		return $this->staticBaseUrl;
 	}
 	
 	/**
@@ -131,7 +127,7 @@ class Head extends HelperAbstract {
 	 * @return Head
 	 */
 	public function setBaseStaticPath($path) {
-		$this->staticPath = realpath($path);
+		$this->staticBasePath = realpath($path);
 		
 		return $this;
 	}
@@ -142,15 +138,15 @@ class Head extends HelperAbstract {
 	 * @return string
 	 */
 	public function getBaseStaticPath() {
-		if ($this->staticPath === null) {
+		if ($this->staticBasePath === null) {
 			if (isset($_SERVER['DOCUMENT_ROOT'])) {
-				$this->staticPath = $_SERVER['DOCUMENT_ROOT'];
+				$this->staticBasePath = $_SERVER['DOCUMENT_ROOT'];
 			} else {
-				$this->staticPath = realpath('.');
+				$this->staticBasePath = realpath('.');
 			}
 		}
 		
-		return $this->staticPath;
+		return $this->staticBasePath;
 	}
 	
 	/**
@@ -159,8 +155,8 @@ class Head extends HelperAbstract {
 	 * @param  bool $enable
 	 * @return Head
 	 */
-	public function setStaticHashing($enable = true) {
-		$this->staticHash = (bool) $enable;
+	public function setStaticHashAppend($enable = true) {
+		$this->staticHashAppend = (bool) $enable;
 		
 		return $this;
 	}
@@ -170,8 +166,35 @@ class Head extends HelperAbstract {
 	 * 
 	 * @return bool
 	 */
-	public function isStaticHashing() {
-		return $this->staticHash;
+	public function isStaticHashAppend() {
+		return $this->staticHashAppend;
+	}
+
+	/**
+	 * Set the metadata manager
+	 * 
+	 * @param  Head\MetadataManagerInterface $manager
+	 * @return Head
+	 */
+	public function setMetadataManager(Head\MetadataManagerInterface $manager) {
+		$this->metadataManager = $manager;
+		
+		return $this;
+	}
+	
+	/**
+	 * Get the metadata manager
+	 * 
+	 * @return Head\MetadataManagerInterface
+	 */
+	public function getMetadataManager() {
+		if ($this->metadataManager === null) {
+			$path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . '.zstaticmeta';
+			
+			$this->metadataManager = new Head\MetadataManager($path);
+		}
+		
+		return $this->metadataManager;
 	}
 	
 	/**
@@ -182,103 +205,55 @@ class Head extends HelperAbstract {
 	public function render() {
 		$parts = [];
 		
-		// Encoding
-		if ($this->encoding !== null) {
-			$parts[] = $this->renderEncoding();
+		if (empty($this->elements)) {
+			return '';
 		}
 		
-		// Title
-		if (! empty($this->titleContent)) {
-			$parts[] = $this->renderTitle();
-		}
-		
-		// Description
-		if ($this->description !== null) {
-			$parts[] = $this->renderDescription();
-		}
-		
-		// Keywords
-		if (! empty($this->keywords)) {
-			$parts[] = $this->renderKeywords();
-		}
-		
-		// Style
-		if (! empty($this->styleLinks)) {
-			$parts[] = $this->renderStyle();
-		}
-		
-		// Scripts
-		if (! empty($this->scriptSources)) {
-			$parts[] = $this->renderScripts();
+		// Elements
+		foreach ($this->elements as $element) {
+			if (! $element->isEmpty()) {
+				$parts[] = $element->assemble();
+			}
 		}
 		
 		return implode(PHP_EOL, $parts);
 	}
 	
 	/**
-	 * Return file's metadata
+	 * Get the element
 	 * 
-	 * @param  string $path
-	 * @return stdObject
+	 * @return Head\ElementInterface
 	 */
-	protected function getFileMeta($path) {
-		$meta = $this->getMetadata();
-		
-		$filePath  = $this->getBaseStaticPath();
-		$filePath .= DIRECTORY_SEPARATOR . $path;
-		
-		// Modification time
-		$fileMtime = filemtime($filePath);
-		
-		if (isset($meta[$path]) && $fileMtime === $meta[$path]->mtime) {
-			return $meta[$path];
+	public function getElement($name) {
+		if (isset($this->elements[$name])) {
+			return $this->elements[$name];
 		}
 		
-		$fileMeta = new stdClass();
-		$fileMeta->mtime = $fileMtime;
-		$fileMeta->hash  = substr(md5_file($filePath), 24);
-		
-		$this->metadata[$path] = $fileMeta;
-		$this->metadataChanged = true;
-		
-		return $fileMeta;
+		$class = 'ZExt\Mvc\View\Helpers\Head\Element' . ucfirst($name);
+
+		$element = new $class(
+			$this->getBaseStaticPath(),
+			$this->getBaseStaticUrl(),
+			$this->getMetadataManager()
+		);
+
+		if ($this->isStaticHashAppend() && method_exists($element, 'setHashAppend')) {
+			$element->setHashAppend();
+		}
+
+		$this->elements[$name] = $element;
+		return $element;
 	}
 	
 	/**
-	 * Get the files metadata
+	 * Easy access to the elements
 	 * 
-	 * @return array
-	 * @throws MetadataError
+	 * @param  string $method
+	 * @param  array  $args
+	 * @return object
 	 */
-	protected function getMetadata() {
-		if ($this->metadata !== null) {
-			return $this->metadata;
-		}
-		
-		$metaPath  = $this->getBaseStaticPath();
-		$metaPath .= DIRECTORY_SEPARATOR . self::META_FILENAME;
-		
-		if (is_file($metaPath)) {
-			$metaRaw = file_get_contents($metaPath);
-			
-			if ($metaRaw === false) {
-				throw new MetadataError('Unable to read the metadata');
-			}
-			
-			$meta = json_decode($metaRaw);
-			
-			if ($meta === null) {
-				throw new MetadataError('Error in the metadata; Errorcode: ' . json_last_error());
-			}
-			
-			$this->metadata = (array) $meta;
-			
-			return $this->metadata;
-		}
-		
-		$this->metadata = [];
-		
-		return $this->metadata;
+	public function __get($name) {
+		return $this->getElement($name);
 	}
 	
 	/**
@@ -291,27 +266,6 @@ class Head extends HelperAbstract {
 			return $this->render();
 		} catch (Exception $e) {
 			return '<!-- Head helper exception: ' . $e->getMessage() . ' -->';
-		}
-	}
-	
-	/**
-	 * Destructor
-	 * 
-	 * Writes the metadata at the end
-	 */
-	public function __destruct() {
-		if (! $this->metadataChanged) {
-			return;
-		}
-		
-		$metaPath  = $this->getBaseStaticPath();
-		$metaPath .= DIRECTORY_SEPARATOR . self::META_FILENAME;
-		
-		$meta   = json_encode($this->metadata);
-		$result = file_put_contents($metaPath, $meta);
-		
-		if ($result === false) {
-			throw new MetadataError('Unable to write the metadata');
 		}
 	}
 	

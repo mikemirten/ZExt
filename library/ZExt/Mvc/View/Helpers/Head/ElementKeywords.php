@@ -29,7 +29,7 @@ namespace ZExt\Mvc\View\Helpers\Head;
 use ZExt\Html\Tag;
 
 /**
- * Keywords element trait
+ * Keywords element
  * 
  * @category   ZExt
  * @package    Mvc
@@ -37,7 +37,7 @@ use ZExt\Html\Tag;
  * @author     Mike.Mirten
  * @version    1.0
  */
-trait Keywords {
+class ElementKeywords implements ElementInterface {
 	
 	/**
 	 * Meta keywords
@@ -113,12 +113,21 @@ trait Keywords {
 	}
 	
 	/**
-	 * Render the keywords tag
+	 * Is the keywords empty ?
+	 * 
+	 * @return bool
+	 */
+	public function isEmpty() {
+		return empty($this->keywords);
+	}
+
+		/**
+	 * Assemble the keywords tag
 	 * 
 	 * @param  array $keywords
 	 * @return string
 	 */
-	protected function renderKeywords() {
+	public function assemble() {
 		$keysTag = new Tag('meta');
 		$keysTag->setClosed();
 

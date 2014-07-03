@@ -26,10 +26,8 @@
 
 namespace ZExt\Mvc\View\Helpers\Head;
 
-use ZExt\Html\Tag;
-
 /**
- * Encoding (charset) element trait
+ * Interface of an element of "head" section
  * 
  * @category   ZExt
  * @package    Mvc
@@ -37,48 +35,20 @@ use ZExt\Html\Tag;
  * @author     Mike.Mirten
  * @version    1.0
  */
-trait Encoding {
+interface ElementInterface {
 	
 	/**
-	 * Meta charset
-	 *
-	 * @var string
-	 */
-	protected $encoding;
-	
-	/**
-	 * Set the encoding
+	 * Is the element empty ?
 	 * 
-	 * @param  string $encoding
-	 * @return Head
+	 * @return bool
 	 */
-	public function setEncoding($encoding) {
-		$this->encoding = trim($encoding);
-		
-		return $this;
-	}
+	public function isEmpty();
 	
 	/**
-	 * Get the encoding
+	 * Render the element
 	 * 
 	 * @return string
 	 */
-	public function getEncoding() {
-		return $this->encoding;
-	}
-	
-	/**
-	 * Render the encoding tag
-	 * 
-	 * @return string
-	 */
-	protected function renderEncoding() {
-		$encTag = new Tag('meta');
-		$encTag->setClosed();
-		
-		$encTag->charset = $this->encoding;
-		
-		return $encTag->render();
-	}
+	public function assemble();
 	
 }

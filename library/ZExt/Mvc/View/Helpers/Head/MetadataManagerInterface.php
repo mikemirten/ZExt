@@ -26,10 +26,8 @@
 
 namespace ZExt\Mvc\View\Helpers\Head;
 
-use ZExt\Html\Tag;
-
 /**
- * Description element trait
+ * Interface of metadata manager
  * 
  * @category   ZExt
  * @package    Mvc
@@ -37,50 +35,24 @@ use ZExt\Html\Tag;
  * @author     Mike.Mirten
  * @version    1.0
  */
-trait Description {
+interface MetadataManagerInterface {
 	
 	/**
-	 * Meta description
-	 *
-	 * @var string
-	 */
-	protected $description;
-	
-	/**
-	 * Set the description
+	 * Get metadata for the resource
 	 * 
-	 * @param  string $description
-	 * @return Head
+	 * @param  Resource $resource
+	 * @param  bool     $forceUpdate
+	 * @return object
 	 */
-	public function setDescription($description) {
-		$this->description = trim($description);
-		
-		return $this;
-	}
+	public function getMetadata(Resource $resource, $forceUpdate = false);
 	
 	/**
-	 * Get the description
+	 * Set metadata parameter for the resource
 	 * 
-	 * @return string
+	 * @param Resource $resource
+	 * @param string   $name
+	 * @param mixed    $value
 	 */
-	public function getDescription() {
-		return $this->description;
-	}
-	
-	/**
-	 * Render the description tag
-	 * 
-	 * @param  string $description
-	 * @return string
-	 */
-	protected function renderDescription() {
-		$descTag = new Tag('meta');
-		$descTag->setClosed();
-
-		$descTag->name    = 'description';
-		$descTag->content = $this->description;
-
-		return $descTag->render();
-	}
+	public function setMetaParam(Resource $resource, $name, $value);
 	
 }
