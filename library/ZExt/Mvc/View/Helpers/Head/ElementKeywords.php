@@ -67,7 +67,7 @@ class ElementKeywords implements ElementInterface {
 	 */
 	public function addKeywords($keywords) {
 		if (is_string($keywords)) {
-			$keywords = explode(' ', $keywords);
+			$keywords = explode(',', $keywords);
 		}
 		
 		foreach ($keywords as $keyword) {
