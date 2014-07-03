@@ -96,6 +96,8 @@ class ElementKeywords implements ElementInterface {
 	 */
 	public function resetKeywords() {
 		$this->keywords = [];
+		
+		return $this;
 	}
 	
 	/**
