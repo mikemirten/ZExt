@@ -56,7 +56,7 @@ trait ResourcesListTrait {
 		$resource = $this->handleResource($resource);
 		
 		$this->resources->unshift($resource);
-		return $this;
+		return $resource;
 	}
 	
 	/**
@@ -69,7 +69,7 @@ trait ResourcesListTrait {
 		$resource = $this->handleResource($resource);
 		
 		$this->resources[] = $resource;
-		return $this;
+		return $resource;
 	}
 	
 	/**
@@ -110,7 +110,17 @@ trait ResourcesListTrait {
 			return $resource;
 		}
 		
-		$resource = new Resource($resource, $this->basePath, $this->baseUrl, $this->metadataManager);
+		// Is not a local resource
+		if (preg_match('~^[a-z]+:~', $resource)) {
+			$slashPos = strrpos($resource, '/');
+			
+			$base = substr($resource, 0, $slashPos);
+			$name = substr($resource, $slashPos + 1);
+			
+			$resource = new Resource($name, $base, $base, $this->metadataManager);
+		} else {
+			$resource = new Resource($resource, $this->basePath, $this->baseUrl, $this->metadataManager);
+		}
 		
 		if ($this->hashAppend) {
 			$resource->setHashAppend(true);
