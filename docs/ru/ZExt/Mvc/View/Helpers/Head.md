@@ -187,15 +187,82 @@ array getTitleRaw()
 
 Получить список значений
 
-```java
-boolean isEmpty()
+
+###Encoding
+
+Элемент формирующий тег передающий кодировку страницы
+
+```php
+$this->head->encoding = 'UTF-8';
 ```
 
-Проверить пустой ли элемент
-
-```java
-string assemble()
+```html
+<meta charset="UTF-8" />
 ```
 
-Собрать конечный тег со значениями
+**Методы**
 
+```java
+ElementEncoding setEncoding(string $encoding)
+```
+
+Задать кодировку
+
+```java
+string getEncoding();
+```
+
+Получить кодировку
+
+###Keywords
+
+Элемент формирующий тэг передающий ключевые слова страницы
+
+```php
+$this->head->keywords = 'keyword1, keyword2, keyword3';
+
+// Или
+$this->head->keywords = ['keyword1', 'keyword2', 'keyword3'];
+```
+
+```html
+<meta name="keywords" content="keyword1,keyword2,keyword3" />
+```
+
+**Методы**
+
+```java
+ElementKeywords setKeywords(string | array $keywords)
+```
+
+Задать ключевые слова вместо текущих
+
+```java
+ElementKeywords addKeywords(string | array $keywords)
+```
+
+Добавит ключевые слова к текущим
+
+```java
+ElementKeywords addKeyword(string $keyword)
+```
+
+Добавить ключевое слово
+
+```java
+ElementKeywords resetKeywords()
+```
+
+Удалить текущие ключевые слова
+
+```java
+string getKeywords()
+```
+
+Получить текущие ключевые слова в виде строки
+
+```java
+array getKeywordsRaw()
+```
+
+Получить текущие ключевые слова в виде массива
