@@ -34,13 +34,27 @@ $this->head->script = 'myapp.js';
 </head>
 ```
 
-### Базовые методы
+## Базовые методы
 
 ```java
 void setBaseStaticUrl(string $url)
 ```
 
 Задаёт базовый URL для всех статических ресурсов, т.е. скриптов, стилей, по умолчанию.
+
+*В контроллере:*
+```php
+$this->head->setBaseStaticUrl('http://mydomain.com/static');
+
+$this->head->style  = 'main.css';
+$this->head->script = 'myapp.js';
+```
+
+*Результат:*
+```html
+<link rel="stylesheet" type="text/css" href="http://mydomain.com/static/main.css"></link>
+<script type="text/javascript" src="http://mydomain.com/static/myapp.js"></script>
+```
 
 ```java
 string getBaseStaticUrl()
@@ -50,7 +64,7 @@ string getBaseStaticUrl()
 
 
 ```java
-void setBaseStaticPath(string $path)
+Head setBaseStaticPath(string $path)
 ```
 
 Задаёт базовый путь для всех статических ресурсов на сервере.
@@ -62,7 +76,7 @@ string getBaseStaticPath()
 Возвращает заданный базовый путь для статических ресурсов на сервере.
 
 ```java
-void setStaticHashAppend(boolean $enable = true)
+Head setStaticHashAppend(boolean $enable = true)
 ```
 
 Задаёт флаг требующий добавлять текущий хеш содержимого статического ресурса к его URL. 
@@ -76,7 +90,7 @@ boolean isStaticHashAppend()
 Возвращает состояние флага о потребности в добавлении хеша к URL статического ресурса
 
 ```java
-void setMetadataManager(MetadataManagerInterface $manager);
+Head setMetadataManager(MetadataManagerInterface $manager);
 ```
 
 Задаёт менеджер метаданных, хранящий информацию о статических файлах. По умолчанию используется идущий в составе помощника.
@@ -100,4 +114,88 @@ ElementInterface getElement(string $name)
 Возвращает элемент хелпера ответственный за определённую часть HTML-кода.
 
 **К элементу можно так же обратиться как к свойству объекта**
+
+## Элементы
+
+###Title
+
+Элемент формирующий тэг "title". Элемент может собирать конечное значение тэга из ряда переданных значений разделённых заданным разделителем.
+
+```php
+$this->head->title->setTitleDelimiter(' :: ')->setTitle('My application');
+
+$this->head->title->appendTitle('Control panel');
+$this->head->title->appendTitle('Users');
+
+// Можно так же добавлять значения через обращение к свойству:
+$this->head->title = 'Control panel';
+$this->head->title = 'Users';
+```
+
+```html
+<title>My application :: Control panel :: Users</title>
+```
+
+**Методы**
+
+```java
+ElementTitle setTitle(string $title)
+```
+
+Задать значение вместо текущих.
+
+```java
+ElementTitle appendTitle(string $title)
+```
+
+Добавить значение в конец
+
+```java
+ElementTitle prependTitle(string $title)
+```
+
+Добавить значение в начало
+
+
+```java
+ElementTitle resetTitle()
+```
+
+Удалить все заданные значения
+
+```java
+ElementTitle setTitleDelimiter(string $delimiter)
+```
+
+Задать разделитель
+
+```java
+string getTitleDelimiter()
+```
+
+Получить разделитель
+
+```java
+string getTitle()
+```
+
+Получить конечное значение разделённое заданным разделителем
+
+```java
+array getTitleRaw()
+```
+
+Получить список значений
+
+```java
+boolean isEmpty()
+```
+
+Проверить пустой ли элемент
+
+```java
+string assemble()
+```
+
+Собрать конечный тег со значениями
 
