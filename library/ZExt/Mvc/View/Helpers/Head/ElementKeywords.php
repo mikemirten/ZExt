@@ -62,10 +62,14 @@ class ElementKeywords implements ElementInterface {
 	/**
 	 * Add many of the keywords
 	 * 
-	 * @param  array | Traversable $keywords
+	 * @param  array | Traversable | string $keywords
 	 * @return Head
 	 */
 	public function addKeywords($keywords) {
+		if (is_string($keywords)) {
+			$keywords = explode(' ', $keywords);
+		}
+		
 		foreach ($keywords as $keyword) {
 			$this->addKeyword($keyword);
 		}
@@ -135,6 +139,15 @@ class ElementKeywords implements ElementInterface {
 		$keysTag->content = $this->getKeywords();
 
 		return $keysTag->render();
+	}
+	
+	/**
+	 * Default action of the element
+	 * 
+	 * @param array | Traversable | string $value
+	 */
+	public function defaultAction($value) {
+		$this->addKeywords($value);
 	}
 	
 }

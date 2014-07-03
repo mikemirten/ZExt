@@ -92,4 +92,13 @@ class ElementDescription implements ElementInterface {
 		return $descTag->render();
 	}
 	
+	/**
+	 * Default action of the element
+	 * 
+	 * @param string $value
+	 */
+	public function defaultAction($value) {
+		$this->setDescription($value);
+	}
+	
 }

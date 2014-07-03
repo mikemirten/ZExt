@@ -90,4 +90,13 @@ class ElementEncoding implements ElementInterface {
 		return $encTag->render();
 	}
 	
+	/**
+	 * Default action of the element
+	 * 
+	 * @param string $value
+	 */
+	public function defaultAction($value) {
+		$this->setEncoding($value);
+	}
+	
 }

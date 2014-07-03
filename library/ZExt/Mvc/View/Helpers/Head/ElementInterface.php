@@ -51,4 +51,11 @@ interface ElementInterface {
 	 */
 	public function assemble();
 	
+	/**
+	 * Default action of the element
+	 * 
+	 * @param mixed $value
+	 */
+	public function defaultAction($value);
+	
 }

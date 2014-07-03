@@ -246,6 +246,16 @@ class Head extends HelperAbstract {
 	}
 	
 	/**
+	 * Default action of an element
+	 * 
+	 * @param string $name
+	 * @param mixed  $value
+	 */
+	public function __set($name, $value) {
+		$this->getElement($name)->defaultAction($value);
+	}
+	
+	/**
 	 * Easy access to the elements
 	 * 
 	 * @param  string $method

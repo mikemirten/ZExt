@@ -160,4 +160,13 @@ class ElementTitle implements ElementInterface {
 		return $titleTag->render();
 	}
 	
+	/**
+	 * Default action of the element
+	 * 
+	 * @param mixed $value
+	 */
+	public function defaultAction($value) {
+		$this->appendTitle($value);
+	}
+	
 }
