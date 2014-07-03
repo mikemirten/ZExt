@@ -192,15 +192,15 @@ class Linker implements IteratorAggregate, Countable {
 	/**
 	 * Assemble and write the file
 	 * 
-	 * @param  string $path
+	 * @param  bool $forceAssemble
 	 * @throws OperationError
 	 */
-	public function write() {
+	public function write($forceAssemble = false) {
 		if ($this->outputFile === null) {
 			throw new OperationError('Path to the output file must be set first');
 		}
 		
-		if ($this->reassembleByMTime && ! $this->isOutputExpired()) {
+		if (! $forceAssemble && $this->reassembleByMTime && ! $this->isOutputExpired()) {
 			return;
 		}
 		
