@@ -104,7 +104,7 @@ class Resource {
 	 * @param  string $path
 	 * @return Resource
 	 */
-	protected function setBasePath($path) {
+	public function setBasePath($path) {
 		$path = rtrim($path, '\/');
 		
 		if (preg_match('~^[a-z]+:~', $path)) {
@@ -125,7 +125,7 @@ class Resource {
 	 * @param  string $url
 	 * @return Resource
 	 */
-	protected function setBaseUrl($url) {
+	public function setBaseUrl($url) {
 		if ($url === '/' || $url === '//') {
 			$this->baseUrl = $url;
 			return;

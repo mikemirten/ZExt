@@ -98,9 +98,10 @@ abstract class ElementAbstract implements ElementInterface, IteratorAggregate, C
 	/**
 	 * Set the base path
 	 * 
-	 * @param string $path
+	 * @param  string $path
+	 * @return ElementAbstract
 	 */
-	protected function setBasePath($path) {
+	public function setBasePath($path) {
 		$path = rtrim($path, '\/');
 		
 		if (preg_match('~^[a-z]+:~', $path)) {
@@ -109,20 +110,25 @@ abstract class ElementAbstract implements ElementInterface, IteratorAggregate, C
 		}
 		
 		$this->basePath = realpath($path);
+		
+		return $this;
 	}
 	
 	/**
 	 * Set the base url
 	 * 
-	 * @param string $url
+	 * @param  string $url
+	 * @return ElementAbstract
 	 */
-	protected function setBaseUrl($url) {
+	public function setBaseUrl($url) {
 		if ($url === '/' || $url === '//') {
 			$this->baseUrl = $url;
 			return;
 		}
 		
 		$this->baseUrl = rtrim($url, '/');
+		
+		return $this;
 	}
 	
 	/**
