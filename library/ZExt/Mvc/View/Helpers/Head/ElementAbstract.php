@@ -134,10 +134,13 @@ abstract class ElementAbstract implements ElementInterface, IteratorAggregate, C
 	/**
 	 * Append hash-tag to URL of the resource
 	 * 
-	 * @param bool $enable
+	 * @param  bool $enable
+	 * @return ElementAbstract
 	 */
 	public function setHashAppend($enable = true) {
 		$this->hashAppend = (bool) $enable;
+		
+		return $this;
 	}
 	
 	/**
@@ -159,7 +162,7 @@ abstract class ElementAbstract implements ElementInterface, IteratorAggregate, C
 		$package = $this->handlePackage($package);
 		
 		$this->packages->unshift($package);
-		return $this;
+		return $package;
 	}
 	
 	/**
@@ -277,7 +280,7 @@ abstract class ElementAbstract implements ElementInterface, IteratorAggregate, C
 		}
 		
 		if (empty($scripts)) {
-			return;
+			return '';
 		}
 		
 		return implode(PHP_EOL, $scripts);

@@ -87,7 +87,7 @@ trait ResourcesListTrait {
 	 * Set the resources (owerrides the exists)
 	 * 
 	 * @param  array $resources
-	 * @return Package
+	 * @return ResourcesListTrait
 	 */
 	public function setResources(array $resources) {
 		$this->resetResources();
