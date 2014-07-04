@@ -332,7 +332,32 @@ $this->head->script = 'http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.mi
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
 ```
 
-**Методы**
+К URL ресурса возможно добавить хеш содержимого ресурса, это заставит браузер обновить ресурс в случае его изменения.
+
+```php
+$this->head->script->appendResource('script.js')->setHashAppend();
+```
+
+```html
+<script type="text/javascript" src="http://mydomain.com/static/script.js?9597ce87"></script>
+```
+
+Так же возможно задать режим добавления хэшей ко всем ресурсам элемента (script,style):
+
+```php
+$this->head->script->setHashAppend();
+```
+
+При этом возможо исключить эту опцию для отдельного ресурса:
+
+```php
+$this->head->script->setHashAppend();
+
+$this->head->script->appendResource('script1.js')
+$this->head->script->appendResource('script2.js')->setHashAppend(false);
+```
+
+**Методы элемента**
 
 ```java
 ElementAbstract setBasePath(string $path)
@@ -378,7 +403,7 @@ ElementAbstract resetResources()
 Удалить текущие ресурсы.
 
 ```java
-setResources(array $resources)
+ElementAbstract setResources(array $resources)
 ```
 
 Задать ресурсы вместо текущих.
@@ -399,4 +424,130 @@ Package prependPackage(string | Package $package)
 ElementAbstract resetPackages()
 ```
 
-Удалтить текущие пакеты ресурсов
+Удалить текущие пакеты ресурсов
+
+**Методы ресурса**
+
+```java
+Resource setBasePath(string $path)
+```
+
+Задать базовый путь.
+
+```java
+Resource setBaseUrl(string $url)
+```
+
+Задать базовый URL.
+
+```java
+Resource setHashAppend(boolean $enable = true)
+```
+
+Задать флаг требующий добавлять хеш содержимого ресурса к его URL. 
+По умолчанию хеширование выключено.
+
+```java
+boolean isHashAppend()
+```
+
+Возвращает состояние флага о потребности в добавлении хеша к URL ресурса.
+
+```java
+string getName()
+```
+
+Получить имя ресурса (на пример имя файла на сервере)
+
+```java
+string getPath()
+```
+
+Получить полный пусть к ресурсу на сервере
+
+```java
+string getUrl()
+```
+
+Получить полный URL ресурса
+
+```java
+boolean isLocal()
+```
+
+Узнать является ли ресурс локальным, т.е. находится в локальной файловой системе.
+
+### Пакеты ресурсов (packages)
+
+Пакеты ресурсов собирают переданные пакету ресурсы в один файл. Такой метод работы с ресурсами уменьшает количество запросов к серверу и как следствие уменьшает нагрузку на сервер и ускоряет загрузку страницы. Для работы сборщика ресурсов, кроме базового URL, необходимо указать базовый путь к директории со статическими ресурсами на сервере.
+
+```php
+$this->head->setBaseStaticPath('/my_application_dir/static');
+$this->head->setBaseStaticUrl('http://mydomain.com/static');
+
+$package = $this->head->script->appendPackage('package.js');
+
+$package->appendResource('script1.js');
+$package->appendResource('script2.js');
+```
+
+```html
+<script type="text/javascript" src="/static/package.js"></script>
+```
+
+С пакетом ресурсов возможны все действия с хешированием аналогичные приминительно к ресурсу.
+
+```php
+$this->head->setBaseStaticPath('/my_application_dir/static');
+$this->head->setBaseStaticUrl('http://mydomain.com/static');
+
+$this->head->script->setHashAppend();
+
+$package1 = $this->head->script->appendPackage('package1.js');
+
+$package1->appendResource('script1.js');
+$package1->appendResource('script2.js');
+
+$package2 = $this->head->script->appendPackage('package2.js')->setHashAppend(false);
+
+$package2->appendResource('script3.js');
+$package2->appendResource('script4.js');
+```
+
+```html
+<script type="text/javascript" src="/static/package1.js?9597ce87"></script>
+<script type="text/javascript" src="/static/package2.js"></script>
+```
+
+**Методы пакета**
+
+Класс Package наследует класс Resource и содержит все теже методы, что и ресурс. (см. описание методов ресурса).
+Так же пакет имеет ряд собственных методов:
+
+```java
+Resource appendResource(string | Resource $resource)
+```
+
+Добавить ресурс.
+
+```java
+Resource prependResource(string | Resource $resource)
+```
+
+Добавить ресурс в начало.
+
+```java
+Package resetResources()
+```
+
+Удалить текущие ресурсы.
+
+```java
+Package setResources(array $resources)
+```
+
+Задать ресурсы вместо текущих.
+
+### Метаданные
+
+Для работы некоторых функций ресурсов и пакетов ресурсов требуется хранение метаданных между запросами. За работу с метаданными отвечает интерфейс "MetadataManagerInterface". В составе помощника "Head" имеется реализация менеджера метаданных хранящая данные в файловой системе. По умолчанию файл с метаданными распологается в системной директории для фременных файлов определённой конфигурацией PHP.
