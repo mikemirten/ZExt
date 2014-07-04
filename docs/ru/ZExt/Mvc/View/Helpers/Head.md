@@ -150,49 +150,49 @@ ElementTitle setTitle(string $title)
 ElementTitle appendTitle(string $title)
 ```
 
-Добавить значение в конец. **Действие по умолчанию**
+Добавить значение в конец. **Действие по умолчанию.**
 
 ```java
 ElementTitle prependTitle(string $title)
 ```
 
-Добавить значение в начало
+Добавить значение в начало.
 
 
 ```java
 ElementTitle resetTitle()
 ```
 
-Удалить все заданные значения
+Удалить все заданные значения.
 
 ```java
 ElementTitle setTitleDelimiter(string $delimiter)
 ```
 
-Задать разделитель
+Задать разделитель.
 
 ```java
 string getTitleDelimiter()
 ```
 
-Получить разделитель
+Получить разделитель.
 
 ```java
 string getTitle()
 ```
 
-Получить конечное значение разделённое заданным разделителем
+Получить конечное значение разделённое заданным разделителем.
 
 ```java
 array getTitleRaw()
 ```
 
-Получить список значений
+Получить список значений.
 
 
 ###Encoding
 
-Элемент формирующий тег передающий кодировку страницы
+Элемент формирующий тег передающий кодировку страницы.
 
 ```php
 $this->head->encoding = 'UTF-8';
@@ -208,17 +208,17 @@ $this->head->encoding = 'UTF-8';
 ElementEncoding setEncoding(string $encoding)
 ```
 
-Задать кодировку
+Задать кодировку. **Действие по умолчанию.**
 
 ```java
 string getEncoding();
 ```
 
-Получить кодировку
+Получить кодировку.
 
 ###Keywords
 
-Элемент формирующий тэг передающий ключевые слова страницы
+Элемент формирующий тэг передающий ключевые слова страницы.
 
 ```php
 $this->head->keywords = 'keyword1, keyword2, keyword3';
@@ -237,41 +237,41 @@ $this->head->keywords = ['keyword1', 'keyword2', 'keyword3'];
 ElementKeywords setKeywords(string | array $keywords)
 ```
 
-Задать ключевые слова вместо текущих
+Задать ключевые слова вместо текущих.
 
 ```java
 ElementKeywords addKeywords(string | array $keywords)
 ```
 
-Добавит ключевые слова к текущим
+Добавит ключевые слова к текущим. **Действие по умолчанию.**
 
 ```java
 ElementKeywords addKeyword(string $keyword)
 ```
 
-Добавить ключевое слово
+Добавить ключевое слово.
 
 ```java
 ElementKeywords resetKeywords()
 ```
 
-Удалить текущие ключевые слова
+Удалить текущие ключевые слова.
 
 ```java
 string getKeywords()
 ```
 
-Получить текущие ключевые слова в виде строки
+Получить текущие ключевые слова в виде строки.
 
 ```java
 array getKeywordsRaw()
 ```
 
-Получить текущие ключевые слова в виде массива
+Получить текущие ключевые слова в виде массива.
 
 ###Description
 
-Элемент отвечает за тег передающий описание к странице
+Элемент отвечает за тег передающий описание к странице.
 
 ```php
 $this->head->description = 'Some description for my application';
@@ -287,10 +287,116 @@ $this->head->description = 'Some description for my application';
 ElementDescription setDescription(string $description)
 ```
 
-Задать описание
+Задать описание. **Действие по умолчанию.**
 
 ```java
 string getDescription()
 ```
 
-Получить описание
+Получить описание.
+
+###Resources (Script, Style)
+
+*Элементы "script" и "style" имеют одинаковые принцип работы и набор методов*
+
+Элементы отвечают за теги передающие информацию о скриптах и стилях
+
+```php
+$this->head->setBaseStaticUrl('http://mydomain.com/static');
+
+$this->head->style = 'bootstrap/bootstrap.min.css';
+$this->head->style = 'main.css';
+
+$this->head->script = 'jquery/jquery.min.js';
+$this->head->script = 'bootstrap/bootstrap.min.js';
+$this->head->script = 'myapp.js';
+```
+
+```html
+<link rel="stylesheet" type="text/css" href="http://mydomain.com/static/bootstrap/bootstrap.min.css"></link>
+<link rel="stylesheet" type="text/css" href="http://mydomain.com/static/main.css"></link>
+<script type="text/javascript" src="http://mydomain.com/static/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="http://mydomain.com/static/bootstrap/bootstrap.min.js"></script>
+<script type="text/javascript" src="http://mydomain.com/static/myapp.js"></script>
+```
+
+При передачи полного URL ресурса, заданные базовые URL и путь не будут использованы:
+
+```php
+$this->head->setBaseStaticUrl('http://mydomain.com/static');
+
+$this->head->script = 'http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js';
+```
+
+```html
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+```
+
+**Методы**
+
+```java
+ElementAbstract setBasePath(string $path)
+```
+
+Задать базовый путь для ресурсов.
+
+```java
+ElementAbstract setBaseUrl(string $url)
+```
+
+Задать базовый URL для ресурсов.
+
+```java
+ElementAbstract setHashAppend(boolean $enable = true)
+```
+
+Задать флаг требующий добавлять хеш содержимого ресурса к его URL. 
+По умолчанию хеширование выключено.
+
+```java
+boolean isHashAppend()
+```
+
+Возвращает состояние флага о потребности в добавлении хеша к URL ресурса.
+
+```java
+Resource appendResource(string | Resource $resource)
+```
+
+Добавить ресурс. **Действие по умолчанию.**
+
+```java
+Resource prependResource(string | Resource $resource)
+```
+
+Добавить ресурс в начало.
+
+```java
+ElementAbstract resetResources()
+```
+
+Удалить текущие ресурсы.
+
+```java
+setResources(array $resources)
+```
+
+Задать ресурсы вместо текущих.
+
+```java
+Package appendPackage(string | Package $package)
+```
+
+Добавить пакет ресурсов
+
+```java
+Package prependPackage(string | Package $package)
+```
+
+Добавить пакет ресурсов в конец
+
+```java
+ElementAbstract resetPackages()
+```
+
+Удалтить текущие пакеты ресурсов
