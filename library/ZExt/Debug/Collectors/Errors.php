@@ -86,8 +86,8 @@ class Errors extends CollectorAbstract {
 	 * Init the collector
 	 */
 	protected function init() {
-		$errorMask = E_ERROR + E_PARSE + E_CORE_ERROR +
-		             E_COMPILE_ERROR + E_USER_ERROR + E_RECOVERABLE_ERROR;
+		$errorMask = E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR |
+		             E_PARSE | E_USER_ERROR | E_RECOVERABLE_ERROR;
 		
 		set_error_handler(function($type, $message, $file, $line) use($errorMask) {
 			$this->errors[] = [
