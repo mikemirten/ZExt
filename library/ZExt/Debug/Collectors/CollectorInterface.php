@@ -40,7 +40,7 @@ interface CollectorInterface {
 	/**
 	 * Get the collected information
 	 * 
-	 * @return \ZExt\Debug\InfoSet
+	 * @return \ZExt\Debug\Infosets\Infoset
 	 */
 	public function getInfo();
 	
