@@ -184,6 +184,27 @@ class Autoloader {
 	}
 	
 	/**
+	 * Register namespaces by the Composer's autoload_namespaces list
+	 * 
+	 * @param  array $namespaces
+	 * @return Autoloader
+	 */
+	public function registerComposerNamespaces(array $namespaces) {
+		foreach ($namespaces as $namespace => $dirs) {
+			$namespaceDir = trim($namespace, '\ ');
+			$namespaceDir = str_replace('\\', DIRECTORY_SEPARATOR, $namespaceDir);
+			
+			foreach ($dirs as $dir) {
+				$dir .= DIRECTORY_SEPARATOR . $namespaceDir;
+				
+				$this->registerNamespace($namespace, $dir);
+			}
+		}
+		
+		return $this;
+	}
+	
+	/**
 	 * Normalize the path
 	 * 
 	 * @param  string $path
@@ -237,7 +258,7 @@ class Autoloader {
 	 * Load the class
 	 * 
 	 * @param  string   $class
-	 * @param  SplStack $path
+	 * @param  SplStack $dirs
 	 * @return bool
 	 */
 	protected function loadClass($class, SplStack $dirs) {
