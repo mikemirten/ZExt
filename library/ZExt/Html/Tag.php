@@ -576,4 +576,17 @@ class Tag {
 		$this->removeAttr($name);
 	}
 	
+	/**
+	 * Set the attr
+	 * 
+	 * @param  string $name
+	 * @param  array  $arguments
+	 * @return Tag
+	 */
+	public function __call($name, $arguments) {
+		$this->setAttr($name, isset($arguments[0]) ? $arguments[0] : true);
+		
+		return $this;
+	}
+	
 }
