@@ -145,6 +145,19 @@ class DebugBar {
 	protected $renderer;
 	
 	/**
+	 * Init the Debug bar with default settings
+	 * 
+	 * @param  array | \Traversable $options
+	 * @return DebugBar
+	 */
+	static public function initDefaults($options = null) {
+		$debug = new static($options);
+		$debug->addDefaultCollectors();
+		
+		return $debug;
+	}
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param array | \Traversable $options
