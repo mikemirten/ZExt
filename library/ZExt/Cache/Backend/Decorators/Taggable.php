@@ -78,11 +78,11 @@ class Taggable extends DecoratorAbstract implements TaggableInterface {
 	/**
 	 * Fetch the many of the data from the cache
 	 * 
-	 * @param  array $id
+	 * @param  array $ids
 	 * @return array
 	 */
-	public function getMany(array $id) {
-		return $this->getBackend()->getMany($id);
+	public function getMany(array $ids) {
+		return $this->getBackend()->getMany($ids);
 	}
 	
 	/**
@@ -223,7 +223,7 @@ class Taggable extends DecoratorAbstract implements TaggableInterface {
 	/**
 	 * Remove the many the data from the cache
 	 * 
-	 * @param  array $id
+	 * @param  array $ids
 	 * @return bool
 	 */
 	public function removeMany(array $ids) {
