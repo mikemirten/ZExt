@@ -2,7 +2,7 @@
 
 use ZExt\Cache\Backend\Decorators\SerializerJson;
 
-require __DIR__ . '/../BackendTestCase.php';
+require_once __DIR__ . '/../BackendTestCase.php';
 
 class SerializerJsonTest extends PHPUnit_Framework_TestCase {
 	
@@ -45,7 +45,7 @@ class SerializerJsonTest extends PHPUnit_Framework_TestCase {
 		$this->assertNull($decorator->get('test0'));
 	}
 	
-	public function testGetMAny() {
+	public function testGetMany() {
 		$data = [
 			'test1' => '[10,20,["key1","key2"]]',
 			'test2' => '[30,40,["key3","key4"]]'

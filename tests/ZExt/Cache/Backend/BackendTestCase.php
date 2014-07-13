@@ -150,4 +150,13 @@ class BackendTestCase implements BackendInterface {
 		return true;
 	}
 	
+	/**
+	 * Get the backend data
+	 * 
+	 * @return array
+	 */
+	public function getData() {
+		return $this->data;
+	}
+	
 }
