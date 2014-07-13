@@ -61,7 +61,7 @@ class SerializerJson extends DecoratorAbstract {
 	/**
 	 * Fetch the many of the data from the cache
 	 * 
-	 * @param  array $id
+	 * @param  array $ids
 	 * @return array
 	 */
 	public function getMany(array $ids) {
@@ -120,7 +120,7 @@ class SerializerJson extends DecoratorAbstract {
 	/**
 	 * Remove the many the data from the cache
 	 * 
-	 * @param  array $id
+	 * @param  array $ids
 	 * @return bool
 	 */
 	public function removeMany(array $ids) {
