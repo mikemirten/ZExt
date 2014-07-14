@@ -1,8 +1,8 @@
 <?php
 
-use ZExt\Cache\Backend\BackendInterface;
+use ZExt\Cache\Backend\TaggableInterface;
 
-class BackendTestCase implements BackendInterface {
+class BackendTestCase implements TaggableInterface {
 	
 	/**
 	 * Test data
@@ -10,6 +10,13 @@ class BackendTestCase implements BackendInterface {
 	 * @var array
 	 */
 	protected $data;
+	
+	/**
+	 * Last tags argument while a tags supported method calling
+	 *
+	 * @var mixed
+	 */
+	protected $lastTagsArg;
 	
 	/**
 	 * Constructor
@@ -45,13 +52,16 @@ class BackendTestCase implements BackendInterface {
 	/**
 	 * Store the data into the cache
 	 * 
-	 * @param  string $id       ID of the stored data
-	 * @param  mixed  $data     Stored data
-	 * @param  int    $lifetime Lifetime in seconds
+	 * @param  string         $id       ID of the stored data
+	 * @param  mixed          $data     Stored data
+	 * @param  int            $lifetime Lifetime in seconds
+	 * @param  string | array $tag
 	 * @return bool
 	 */
-	public function set($id, $data, $lifetime = 0) {
+	public function set($id, $data, $lifetime = 0, $tags = null) {
 		$this->data[$id] = $data;
+		
+		$this->lastTagsArg = $tags;
 		
 		return true;
 	}
@@ -59,12 +69,15 @@ class BackendTestCase implements BackendInterface {
 	/**
 	 * Store the many of the date into the cache
 	 * 
-	 * @param  array $data
-	 * @param  int   $lifetime
+	 * @param  array          $data
+	 * @param  int            $lifetime
+	 * @param  string | array $tag
 	 * @return bool
 	 */
-	public function setMany(array $data, $lifetime = 0) {
+	public function setMany(array $data, $lifetime = 0, $tags = null) {
 		$this->data = $data + $this->data;
+		
+		$this->lastTagsArg = $tags;
 		
 		return true;
 	}
@@ -157,6 +170,41 @@ class BackendTestCase implements BackendInterface {
 	 */
 	public function getData() {
 		return $this->data;
+	}
+	
+	/**
+	 * Fetch a data from the cache by the tag(s)
+	 * 
+	 * @param  string | array $tag
+	 * @param  bool           $byIntersect
+	 * @return array
+	 */
+	public function getByTag($tags, $byIntersect = false) {
+		$this->lastTagsArg = $tags;
+		
+		return [];
+	}
+	
+	/**
+	 * Remove a data from the cache by the tag(s)
+	 * 
+	 * @param  string | array $tag
+	 * @param  bool           $byIntersect
+	 * @return bool
+	 */
+	public function removeByTag($tags, $byIntersect = false) {
+		$this->lastTagsArg = $tags;
+		
+		return true;
+	}
+	
+	/**
+	 * Get the last tags argument while a tags supported method calling
+	 * 
+	 * @return mixed
+	 */
+	public function getLastTagsArgument() {
+		return $this->lastTagsArg;
 	}
 	
 }
