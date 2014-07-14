@@ -84,6 +84,20 @@ class File extends BackendAbstract {
 	protected $compressionLevel = 1;
 	
 	/**
+	 * Is GC enabled ?
+	 *
+	 * @var bool
+	 */
+	protected $gcEnabled = true;
+	
+	/**
+	 * Probability of GC cycle in percents
+	 *
+	 * @var int
+	 */
+	protected $gcProbability = 10;
+	
+	/**
 	 * Is system function available
 	 *
 	 * @var bool 
@@ -117,6 +131,8 @@ class File extends BackendAbstract {
 	 * compression         | bool     | true        | Use compression of a data
 	 * compressionTreshold | int      | 1024        | Compression theshold in bytes
 	 * compressionLevel    | int      | 1           | Compression level 1-9 (higher -> better compression, slowly operations)
+	 * gcEnabled           | bool     | true        | Garbage collection enabled/disabled
+	 * gcProbability       | int      | 10          | Garbage collection start probability in percents
 	 * 
 	 * @param  string | array | Traversable $options
 	 */
@@ -662,6 +678,42 @@ class File extends BackendAbstract {
 	}
 	
 	/**
+	 * Set the garbage collector enabled or disabled
+	 * 
+	 * @param bool $state
+	 */
+	public function setGcEnabled($state = true) {
+		$this->gcEnabled = (bool) $state;
+	}
+	
+	/**
+	 * Is the garbage collector enabled ?
+	 * 
+	 * @return bool
+	 */
+	public function isGcEnabled() {
+		return $this->gcEnabled;
+	}
+	
+	/**
+	 * Set the garbage collector start probability
+	 * 
+	 * @param int $probability In percents
+	 */
+	public function setGcProbability($probability) {
+		$this->gcProbability = (int) $probability;
+	}
+	
+	/**
+	 * Get the garbage collector start probability
+	 * 
+	 * @return int
+	 */
+	public function getGcProbability() {
+		return $this->gcProbability;
+	}
+
+	/**
 	 * Run the garbage collection cycle
 	 */
 	protected function gcCycle() {
@@ -690,6 +742,17 @@ class File extends BackendAbstract {
 				unlink($path);
 			}
 		}
+	}
+	
+	/**
+	 * Destructor
+	 */
+	public function __destruct() {
+		if (! $this->gcEnabled || rand(1, 100) > $this->gcProbability) {
+			return;
+		}
+		
+		$this->gcCycle();
 	}
 	
 }
