@@ -632,7 +632,7 @@ class File extends BackendAbstract {
 		
 		$totalSpace = disk_total_space($this->path);
 		$freeSpace  = disk_free_space($this->path);
-		$filled     = $freeSpace / $totalSpace * 100;
+		$filled     = ($totalSpace - $freeSpace) / $totalSpace * 100;
 		
 		$descriptor->id     = $this->getTopologyId();
 		$descriptor->path   = $this->path;
