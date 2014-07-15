@@ -236,6 +236,11 @@ class Profileable extends DecoratorAbstract implements ProfileableInterface {
 			
 			$profiler->setName($pos === false ? $name : substr($name, $pos + 1));
 			$profiler->setIcon('lightning');
+			
+			$profiler->addAdditionalInfo(
+				'__TOPOLOGY__',
+				$this->getTopology()
+			);
 		}
 	}
 	
