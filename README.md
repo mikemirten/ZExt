@@ -15,13 +15,7 @@ Add to composer.json following strings:
 {
     "require": {
         "zext/zext": "dev-master"
-    },
-    "repositories": [
-        {
-            "type": "git",
-            "url": "https://github.com/mikemirten/ZExt"
-        }
-    ]
+    }
 }
 ```
 
