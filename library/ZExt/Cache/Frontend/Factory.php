@@ -233,7 +233,7 @@ class Factory implements FactoryInterface, ProfileableInterface, TopologyInterfa
 	/**
 	 * Switch the profiler on/off
 	 * 
-	 * @param bool $switch
+	 * @param bool $enabled
 	 */
 	public function setProfilerStatus($enabled = true) {
 		if (! $enabled) {
@@ -253,7 +253,7 @@ class Factory implements FactoryInterface, ProfileableInterface, TopologyInterfa
 	/**
 	 * Create the namespaced wrapper
 	 * 
-	 * @param  string $namespace
+	 * @param  string $name
 	 * @return Wrapper
 	 */
 	public function __get($name) {
