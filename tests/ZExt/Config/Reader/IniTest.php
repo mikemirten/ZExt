@@ -5,8 +5,12 @@ use ZExt\Config\Reader\Ini;
 class IniTest extends PHPUnit_Framework_TestCase {
 	
 	public function testNoSections() {
-		$reader = new Ini();
-		$config = $reader->parse(file_get_contents(__DIR__ . '/Ini/simple.ini'));
+		$reader  = new Ini();
+		$options = [
+			Ini::OPTION_MODE => Ini::SECTIONS_IGNORE
+		];
+				
+		$config = $reader->parse(file_get_contents(__DIR__ . '/Ini/simple.ini'), $options);
 		
 		$this->assertEquals('localhost', $config['host']);
 		$this->assertSame(8080, $config['port']);
@@ -21,7 +25,11 @@ class IniTest extends PHPUnit_Framework_TestCase {
 	
 	public function testSectionsIgnore() {
 		$reader = new Ini();
-		$config = $reader->parse(file_get_contents(__DIR__ . '/Ini/sections.ini'));
+		$options = [
+			Ini::OPTION_MODE => Ini::SECTIONS_IGNORE
+		];
+		
+		$config = $reader->parse(file_get_contents(__DIR__ . '/Ini/sections.ini'), $options);
 		
 		$this->assertEquals('localhost', $config['host']);
 		$this->assertSame(8080, $config['port']);
@@ -203,11 +211,14 @@ class IniTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testInvalidKeyDefinition() {
-		$reader = new Ini();
+		$reader  = new Ini();
+		$options = [
+			Ini::OPTION_MODE => Ini::SECTIONS_IGNORE
+		];
 		
 		$this->setExpectedException('ZExt\Config\Reader\Exceptions\InvalidIniKey');
 		
-		$reader->parse('path..tmp = /tmp');
+		$reader->parse('path..tmp = /tmp', $options);
 	}
 	
 }
