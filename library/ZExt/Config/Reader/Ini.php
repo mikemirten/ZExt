@@ -59,8 +59,8 @@ class Ini implements ReaderInterface {
 	 * "inheritance" => Sections inheritance over ":"
 	 * 
 	 * Modes:
-	 * "ignore": Sections will be ignored (default)
-	 * "root"  : Sections will be used as the root of a config
+	 * "ignore": Sections will be ignored
+	 * "root"  : Sections will be used as the root of a config (default)
 	 * "pick"  : Only selected section(s) will be used; the "section" option required with the mode
 	 * 
 	 * @param  string $source
@@ -70,7 +70,7 @@ class Ini implements ReaderInterface {
 	public function parse($source, array $options = []) {
 		$mode = isset($options[self::OPTION_MODE])
 			? (string) $options[self::OPTION_MODE]
-			: self::SECTIONS_IGNORE;
+			: self::SECTIONS_ROOT;
 		
 		// Parse with sections ignore
 		if ($mode === self::SECTIONS_IGNORE) {
