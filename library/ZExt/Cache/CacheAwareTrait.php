@@ -232,7 +232,7 @@ trait CacheAwareTrait {
 			return lcfirst($this->getServiceName()) . 'CacheFrontend';
 		}
 		
-		return 'defaultCacheFrontend';
+		return 'cache';
 	}
 	
 	/**
@@ -241,7 +241,7 @@ trait CacheAwareTrait {
 	 * @return string
 	 */
 	protected function getCacheFrontendFactoryServiceId() {
-		return 'cacheFrontendFactory';
+		return 'cacheFactory';
 	}
 	
 }
