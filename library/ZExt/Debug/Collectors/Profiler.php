@@ -142,7 +142,7 @@ class Profiler extends CollectorAbstract {
 			}
 		}
 		
-		if ($profiler->getTotalEvents() === 0) {
+		if ($profiler->getTotalEvents() === 0 && ! $profiler->hasAdditionalInfo()) {
 			return;
 		}
 		
