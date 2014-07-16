@@ -299,7 +299,7 @@ class Memcache extends BackendAbstract {
 	/**
 	 * Remove the many the data from the cache
 	 * 
-	 * @param  array $id
+	 * @param  array $ids
 	 * @return bool
 	 */
 	public function removeMany(array $ids) {
@@ -484,7 +484,7 @@ class Memcache extends BackendAbstract {
 		} else {
 			$args = $argsRaw + self::$defaultServerArgs;
 		}
-		
+
 		$result = call_user_func_array([$this->getClient(), 'addServer'], $args);
 		
 		if ($result === false) {
@@ -561,17 +561,34 @@ class Memcache extends BackendAbstract {
 			return $descriptor;
 		}
 		
+		$info = $this->memcacheClient->getextendedstats();
+		
+		if (count($info) === 1) {
+			$serverInfo = current($info);
+			
+			$descriptor->host = key($info);
+			
+			$used  = $serverInfo['bytes'];
+			$limit = $serverInfo['limit_maxbytes'];
+		} else {
+			$used   = 0;
+			$limit  = 0;
+			$hostNm = 0;
+			
+			foreach ($info as $serverKey => $serverInfo) {
+				$used  += $serverInfo['bytes'];
+				$limit += $serverInfo['limit_maxbytes'];
+
+				$descriptor->setProperty('host.' . $hostNm ++, $serverKey);
+			}
+		}
+		
 		$memoryFormatter = new Memory();
 		
-		foreach($this->memcacheClient->getextendedstats() as $serverKey => $serverInfo) {
-			$filled = $serverInfo['bytes'] / $serverInfo['limit_maxbytes'] * 100;
-			
-			$descriptor->host    = $serverKey;
-			$descriptor->version = $serverInfo['version'];
-			$descriptor->used    = $memoryFormatter->format($serverInfo['bytes']);
-			$descriptor->limit   = $memoryFormatter->format($serverInfo['limit_maxbytes']);
-			$descriptor->filled  = round($filled, 2) . '%';
-		}
+		$descriptor->version = $serverInfo['version'];
+		$descriptor->used    = $memoryFormatter->format($used);
+		$descriptor->limit   = $memoryFormatter->format($limit);
+		$descriptor->filled  = round($used / $limit * 100, 2) . '%';
 		
 		return $descriptor;
 	}
