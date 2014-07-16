@@ -173,7 +173,7 @@ class File extends BackendAbstract {
 	/**
 	 * Fetch the many of the data from the cache
 	 * 
-	 * @param  array $id
+	 * @param  array $ids
 	 * @return array
 	 * @throws OperationFailed
 	 */
@@ -271,7 +271,7 @@ class File extends BackendAbstract {
 	/**
 	 * Remove the many the data from the cache
 	 * 
-	 * @param  array $id
+	 * @param  array $ids
 	 * @return bool
 	 * @throws OperationFailed
 	 */
@@ -630,12 +630,13 @@ class File extends BackendAbstract {
 		$descriptor      = new Descriptor('File', self::TOPOLOGY_BACKEND);
 		$memoryFormatter = new Memory();
 		
-		$totalSpace = disk_total_space($this->path);
-		$freeSpace  = disk_free_space($this->path);
+		$path       = $this->getCachePath();
+		$totalSpace = disk_total_space($path);
+		$freeSpace  = disk_free_space($path);
 		$filled     = ($totalSpace - $freeSpace) / $totalSpace * 100;
 		
 		$descriptor->id     = $this->getTopologyId();
-		$descriptor->path   = $this->path;
+		$descriptor->path   = $path;
 		$descriptor->size   = $memoryFormatter->format($totalSpace);
 		$descriptor->free   = $memoryFormatter->format($freeSpace);
 		$descriptor->filled = round($filled, 2) . '%';
