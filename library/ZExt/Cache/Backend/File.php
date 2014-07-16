@@ -159,7 +159,7 @@ class File extends BackendAbstract {
 		$file = $this->openFile($path);
 		
 		if ($file === false) { // File is absent or is expired
-			return false;
+			return;
 		}
 		
 		// Process the data
