@@ -27,6 +27,7 @@
 namespace ZExt\Cache\Backend;
 
 use ZExt\Cache\Backend\Exceptions\OperationFailed;
+use ZExt\Cache\Backend\Exceptions\NoPath;
 
 use ZExt\Topology\Descriptor;
 use ZExt\Formatter\Memory;
@@ -502,13 +503,18 @@ class File extends BackendAbstract {
 	 */
 	public function setCachePath($path) {
 		$path = rtrim($path, DIRECTORY_SEPARATOR);
+		$path = realpath($path);
+		
+		if ($path === false) {
+			throw new NoPath('Invalid path: "' . func_get_arg(0) . '"');
+		}
 		
 		if (! is_dir($path)) {
-			throw new NoPath('Path must be a directory');
+			throw new NoPath('Path must be a directory: "' . $path . '"');
 		}
 		
 		if (! is_writeable($path)) {
-			throw new NoPath('Path must be a writable');
+			throw new NoPath('Path must be a writable: "' . $path . '"');
 		}
 		
 		$this->path = $path;
