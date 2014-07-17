@@ -223,9 +223,10 @@ class File extends BackendAbstract {
 		}
 		
 		$options = sprintf('%03d', $options);
+		$path    = $this->preparePath($id);
+		$content = $expire . ';' . $options . ';' . $data;
 		
-		$path   = $this->preparePath($id);
-		$result = file_put_contents($this->preparePath($id), $expire . ';' . $options . ';' . $data);
+		$result = file_put_contents($path, $content, LOCK_EX);
 		
 		if ($result === false) {
 			throw new OperationFailed('Unable to puth the cache content to: ' . $path);
