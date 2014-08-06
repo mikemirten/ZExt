@@ -390,7 +390,7 @@ abstract class DatagateAbstract
 	 */
 	public function getTableName() {
 		if ($this->name === null) {
-			$this->name = strtolower($this->getIntrospectiveData()->name);
+			$this->name = lcfirst($this->getIntrospectiveData()->name);
 		}
 
 		return $this->name;
