@@ -243,7 +243,8 @@ class PhalconTable extends DatagateAbstract {
 			
 			return $this->_save($model, $phalconModel);
 		}
-		else if ($model instanceof Collection) {
+		
+		if ($model instanceof Collection) {
 			if ($model->isEmpty()) {
 				return true;
 			}
@@ -277,8 +278,8 @@ class PhalconTable extends DatagateAbstract {
 	/**
 	 * Save the model
 	 * 
-	 * @param  Model $model
-	 * @param  mixed $primary
+	 * @param  Model        $model
+	 * @param  PhalconModel $phalconModel
 	 * @return bool  True if succeeded
 	 */
 	private function _save(Model $model, PhalconModel $phalconModel) {
@@ -338,7 +339,8 @@ class PhalconTable extends DatagateAbstract {
 			
 			return $phalconModel->delete();
 		}
-		else if ($model instanceof Collection) {
+		
+		if ($model instanceof Collection) {
 			$transaction = $this->getTransactionsManager()->get(true);
 			
 			foreach ($model as $item) {
