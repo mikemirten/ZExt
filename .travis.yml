@@ -6,6 +6,7 @@ php:
 
 services:
   - memcached
+  - mongodb
 
 install:
   - composer install --no-dev
