@@ -2,10 +2,16 @@
 namespace ZExt\Datagate\Criteria;
 
 use ZExt\Datagate\MongoCollection;
-use MongoRegex;
+use MongoRegex,	Exception;
 
 /**
- * MongoDB find conditions' abstraction
+ * MongoDB conditions abstraction
+ * 
+ * @category   ZExt
+ * @package    Datagate
+ * @subpackage Criteria
+ * @author     Mike.Mirten
+ * @version    1.2
  */
 class MongoCriteria implements CriteriaInterface {
 	
@@ -76,6 +82,13 @@ class MongoCriteria implements CriteriaInterface {
 	const MONGO_SORT_DESC = -1;
 	
 	/**
+	 * Aggregate functions list
+	 *
+	 * @var array
+	 */
+	static protected $mongoAggregators = ['sum', 'avg', 'min', 'max', 'first', 'last', 'push'];
+	
+	/**
 	 * Datagate
 	 *
 	 * @var MongoCollection 
@@ -120,9 +133,23 @@ class MongoCriteria implements CriteriaInterface {
 	/**
 	 * Properties list
 	 *
-	 * @var srrsy
+	 * @var array
 	 */
-	protected $_properties;
+	protected $_properties = [];
+	
+	/**
+	 * Group aggregate definition
+	 *
+	 * @var array
+	 */
+	protected $_groupDefinition = [];
+	
+	/**
+	 * Group by property
+	 *
+	 * @var string
+	 */
+	protected $_groupBy;
 
 	/**
 	 * Constructor
@@ -150,8 +177,59 @@ class MongoCriteria implements CriteriaInterface {
 		return $this;
 	}
 	
+	/**
+	 * Set the properties list
+	 * 
+	 * @param  array $columns
+	 * @return MongoCriteria
+	 */
 	public function columns($columns) {
+		foreach ($columns as $property => $definition) {
+			if (is_bool($definition)) {
+				$this->_properties[$property] = $definition;
+				continue;
+			}
+			
+			$this->addAccumulator($property, $definition);
+		}
 		
+		return $this;
+	}
+	
+	/**
+	 * Add accumulator to the group
+	 * 
+	 * @param  string $group
+	 * @param  string $definition
+	 * @throws Exceptions\InvalidDefinition
+	 */
+	protected function addAccumulator($group, $definition) {
+		$definition = trim($definition);
+		
+		if (! preg_match('/^([a-z]+) *\( *([a-z_]+) *\)$/i', $definition, $matches)) {
+			throw new Exceptions\InvalidDefinition('Invalid definition: "' . $definition . '"');
+		}
+		
+		$function = strtolower(trim($matches[1]));
+		$property = trim($matches[2]);
+		
+		if (! in_array($function, static::$mongoAggregators, true)) {
+			throw new Exceptions\InvalidDefinition('Invalid aggregate function: "' . $function . '"');
+		}
+		
+		$this->_groupDefinition[$group] = ['$' . $function => '$' . $property];
+	}
+	
+	/**
+	 * Group by property
+	 * 
+	 * @param  string $property
+	 * @return MongoCriteria
+	 */
+	public function groupBy($property) {
+		$this->_groupBy = (string) $property;
+		
+		return $this;
 	}
 	
 	/**
@@ -168,6 +246,7 @@ class MongoCriteria implements CriteriaInterface {
 			$conditions = array_map('trim', $conditions);
 			
 			$conditionParts = [];
+			
 			foreach ($conditions as $condition) {
 				list($property, $condition, $valueCond) = $this->_parseCondition($condition);
 				if ($valueCond !== '?') {
@@ -180,6 +259,7 @@ class MongoCriteria implements CriteriaInterface {
 			$this->_addCondition([self::MONGO_OR => $conditionParts]);
 		} else {
 			list($property, $condition, $valueCond) = $this->_parseCondition($condition);
+			
 			if ($valueCond !== '?') {
 				$value = is_numeric($valueCond) ? $this->_parseNumeric($valueCond) : $valueCond;
 			}
@@ -489,6 +569,13 @@ class MongoCriteria implements CriteriaInterface {
 	}
 	
 	/**
+	 * Get "group by" property
+	 */
+	public function getGroupBy() {
+		return $this->_groupBy;
+	}
+	
+	/**
 	 * Assemble the query
 	 * 
 	 * @return array
@@ -497,12 +584,74 @@ class MongoCriteria implements CriteriaInterface {
 		return $this->_conditions;
 	}
 	
-	public function find() {
+	/**
+	 * Assemble the aggregate pipeline
+	 * 
+	 * @return array
+	 */
+	public function assemblePipeline() {
+		$aggregate = [];
 		
+		// Conditions
+		if (! empty($this->_conditions)) {
+			$aggregate[] = ['$match' => $this->_conditions];
+		}
+		
+		// Group
+		if (! empty($this->_groupDefinition)) {
+			$group = $this->_groupDefinition;
+			
+			$group['_id'] = ($this->_groupBy === null)
+				? null
+				: '$' . $this->_groupBy;
+			
+			$aggregate[] = ['$group' => $group];
+		}
+		
+		// Sort
+		if (! empty($this->_sort)) {
+			$aggregate[] = ['$sort' => $this->_sort];
+		}
+		
+		// Offset
+		if ($this->_offset !== null) {
+			$aggregate[] = ['$skip' => $this->_offset];
+		}
+		
+		// Limit
+		if ($this->_limit !== null) {
+			$aggregate[] = ['$limit' => $this->_limit];
+		}
+		
+		return $aggregate;
+	}
+	
+	/**
+	 * Find all records of a data
+	 * 
+	 * @return \ZExt\Model\Collection | \ZExt\Model\Iterator
+	 */
+	public function find() {
+		return $this->_datagate->find($this);
 	}
 
+	/**
+	 * Find a first record
+	 * 
+	 * @return \ZExt\Model\Model | null
+	 */
 	public function findFirst() {
-		
+		return $this->_datagate->findFirst($this);
+	}
+	
+	/**
+	 * Aggregate data
+	 * 
+	 * @param  bool $rawOutput
+	 * @return \ZExt\Model\Collection | \ZExt\Model\Model
+	 */
+	public function aggregate($rawOutput = false) {
+		return $this->_datagate->aggregate($this, $rawOutput);
 	}
 	
 	/**
@@ -552,7 +701,9 @@ class MongoCriteria implements CriteriaInterface {
 			'_limit',
 			'_offset',
 			'_collection',
-			'_properties'
+			'_properties',
+			'_groupDefinition',
+			'_groupBy'
 		];
 	}
 
