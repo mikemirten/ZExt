@@ -347,7 +347,9 @@ class MongoCriteria implements CriteriaInterface {
 			
 			// var type(?)
 			case self::COND_TYPE:
-				$this->_where($property, [self::MONGO_TYPE => $value]);
+				return [$property => [
+					self::MONGO_TYPE => $value
+				]];
 				
 			// var is array()
 			case self::COND_IS_ARRAY:
@@ -386,8 +388,14 @@ class MongoCriteria implements CriteriaInterface {
 			// var like ?
 			case self::COND_LIKE:
 				$regex = preg_quote(trim($value, '%'));
-				if ($value[0] !== '%') $regex = '^' . $regex;
-				if ($value[strlen($value) - 1] !== '%') $regex .= '&';
+				
+				if ($value[0] !== '%') {
+					$regex = '^' . $regex;
+				}
+				
+				if ($value[strlen($value) - 1] !== '%') {
+					$regex .= '$';
+				}
 				
 				return [$property => new MongoRegex('/' . $regex . '/')];
 				
