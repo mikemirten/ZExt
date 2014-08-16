@@ -26,10 +26,9 @@
 
 namespace ZExt\Datagate;
 
-use ZExt\Datagate\Exceptions\NoAdapter;
-use ZExt\Datagate\Exceptions\OperationError;
-
 use ZExt\NoSql\Adapter\MongoAdapter;
+
+use ZExt\Datagate\Criteria\MongoCriteria as Criteria;
 
 use ZExt\Paginator\Adapter\MongoCursorAdapter as PaginatorAdapter,
 	ZExt\Paginator\Paginator,
@@ -39,7 +38,7 @@ use ZExt\Model\ModelInterface,
 	ZExt\Model\Collection,
 	ZExt\Model\Model;
 
-use MongoId;
+use MongoId, MongoCursor;
 
 /**
  * MongoDB collection datagate
@@ -47,7 +46,7 @@ use MongoId;
  * @category   ZExt
  * @package    Datagate
  * @subpackage MongoDB
- * @version    2.0
+ * @version    2.1
  */
 class MongoCollection extends DatagateAbstract {
 	
@@ -109,7 +108,7 @@ class MongoCollection extends DatagateAbstract {
 		$primary = $this->getPrimaryName();
 		
 		if ($primary === false) {
-			throw new OperationError('Unable to determine the primary identity');
+			throw new Exceptions\OperationError('Unable to determine the primary identity');
 		}
 		
 		// Many
@@ -140,7 +139,7 @@ class MongoCollection extends DatagateAbstract {
 	 */
 	public function save(ModelInterface $model, array $options = []) {
 		if ($model->isEmpty()) {
-			throw new OperationError('Model has no data');
+			throw new Exceptions\OperationError('Model has no data');
 		}
 		
 		if ($model instanceof Model) {
@@ -152,7 +151,7 @@ class MongoCollection extends DatagateAbstract {
 			return $this->saveCollection($model, $options);
 		}
 		
-		throw new OperationError('Unknown instance of the "ModelInterface" was given: "' . get_class($model) . '"');
+		throw new Exceptions\OperationError('Unknown instance of the "ModelInterface" was given: "' . get_class($model) . '"');
 	}
 	
 	/**
@@ -221,11 +220,11 @@ class MongoCollection extends DatagateAbstract {
 	 * @param  ModelInterface $model
 	 * @param  array          $options
 	 * @return bool True if succeeded
-	 * @throws OperationError
+	 * @throws Exceptions\OperationError
 	 */
 	public function remove(ModelInterface $model, array $options = []) {
 		if ($model->isEmpty()) {
-			throw new OperationError('Model has no data');
+			throw new Exceptions\OperationError('Model has no data');
 		}
 		
 		if ($model instanceof Model) {
@@ -237,7 +236,7 @@ class MongoCollection extends DatagateAbstract {
 			return $this->removeCollection($model, $options);
 		}
 		
-		throw new OperationError('Unknown instance of the "ModelInterface" was given: "' . get_class($model) . '"');
+		throw new Exceptions\OperationError('Unknown instance of the "ModelInterface" was given: "' . get_class($model) . '"');
 	}
 	
 	/**
@@ -246,11 +245,11 @@ class MongoCollection extends DatagateAbstract {
 	 * @param  Model $model
 	 * @param  array $options
 	 * @return bool
-	 * @throws OperationError
+	 * @throws Exceptions\OperationError
 	 */
 	private function removeModel(Model $model, array $options = []) {
 		if (! isset($model->_id)) {
-			throw new OperationError('The model has no ID');
+			throw new Exceptions\OperationError('The model has no ID');
 		}
 		
 		$id = $this->normalizeId($model->_id);
@@ -268,13 +267,13 @@ class MongoCollection extends DatagateAbstract {
 	 * @param  Collection $collection
 	 * @param  array $options
 	 * @return bool
-	 * @throws OperationError
+	 * @throws Exceptions\OperationError
 	 */
 	private function removeCollection(Collection $collection, array $options = []) {
 		$ids = $collection->_id;
 		
 		if (count($ids) !== $collection->count()) {
-			throw new OperationError('Some of the models has no ID');
+			throw new Exceptions\OperationError('Some of the models has no ID');
 		}
 		
 		$ids = array_map([$this, 'normalizeId'], $ids);
@@ -296,6 +295,8 @@ class MongoCollection extends DatagateAbstract {
 	 * @return Model | null
 	 */
 	public function findFirst($criteria = [], array $fields = []) {
+		$criteria = $this->normalizeCriteria($criteria);
+		
 		$result = $this->getAdapter()->findFirst(
 			$this->getTableName(),
 			$criteria,
@@ -317,13 +318,19 @@ class MongoCollection extends DatagateAbstract {
 	 * @return Collection | Iterator
 	 */
 	public function find($criteria = [], array $fields = []) {
-		$iterator = $this->getAdapter()->find(
+		$criteriaNormalized = $this->normalizeCriteria($criteria);
+		
+		$mongoCursor = $this->getAdapter()->find(
 			$this->getTableName(),
-			$criteria,
+			$criteriaNormalized,
 			$fields
 		);
 		
-		return $this->createResultset($iterator);
+		if ($criteria instanceof Criteria) {
+			$this->applyCriteriaToCursor($criteria, $mongoCursor);
+		}
+		
+		return $this->createResultset($mongoCursor);
 	}
 	
 	/**
@@ -334,13 +341,19 @@ class MongoCollection extends DatagateAbstract {
 	 * @return Paginator
 	 */
 	public function getPaginator($criteria = [], array $fields = []) {
-		$iterator = $this->getAdapter()->find(
+		$criteriaNormalized = $this->normalizeCriteria($criteria);
+		
+		$mongoCursor = $this->getAdapter()->find(
 			$this->getTableName(),
-			$criteria,
+			$criteriaNormalized,
 			$fields
 		);
 		
-		return new Paginator(new PaginatorAdapter($iterator, $this));
+		if ($criteria instanceof Criteria) {
+			$this->applyCriteriaToCursor($criteria, $mongoCursor);
+		}
+		
+		return new Paginator(new PaginatorAdapter($mongoCursor, $this));
 	}
 	
 	/**
@@ -351,13 +364,100 @@ class MongoCollection extends DatagateAbstract {
 	 * @return Iterator
 	 */
 	public function getIterator($criteria = [], array $fields = []) {
-		$iterator = $this->getAdapter()->find(
+		$criteriaNormalized = $this->normalizeCriteria($criteria);
+		
+		$mongoCursor = $this->getAdapter()->find(
 			$this->getTableName(),
-			$criteria,
+			$criteriaNormalized,
 			$fields
 		);
 		
-		return $this->createIterator($iterator);
+		if ($criteria instanceof Criteria) {
+			$this->applyCriteriaToCursor($criteria, $mongoCursor);
+		}
+		
+		return $this->createIterator($mongoCursor);
+	}
+	
+	/**
+	 * Apply critera to Mongo cursor
+	 * 
+	 * @param MongoCriteria $criteria
+	 * @param MongoCursor   $mongoCursor
+	 */
+	protected function applyCriteriaToCursor(Criteria $criteria, MongoCursor $mongoCursor) {
+		$sort   = $criteria->getSortConditions();
+		$offset = $criteria->getOffset();
+		$limit  = $criteria->getLimit();
+				
+		if (! empty($sort)) {
+			$mongoCursor->sort($sort);
+		}
+		
+		if ($offset !== null) {
+			$mongoCursor->skip($offset);
+		}
+
+		if ($limit !== null) {
+			$mongoCursor->limit($limit);
+		}
+	}
+	
+	/**
+	 * Aggregate data by the pipeline
+	 * 
+	 * @param  mixed $criteria
+	 * @param  bool  $rawOutput
+	 * @return Collection | Iterator
+	 */
+	public function aggregate($criteria, $rawOutput = false) {
+		$pipeline = ($criteria instanceof Criteria)
+			? $criteria->assemblePipeline()
+			: $criteria;
+		
+		$result = $this->getAdapter()->aggregate($this->getTableName(), $pipeline);
+		
+		if ($rawOutput) {
+			return $result;
+		}
+		
+		$primaryId = ($criteria instanceof Criteria)
+			? $criteria->getGroupBy()
+			: $this->resolvePrimaryIdByPipeline($criteria);
+		
+		// Result
+		if ($primaryId === null) {
+			$result = $result[0];
+			unset($result['_id']);
+			
+			return $this->createResult($result);
+		}
+		
+		// Resultset
+		$result = array_map(function($data) use($primaryId) {
+			$data[$primaryId] = $data['_id'];
+			unset($data['_id']);
+			
+			return $data;
+		}, $result);
+		
+		return $this->createResultset($result, null, $primaryId);
+	}
+	
+	/**
+	 * Resolve the primary ID by aggregation pipeline definition
+	 * 
+	 * @param  array $pipeline
+	 * @return string | null
+	 */
+	protected function resolvePrimaryIdByPipeline(array $pipeline) {
+		foreach ($pipeline as $stage) {
+			foreach ($stage as $name => $definition) {
+				if ($name === '$group' && isset($definition['_id'])) {
+					return ltrim($definition['_id'], '$');
+				}
+			}
+		}
 	}
 	
 	/**
@@ -410,6 +510,43 @@ class MongoCollection extends DatagateAbstract {
 	}
 	
 	/**
+	 * Get the query criteria
+	 * 
+	 * @return Criteria
+	 */
+	public function query() {
+		return new Criteria($this);
+	}
+	
+	/**
+	 * Get the query criteria (alias to the query())
+	 * 
+	 * @return Criteria
+	 */
+	protected function select() {
+		return $this->query();
+	}
+	
+	/**
+	 * Normalize the type of a criteria
+	 * 
+	 * @param  array | Criteria $criteria
+	 * @return array
+	 * @throws Exceptions\InvalidCriteria
+	 */
+	protected function normalizeCriteria($criteria) {
+		if ($criteria instanceof Criteria) {
+			return $criteria->assemble();
+		}
+		
+		if (is_array($criteria)) {
+			return $criteria;
+		}
+		
+		throw new Exceptions\InvalidCriteria('Invalid type of the criteria: "' . gettype($criteria) . '"');
+	}
+	
+	/**
 	 * Get the mongo collection
 	 * 
 	 * @return \MongoCollection
@@ -453,7 +590,7 @@ class MongoCollection extends DatagateAbstract {
 			if ($this->hasLocator()) {
 				$this->_adapter = $this->getLocator()->get($this->getAdapterName());
 			} else {
-				throw new NoAdapter('Nor a database adapter neither a services locator has been provided');
+				throw new Exceptions\NoAdapter('Nor a database adapter neither a services locator has been provided');
 			}
 		}
 		
