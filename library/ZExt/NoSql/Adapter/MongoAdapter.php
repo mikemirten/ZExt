@@ -337,6 +337,38 @@ class MongoAdapter implements ProfileableInterface {
 
 		return $result;
 	}
+	
+	/**
+	 * Aggregate data by the pipeline
+	 * 
+	 * @param  string $collectionName
+	 * @param  array  $pipeline
+	 * @return array
+	 */
+	public function aggregate($collectionName, array $pipeline) {
+		$collection = $this->getCollection($collectionName);
+		
+		if ($this->_profilerEnabled) {
+			$message = 'db.' . $collectionName . '.aggregate(' . json_encode($pipeline) . ');';
+			$event   = $this->getProfiler()->startRead($message);
+		}
+
+		$result = $collection->aggregate($pipeline);
+		
+		if ($this->_profilerEnabled) {
+			if ($result['ok'] == 1) {
+				$event->stopSuccess();
+			} else {
+				$event->stopError();
+			}
+		}
+		
+		if (($result['ok'] == 0)) {
+			throw new Exceptions\OperationError('Aggregation error: "' . $result['errmsg'] . '"', $result['code']);
+		}
+		
+		return $result['result'];
+	}
 
 	/**
 	 * Update the data of the collection
