@@ -343,7 +343,7 @@ class MongoAdapter implements ProfileableInterface {
 	 * 
 	 * @param  string $collectionName
 	 * @param  array  $pipeline
-	 * @return array
+	 * @return array | null
 	 */
 	public function aggregate($collectionName, array $pipeline) {
 		$collection = $this->getCollection($collectionName);
@@ -367,7 +367,9 @@ class MongoAdapter implements ProfileableInterface {
 			throw new Exceptions\OperationError('Aggregation error: "' . $result['errmsg'] . '"', $result['code']);
 		}
 		
-		return $result['result'];
+		if (! empty($result['result'])) {
+			return $result['result'];
+		}
 	}
 
 	/**

@@ -408,7 +408,7 @@ class MongoCollection extends DatagateAbstract {
 	 * 
 	 * @param  mixed $criteria
 	 * @param  bool  $rawOutput
-	 * @return Collection | Iterator
+	 * @return Collection | Iterator | null
 	 */
 	public function aggregate($criteria, $rawOutput = false) {
 		$pipeline = ($criteria instanceof Criteria)
@@ -417,7 +417,7 @@ class MongoCollection extends DatagateAbstract {
 		
 		$result = $this->getAdapter()->aggregate($this->getTableName(), $pipeline);
 		
-		if ($rawOutput) {
+		if ($rawOutput || $result === null) {
 			return $result;
 		}
 		
