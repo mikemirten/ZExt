@@ -47,7 +47,7 @@ use ZExt\Datagate\Exceptions\InvalidResultType;
  * @package    Datagate
  * @subpackage Datagate
  * @author     Mike.Mirten
- * @version    3.0.1
+ * @version    3.0.2
  */
 abstract class DatagateAbstract
 
@@ -190,7 +190,7 @@ abstract class DatagateAbstract
 	 * @param  int                 $type
 	 * @return mixed
 	 */
-	protected function createResultset(&$data, $type = null) {
+	protected function createResultset(&$data, $type = null, $primaryId = null) {
 		if ($type === null) {
 			$type = $this->getResultType();
 		}
@@ -220,7 +220,7 @@ abstract class DatagateAbstract
 				$data = iterator_to_array($data);
 			}
 
-			return $this->createCollection($data);
+			return $this->createCollection($data, $primaryId);
 		}
 
 		// Resultset = iterator
@@ -284,37 +284,41 @@ abstract class DatagateAbstract
 	/**
 	 * Create a new collection, empty or with the supplied data
 	 * 
-	 * @param  array $data initial data for the collection
+	 * @param  array  $data      Initial data for the collection
+	 * @param  string $primaryId Specify the primary ID
 	 * @return \ZExt\Model\Collection
 	 */
-	public function createCollection(array &$data = null) {
+	public function createCollection(array &$data = null, $primaryId = null) {
 		$collectionClass = $this->getCollectionClass();
 		$modelClass      = $this->getModelClass();
-		$primary         = $this->getPrimaryName();
+		
+		if ($primaryId === null) {
+			$primaryId = $this->getPrimaryName();
+		}
 
 		// Primary ID data handling
-		if (! empty($data) || $primary !== null) {
+		if (! empty($data) || $primaryId !== null) {
 			$validation = true;
 
-			array_walk($data, function(&$item) use($primary, &$validation) {
-				if (! isset($item[$primary])) {
+			array_walk($data, function(&$item) use($primaryId, &$validation) {
+				if (! isset($item[$primaryId])) {
 					$validation = false;
 				}
 			});
 
 			if ($validation) {
-				array_walk($data, function(&$item) use($primary) {
-					if (is_object($item[$primary])) {
-						$item[$primary] = (string) $item[$primary];
+				array_walk($data, function(&$item) use($primaryId) {
+					if (is_object($item[$primaryId])) {
+						$item[$primaryId] = (string) $item[$primaryId];
 					}
 				});
 			} else {
-				$primary = null;
+				$primaryId = null;
 			}
 		}
 
 		// Creating and supplying of the dependencies
-		$collection = $collectionClass::factory($data, $modelClass, $primary);
+		$collection = $collectionClass::factory($data, $modelClass, $primaryId);
 		$collection->setDatagate($this);
 
 		if ($this->hasLocator()) {

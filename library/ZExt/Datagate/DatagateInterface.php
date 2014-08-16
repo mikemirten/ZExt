@@ -109,7 +109,7 @@ interface DatagateInterface {
 	/**
 	 * Set the model's class
 	 * 
-	 * @param string $name
+	 * @param string $class
 	 */
 	public function setModelClass($class);
 
@@ -123,7 +123,7 @@ interface DatagateInterface {
 	/**
 	 * Set the collection's class
 	 * 
-	 * @param string $name
+	 * @param string $class
 	 */
 	public function setCollectionClass($class);
 
