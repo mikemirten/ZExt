@@ -9,6 +9,10 @@
 		<testsuite name="Config">
 			<directory>./tests/ZExt/Config</directory>
 		</testsuite>
+		
+		<testsuite name="Datagate">
+			<directory>./tests/ZExt/Datagate</directory>
+		</testsuite>
 	</testsuites>
 	
 </phpunit>
