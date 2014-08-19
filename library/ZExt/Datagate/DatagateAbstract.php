@@ -426,7 +426,7 @@ abstract class DatagateAbstract
 	 */
 	public function getResultType() {
 		if ($this->result === null) {
-			$this->result = self::RESULTSET_COLLECTION + self::RESULT_MODEL;
+			$this->result = self::RESULTSET_COLLECTION | self::RESULT_MODEL;
 		}
 
 		return $this->result;
