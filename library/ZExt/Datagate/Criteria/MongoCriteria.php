@@ -11,7 +11,7 @@ use MongoRegex,	Exception;
  * @package    Datagate
  * @subpackage Criteria
  * @author     Mike.Mirten
- * @version    1.2
+ * @version    1.2.1
  */
 class MongoCriteria implements CriteriaInterface {
 	
@@ -56,6 +56,13 @@ class MongoCriteria implements CriteriaInterface {
 	const MONGO_SIZE       = '$size';
 	const MONGO_OR         = '$or';
 	const MONGO_AND        = '$and';
+	
+	// Mongo aggregate pipe
+	const MONGO_PIPE_MATCH  = '$match';
+	const MONGO_PIPE_GROUP  = '$group';
+	const MONGO_PIPE_SORT   = '$sort';
+	const MONGO_PIPE_OFFSET = '$skip';
+	const MONGO_PIPE_LIMIT  = '$limit';
 	
 	// Mongo datatypes
 	const MONGO_TYPE_DOUBLE     = 1;
@@ -206,7 +213,7 @@ class MongoCriteria implements CriteriaInterface {
 	protected function addAccumulator($group, $definition) {
 		$definition = trim($definition);
 		
-		if (! preg_match('/^([a-z]+) *\( *([a-z_]+) *\)$/i', $definition, $matches)) {
+		if (! preg_match('/^([a-z]+)\s*\(\s*(.+)\s*\)$/i', $definition, $matches)) {
 			throw new Exceptions\InvalidDefinition('Invalid definition: "' . $definition . '"');
 		}
 		
@@ -602,33 +609,33 @@ class MongoCriteria implements CriteriaInterface {
 		
 		// Conditions
 		if (! empty($this->_conditions)) {
-			$aggregate[] = ['$match' => $this->_conditions];
+			$aggregate[] = [self::MONGO_PIPE_MATCH => $this->_conditions];
 		}
 		
 		// Group
 		if (! empty($this->_groupDefinition)) {
 			$group = $this->_groupDefinition;
 			
-			$group['_id'] = ($this->_groupBy === null)
+			$group[MongoCollection::DEFAULT_PRIMARY] = ($this->_groupBy === null)
 				? null
 				: '$' . $this->_groupBy;
 			
-			$aggregate[] = ['$group' => $group];
+			$aggregate[] = [self::MONGO_PIPE_GROUP => $group];
 		}
 		
 		// Sort
 		if (! empty($this->_sort)) {
-			$aggregate[] = ['$sort' => $this->_sort];
+			$aggregate[] = [self::MONGO_PIPE_SORT => $this->_sort];
 		}
 		
 		// Offset
 		if ($this->_offset !== null) {
-			$aggregate[] = ['$skip' => $this->_offset];
+			$aggregate[] = [self::MONGO_PIPE_OFFSET => $this->_offset];
 		}
 		
 		// Limit
 		if ($this->_limit !== null) {
-			$aggregate[] = ['$limit' => $this->_limit];
+			$aggregate[] = [self::MONGO_PIPE_LIMIT => $this->_limit];
 		}
 		
 		return $aggregate;
