@@ -1,13 +1,12 @@
 <?php
 
+use ZExt\Datagate\MongoCollection;
 use ZExt\Datagate\Criteria\MongoCriteria as Criteria;
-
-require_once __DIR__ . '/../MongoTestDatagate.php';
 
 class CriteriaTest extends PHPUnit_Framework_TestCase {
 	
 	public function testWhereEqual() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId = ?', 200);
@@ -29,7 +28,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereNotEqual() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId != ?', 200);
@@ -49,7 +48,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereIn() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId in(?)', [1, 2, 3, 4]);
@@ -67,7 +66,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereNotIn() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId not in(?)', [1, 2, 3, 4]);
@@ -85,7 +84,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereLessThan() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId < ?', 100);
@@ -108,7 +107,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereMoreThan() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId > ?', 100);
@@ -131,7 +130,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereInArray() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId in array(?)', [1, 2, 3, 4]);
@@ -142,7 +141,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereExists() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId exists(?)', true);
@@ -160,7 +159,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereType() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId type(?)', Criteria::MONGO_TYPE_INT32);
@@ -171,7 +170,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereIsArray() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('roles is array()');
@@ -182,7 +181,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereIsInt() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('role is int()');
@@ -193,7 +192,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereIsString() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('role is string()');
@@ -204,7 +203,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereIsBool() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('enabled is bool()');
@@ -215,7 +214,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereIsNull() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('enabled is null()');
@@ -226,7 +225,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereRegexp() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId regexp(?)', '/^[a-z]+$/i');
@@ -247,7 +246,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereLike() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('title like(?)', '%qwerty');
@@ -268,7 +267,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereArraySize() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('roles array size(?)', 10);
@@ -291,7 +290,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereOrEqual() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('role = admin || role = moderator');
@@ -307,7 +306,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereMultipleOrEqual() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('role = admin || role = moderator');
@@ -326,7 +325,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereOrLessThan() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('roleId < 10 || roleId <= 50');
@@ -342,7 +341,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereOrIsType() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('role is int() || role is string()');
@@ -356,7 +355,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testWhereMultipleOrComplex() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->where('postId in(?) || postId = 0', [1, 2, 3, 4]);
@@ -375,7 +374,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testLimit() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->limit(10);
@@ -387,7 +386,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testOffset() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->offset(10);
@@ -395,7 +394,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testSort() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->sort('time');
@@ -411,7 +410,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testSortDesc() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->sort('time DESC');
@@ -421,7 +420,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testSortMultiple() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->sort('time ASC, postId DESC');
@@ -439,7 +438,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testAggregationColumns() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->columns([
@@ -457,7 +456,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testAggregationGroupBy() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->columns(['count' => 'SUM(rate)']);
@@ -472,7 +471,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testAggregationSort() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->columns(['count' => 'SUM(rate)']);
@@ -491,7 +490,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testAggregationLimit() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->columns(['count' => 'SUM(rate)']);
@@ -507,7 +506,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testAggregationOffset() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->columns(['count' => 'SUM(rate)']);
@@ -523,7 +522,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testAggregationMatch() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->columns(['count' => 'SUM(rate)']);
@@ -544,7 +543,7 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testAggregationComplex() {
-		$datagate = new MongoTestDatagate();
+		$datagate = new MongoCollection();
 		$criteria = $datagate->query();
 		
 		$criteria->columns([
