@@ -38,7 +38,7 @@ use ArrayAccess,
  * @package    Model
  * @subpackage Collection
  * @author     Mike.Mirten
- * @version    2.3
+ * @version    2.4
  */
 class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator {
 	
@@ -56,6 +56,9 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	const ITERATION_REVERSE  = 'reverse';
 	const ITERATION_EVEN     = 'even';
 	const ITERATION_ODD      = 'odd';
+	
+	const SORT_ASC  = 'asc';
+	const SORT_DESC = 'desc';
 	
 	const PRIMARY_MODEL = 'ZExt\Model\Model';
 	
@@ -521,6 +524,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 		foreach($this->_data as &$data) {
 			$data = $callback($data);
 		}
+		unset($data);
 		
 		return $this;
 	}
@@ -594,81 +598,114 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	}
 	
 	/**
-	 * Sort the collection by a property or an array of properties
+	 * Sort the items order
+	 * Affects iteration and some methods, like "toArray()", "find()" etc.
+	 * 
+	 * Usage:
+	 * sort('property1', 'property2', 'PropertyN');
+	 * 
+	 * With a direction:
+	 * sort('property ASC')  - ascend (default)
+	 * sort('property DESC') - descend
+	 * 
+	 * With definition as an array:
+	 * sort(['property1', 'property2', 'propertyN'])
 	 *
-	 * @param  mixed $property
-	 * @param  bool  $reverse
+	 * @param  string | array $definition
 	 * @return Collection
 	 * @throws Exception
 	 */
-	public function sort($property = null, $reverse = false) {
-		if ($property === null) {
-			$property = $this->getPrimary();
-			if ($property === null) {
-				throw new Exception('Primary property wasn\'t specified');
+	public function sort($definition = null) {
+		if (func_num_args() > 1) {
+			$definition = func_get_args();
+		}
+		else if ($definition === null) {
+			$definition = $this->getPrimary();
+			
+			if ($definition === null) {
+				throw new Exception('Unable to sort by primary property due to primary is not set');
 			}
 		}
 		
-		if (is_array($property)) {
-			ksort($property);
-		}
-		
-		$sorted = $this->_sort($this->_data, $property, $reverse);
-		
-		$this->_map = array_keys($sorted);
+		$sortedData = $this->sortData($this->_data, (array) $definition);
+		$this->_map = array_keys($sortedData);
 		
 		return $this;
 	}
-
+	
 	/**
-	 * Sort the data by a property
+	 * Sort the data by the definition
 	 * 
 	 * @param  array $data
-	 * @param  mixed $property
-	 * @param  bool  $reverse
+	 * @param  array $definition
 	 * @return array
 	 */
-	protected function _sort(&$data, $property, $reverse = false) {
-		if (is_array($property)) {
-			$prop = array_shift($property);
-		} else {
-			$prop = &$property;
-		}
-
-		if (is_array($prop)) {
-			list($prop, $reverse) = $prop;
-		}
-
-		$unsorted = array();
-		foreach ($data as $key => &$item) {
-			if (! isset($unsorted[$item[$prop]])) {
-				$unsorted[$item[$prop]] = array();
+	protected function sortData(array $data, array $definition) {
+		$definitionPart = array_shift($definition);
+		
+		list($property, $direction) = $this->parseSortDefinition($definitionPart);
+		
+		$unsorted = [];
+		
+		foreach ($data as $key => $item) {
+			if (! isset($unsorted[$item[$property]])) {
+				$unsorted[$item[$property]] = [];
 			}
 			
-			$unsorted[$item[$prop]][$key] = &$item;
+			$unsorted[$item[$property]][$key] = $item;
 		}
-		unset($item);
 
-		$reverse ? krsort($unsorted) : ksort($unsorted);
+		$direction ? ksort($unsorted) : krsort($unsorted);
 
-		$sorted = array();
-		if (is_array($property) && ! empty($property)) {
-			foreach ($unsorted as &$group) {
+		$sorted = [];
+		
+		if (! empty($definition)) {
+			foreach ($unsorted as $group) {
 				if (count($group) < 2) {
 					$sorted = $sorted + $group;
 				} else {
-					$sorted = $sorted + $this->_sort($group, $property, $reverse);
+					$sorted = $sorted + $this->sortData($group, $definition);
 				}
 			}
-			unset($group);
-		} else {
-			foreach($unsorted as &$group) {
-				$sorted = $sorted + $group;
-			}
-			unset($group);
+			
+			return $sorted;
+		}
+		
+		foreach($unsorted as $group) {
+			$sorted = $sorted + $group;
 		}
 
 		return $sorted;
+	}
+	
+	/**
+	 * Parse the sort definition
+	 * 
+	 * @param  string $definition
+	 * @return array  [property, direction]
+	 * @throws Exception
+	 */
+	protected function parseSortDefinition($definition) {
+		$definition = trim($definition);
+		$spacePos   = strrpos($definition, ' ');
+		
+		if ($spacePos === false) {
+			return [$definition, true];
+		}
+		
+		$property  = substr($definition, 0, $spacePos);
+		$direction = substr($definition, $spacePos);
+		$direction = strtolower(ltrim($direction));
+
+		if ($direction === self::SORT_ASC) {
+			return [$property, true];
+		}
+		
+		if ($direction === self::SORT_DESC) {
+			return [$property, false];
+		}
+		
+		throw new Exception('Unknown sort direction: "' . $direction . '"');
 	}
 	
 	/**
@@ -691,7 +728,9 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 				$this->_map = array();
 				
 				foreach (array_keys($this->_data) as $key => $value) {
-					if ($key % 2 === 0) $this->_map[] = $value;
+					if ($key % 2 === 0) {
+						$this->_map[] = $value;
+					}
 				}
 				break;
 				
@@ -699,7 +738,9 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 				$this->_map = array();
 				
 				foreach (array_keys($this->_data) as $key => $value) {
-					if ($key % 2 !== 0) $this->_map[] = $value;
+					if ($key % 2 !== 0) {
+						$this->_map[] = $value;
+					}
 				}
 				break;
 		}
