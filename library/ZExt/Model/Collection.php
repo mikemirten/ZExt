@@ -38,7 +38,7 @@ use ArrayAccess,
  * @package    Model
  * @subpackage Collection
  * @author     Mike.Mirten
- * @version    2.4
+ * @version    2.4.1
  */
 class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator {
 	
@@ -104,7 +104,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	 * 
 	 * @var array
 	 */
-	protected $_models = array();
+	protected $_models = [];
 	
 	/**
 	 * Iterator's pointer
@@ -118,7 +118,14 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	 * 
 	 * @var array 
 	 */
-	protected $_map = array();
+	protected $_map = [];
+	
+	/**
+	 * Last sort definition
+	 *
+	 * @var array
+	 */
+	protected $_sortDefinition;
 	
 	/**
 	 * Collections' factory
@@ -180,8 +187,8 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	 * @return Collection
 	 */
 	public function setDataLinked(array &$data) {
-		$this->_data   = array();
-		$this->_models = array();
+		$this->_data   = [];
+		$this->_models = [];
 		
 		$modelClass = $this->getModel();
 		
@@ -226,7 +233,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 		
 		if (! empty($this->_models)) {
 			$currentModels = $this->_models;
-			$this->_models = array();
+			$this->_models = [];
 
 			foreach ($currentModels as $key => $model) {
 				if ($model instanceof $modelClass) {
@@ -271,7 +278,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 			$idProperty = self::COMPOSITE_ID_PROPERTY . $this->_collectionId;
 			
 			foreach ($this->_data as &$dataPart) {
-				$dataHashParts = array();
+				$dataHashParts = [];
 				
 				foreach ($primaryName as $keyPart) {
 					if (! isset($dataPart[$keyPart])) {
@@ -293,7 +300,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 		}
 		
 		$tempData = $this->_data;
-		$this->_data = array();
+		$this->_data = [];
 		
 		foreach ($tempData as &$item) {
 			if (! isset($item[$primaryName])) {
@@ -306,7 +313,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 		
 		if (! empty($this->_models)) {
 			$tempData = $this->_models;
-			$this->_models = array();
+			$this->_models = [];
 			
 			foreach ($tempData as $item) {
 				$this->_models[$item->$primaryName] = $item;
@@ -439,7 +446,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 				$this->_map[] = key($this->_data);
 			} else {
 				if (is_array($this->_primaryDefinition)) {
-					$idParts = array();
+					$idParts = [];
 					
 					foreach ($this->_primaryDefinition as $primaryPart) {
 						if (! isset($item->$primaryPart)) {
@@ -471,7 +478,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 				
 			} else {
 				if (is_array($this->_primaryDefinition)) {
-					$idParts = array();
+					$idParts = [];
 					
 					foreach ($this->_primaryDefinition as $primaryPart) {
 						if (! isset($item[$primaryPart])) {
@@ -627,55 +634,32 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 			}
 		}
 		
-		$sortedData = $this->sortData($this->_data, (array) $definition);
-		$this->_map = array_keys($sortedData);
+		$this->_sortDefinition = (array) $definition;
+		
+		$this->buildSortedMap($this->_sortDefinition);
 		
 		return $this;
 	}
 	
 	/**
-	 * Sort the data by the definition
+	 * Build iteration map by data columns
 	 * 
-	 * @param  array $data
-	 * @param  array $definition
-	 * @return array
+	 * @param array $definition
 	 */
-	protected function sortData(array $data, array $definition) {
-		$definitionPart = array_shift($definition);
+	protected function buildSortedMap(array $definition) {
+		$sortArgs = [];
 		
-		list($property, $direction) = $this->parseSortDefinition($definitionPart);
-		
-		$unsorted = [];
-		
-		foreach ($data as $key => $item) {
-			if (! isset($unsorted[$item[$property]])) {
-				$unsorted[$item[$property]] = [];
-			}
+		foreach ($definition as $definitionPart) {
+			list($property, $direction) = $this->parseSortDefinition($definitionPart);
 			
-			$unsorted[$item[$property]][$key] = $item;
-		}
-
-		$direction ? ksort($unsorted) : krsort($unsorted);
-
-		$sorted = [];
-		
-		if (! empty($definition)) {
-			foreach ($unsorted as $group) {
-				if (count($group) < 2) {
-					$sorted = $sorted + $group;
-				} else {
-					$sorted = $sorted + $this->sortData($group, $definition);
-				}
-			}
-			
-			return $sorted;
+			$sortArgs[] = $this->getDataColumn($property);
+			$sortArgs[] = $direction;
 		}
 		
-		foreach($unsorted as $group) {
-			$sorted = $sorted + $group;
-		}
-
-		return $sorted;
+		$this->_map = array_keys($this->_data);
+		$sortArgs[] = &$this->_map;
+		
+		call_user_func_array('array_multisort', $sortArgs);
 	}
 	
 	/**
@@ -690,7 +674,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 		$spacePos   = strrpos($definition, ' ');
 		
 		if ($spacePos === false) {
-			return [$definition, true];
+			return [$definition, SORT_ASC];
 		}
 		
 		$property  = substr($definition, 0, $spacePos);
@@ -698,14 +682,34 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 		$direction = strtolower(ltrim($direction));
 
 		if ($direction === self::SORT_ASC) {
-			return [$property, true];
+			return [$property, SORT_ASC];
 		}
 		
 		if ($direction === self::SORT_DESC) {
-			return [$property, false];
+			return [$property, SORT_DESC];
 		}
 		
 		throw new Exception('Unknown sort direction: "' . $direction . '"');
+	}
+	
+	/**
+	 * Get the data column
+	 * 
+	 * @param  string $column
+	 * @return array
+	 */
+	protected function getDataColumn($column) {
+		if (function_exists('array_column')) {
+			return array_column($this->_data, $column);
+		}
+		
+		$columnData = [];
+		
+		foreach ($this->_data as $row) {
+			$columnData[] = $row[$column];
+		}
+		
+		return $columnData;
 	}
 	
 	/**
@@ -725,7 +729,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 				break;
 			
 			case self::ITERATION_EVEN:
-				$this->_map = array();
+				$this->_map = [];
 				
 				foreach (array_keys($this->_data) as $key => $value) {
 					if ($key % 2 === 0) {
@@ -735,7 +739,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 				break;
 				
 			case self::ITERATION_ODD:
-				$this->_map = array();
+				$this->_map = [];
 				
 				foreach (array_keys($this->_data) as $key => $value) {
 					if ($key % 2 !== 0) {
@@ -824,7 +828,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	public function getList($propertyValues, $propertyKeys = null, $uniqueValues = false) {
 		$this->initialize($propertyValues);
 		
-		$list = array();		
+		$list = [];		
 		
 		if ($propertyKeys === true) {
 			$propertyKeys = $this->getPrimary();
@@ -977,7 +981,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 		
 		foreach ($this->_map as $key) {
 			$item = $this->_data[$key];
-			$itemFetched = array();
+			$itemFetched = [];
 			
 			foreach ($propertiesList as $property) {
 				if (isset($item[$property])) {
@@ -1019,7 +1023,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	 * @return array 
 	 */
 	public function getPropertiesNames() {
-		$propertiesList = array();
+		$propertiesList = [];
 		
 		foreach($this->_data as $item) {
 			$propertiesList += array_keys($item);
@@ -1124,9 +1128,9 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	 * @return Collection
 	 */
 	public function truncate() {
-		$this->_map     = array();
-		$this->_data    = array();
-		$this->_models  = array();
+		$this->_map     = [];
+		$this->_data    = [];
+		$this->_models  = [];
 		$this->_pointer = 0;
 		
 		return $this;
@@ -1148,7 +1152,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	 * @return array
 	 */
 	public function toArray($recursively = false) {
-		$array = array();
+		$array = [];
 		
 		if ($recursively === true) {
 			foreach($this->_map as $key) {
@@ -1227,7 +1231,7 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	 * 
 	 * @return Collection
 	 */
-	public function createClone($data = array()) {
+	public function createClone($data = []) {
 		$collection = static::factory($data, $this->getModel(), $this->getPrimary());
 		
 		if ($this->hasDatagate()) {
@@ -1392,7 +1396,12 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 	public function __sleep() {
 		return array_merge(
 			parent::__sleep(),
-			array('_modelClass', '_primary', '_primaryDefinition')
+			[
+				'_modelClass', 
+				'_primary',
+				'_primaryDefinition',
+				'_sortDefinition'
+			]
 		);
 	}
 	
@@ -1400,8 +1409,13 @@ class Collection extends ModelAbstract implements ArrayAccess, SeekableIterator 
 		parent::__wakeup();
 		
 		$this->_pointer      = 0;
-		$this->_map          = array_keys($this->_data);
 		$this->_collectionId = self::$_collectionIdCounter ++;
+		
+		if ($this->_sortDefinition === null) {
+			$this->_map = array_keys($this->_data);
+		} else {
+			$this->buildSortedMap($this->_sortDefinition);
+		}
 	}
 	
 	public function __clone() {
