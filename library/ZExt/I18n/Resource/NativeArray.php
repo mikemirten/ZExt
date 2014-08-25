@@ -69,6 +69,15 @@ class NativeArray extends ResourceAbstract {
 	 * Set the catalogs for all the locales and domains (overrides the current catalogs)
 	 * Must contains an array with locales, and locales must contains an arrays with domain(s)
 	 * 
+	 * Raw source format:
+	 * [
+	 *     'locale' => [
+	 *         'domain' => [
+	 *             'id' => 'translation'
+	 *         ]
+	 *     ]
+	 * ]
+	 * 
 	 * @param  array $catalogs
 	 * @return NativeArray
 	 */

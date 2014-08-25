@@ -154,7 +154,7 @@ class Translator implements TranslatorInterface {
 	 * 
 	 * @param Locale | string   $locale   Default locale | Options as an array or a traversable implementation
 	 * @param ResourceInterface $resource A resource instance or an array of instances
-	 * @param LocatorInterface  $locator  Cache strategy instance
+	 * @param StrategyInterface $cache    Cache strategy instance
 	 */
 	public function __construct($locale = null, $resource = null, StrategyInterface $cache = null) {
 		if ($locale !== null) {
