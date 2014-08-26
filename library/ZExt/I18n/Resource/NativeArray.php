@@ -52,15 +52,28 @@ class NativeArray extends ResourceAbstract {
 	 * Add the catalog for the locale
 	 * Must contains an array with domain(s)
 	 * 
+	 * Source format:
+	 * [
+	 *     'domain' => [
+	 *         'id' => 'translation'
+	 *     ]
+	 * ]
+	 * 
 	 * @param  string $locale
 	 * @param  array  $catalog
 	 * @return NativeArray
 	 */
 	public function addLocaleCatalog($locale, array $catalog) {
-		$this->catalogs[$locale] = array_replace_recursive(
-			$this->catalogs[$locale],
-			$catalog
-		);
+		if (isset($this->catalogs[$locale])) {
+			$this->catalogs[$locale] = array_replace_recursive(
+				$this->catalogs[$locale],
+				$catalog
+			);
+			
+			return $this;
+		}
+		
+		$this->catalogs[$locale] = $catalog;
 
 		return $this;
 	}
