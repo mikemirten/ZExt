@@ -38,8 +38,6 @@ use ZExt\Model\Iterator;
 
 use ReflectionObject, Traversable, ArrayIterator;
 
-use ZExt\Datagate\Exceptions\InvalidResultType;
-
 /**
  * Interface of a gateway to a data and a data to a model mapper
  * 
@@ -47,7 +45,7 @@ use ZExt\Datagate\Exceptions\InvalidResultType;
  * @package    Datagate
  * @subpackage Datagate
  * @author     Mike.Mirten
- * @version    3.0.2
+ * @version    3.0.3
  */
 abstract class DatagateAbstract
 
@@ -178,7 +176,7 @@ abstract class DatagateAbstract
 			return $this->create($data);
 		}
 
-		throw new InvalidResultType('Nothing to do with the type #' . $type);
+		throw new Exceptions\InvalidResultType('Nothing to do with the type #' . $type);
 	}
 
 	/**
@@ -213,7 +211,7 @@ abstract class DatagateAbstract
 		// Resultset = collection
 		if ($type & self::RESULTSET_COLLECTION) {
 			if (! ($type & self::RESULT_MODEL)) {
-				throw new InvalidResultType('Colection resultset works only with the models type');
+				throw new Exceptions\InvalidResultType('Colection resultset works only with the models type');
 			}
 			
 			if ($data instanceof Traversable) {
@@ -238,7 +236,7 @@ abstract class DatagateAbstract
 			}
 		}
 
-		throw new InvalidResultType('Nothing to do with the type #' . $type);
+		throw new Exceptions\InvalidResultType('Nothing to do with the type #' . $type);
 	}
 
 	/**
@@ -398,6 +396,20 @@ abstract class DatagateAbstract
 		}
 
 		return $this->name;
+	}
+	
+	/**
+	 * Set the name of the primary identity
+	 * 
+	 * @param string | array $primary
+	 */
+	public function setPrimaryName($primary) {
+		if (is_string($primary) || is_array($primary)) {
+			$this->primary = $primary;
+			return;
+		}
+		
+		throw new Exceptions\InvalidOption('Name of primary identity must be a string or an array, "' . gettype($primary) . '" was given');
 	}
 
 	/**
