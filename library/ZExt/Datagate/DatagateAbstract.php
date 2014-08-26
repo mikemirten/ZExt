@@ -329,7 +329,7 @@ abstract class DatagateAbstract
 	/**
 	 * Set the model's class
 	 * 
-	 * @param string $name
+	 * @param string $class
 	 */
 	public function setModelClass($class) {
 		$this->model = (string) $class;
@@ -348,11 +348,9 @@ abstract class DatagateAbstract
 			$modelPath = $introspection->dirname . DIRECTORY_SEPARATOR .
 						 $modelBase . '.' . $introspection->extension;
 
-			if (is_file($modelPath)) {
-				$this->model = $introspection->namespace . '\\' . $modelBase;
-			} else {
-				$this->model = self::MODEL_DEFAULT;
-			}
+			$this->model = (is_file($modelPath))
+				? $introspection->namespace . '\\' . $modelBase
+				: self::MODEL_DEFAULT;
 		}
 
 		return $this->model;
@@ -361,7 +359,7 @@ abstract class DatagateAbstract
 	/**
 	 * Set the collection's class
 	 * 
-	 * @param string $name
+	 * @param string $class
 	 */
 	public function setCollectionClass($class) {
 		$this->collection = (string) $class;
