@@ -228,10 +228,6 @@ trait CacheAwareTrait {
 	 * @return string
 	 */
 	protected function getCacheFrontendServiceId() {
-		if (method_exists($this, 'getServiceName')) {
-			return lcfirst($this->getServiceName()) . 'CacheFrontend';
-		}
-		
 		return 'cache';
 	}
 	
