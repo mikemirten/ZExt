@@ -37,7 +37,7 @@ use Traversable, ReflectionObject, ReflectionMethod;
  * @package    Components
  * @subpackage Options
  * @author     Mike.Mirten
- * @version    1.0.1
+ * @version    1.1
  */
 trait OptionsTrait {
 	
@@ -59,31 +59,47 @@ trait OptionsTrait {
 
 		foreach ($options as $option => $value) {
 			if (strpos($option, '_') !== false) {
-				$option = str_replace(' ', '', ucwords(str_replace('_', ' ', $option)));
+				$option = ucwords(str_replace('_', ' ', $option));
+				$option = lcfirst(str_replace(' ', '', $option));
 			}
 
 			if ($option === 'options') {
 				continue;
 			}
 			
-			$method = 'set' . lcfirst($option);
-
-			if (method_exists($this, $method)) {
-				if ($value instanceof ConfigInterface) {
-					$value = $value->toArray();
+			$method = 'set' . $option;
+			
+			if (! method_exists($this, $method)) {
+				if (! $ignoreUnknown) {
+					$this->onUnknownOptionSet($option, $value);
 				}
+				
+				continue;
+			}
 
-				if ($arraysAsManyOfArgs && is_array($value)) {
-					call_user_func_array([$this, $method], $value);
-				} else {
-					$this->$method($value);
-				}
-			} else if (! $ignoreUnknown) {
-				throw new InvalidOption('Unknown option "' . $option . '"');
+			if ($value instanceof ConfigInterface) {
+				$value = $value->toArray();
+			}
+
+			if ($arraysAsManyOfArgs && is_array($value)) {
+				call_user_func_array([$this, $method], $value);
+			} else {
+				$this->$method($value);
 			}
 		}
 
 		return $this;
+	}
+	
+	/**
+	 * On unknown option set callback
+	 * Can be overriden by user
+	 * 
+	 * @param string $option
+	 * @param mixed  $value
+	 */
+	protected function onUnknownOptionSet($option, $value) {
+		throw new InvalidOption('Unknown option "' . $option . '"');
 	}
 	
 	/**
