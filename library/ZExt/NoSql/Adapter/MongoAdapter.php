@@ -26,17 +26,17 @@
 
 namespace ZExt\NoSql\Adapter;
 
-use ZExt\Profiler\ProfilerExtendedInterface,
+use ZExt\Profiler\ProfilerInterface,
+    ZExt\Profiler\ProfilerExtendedInterface,
     ZExt\Profiler\ProfileableTrait,
     ZExt\Profiler\ProfileableInterface;
+
+use ZExt\Components\OptionsTrait;
+use ZExt\Url\Url;
 
 use Traversable, Exception;
 
 use	MongoClient, MongoDB, MongoCollection, MongoCursor, MongoConnectionException;
-
-use ZExt\NoSql\Adapter\Exceptions\PhpExtensionError;
-use ZExt\NoSql\Adapter\Exceptions\ConnectionError;
-use ZExt\NoSql\Adapter\Exceptions\OptionsError;
 
 /**
  * MongoDB Adapter
@@ -44,23 +44,12 @@ use ZExt\NoSql\Adapter\Exceptions\OptionsError;
  * @category   ZExt
  * @package    NoSql
  * @subpackage MongoDbAdapter
- * @version    2.0beta
+ * @version    3.0beta
  */
 class MongoAdapter implements ProfileableInterface {
 
 	use ProfileableTrait;
-
-	const PARAM_HOST     = 'host';
-	const PARAM_HOSTS    = 'hosts';
-	const PARAM_PORT     = 'port';
-	const PARAM_USERNAME = 'username';
-	const PARAM_PASSWORD = 'password';
-	const PARAM_DATABASE = 'database';
-	const PARAM_PROFILER = 'profiler';
-	const PARAM_PARAMS   = 'params';
-
-	const PARAM_CONNECTION_ATTEMPTS = 'connection_attempts';
-	const PARAM_CONNECTION_TIMEOUT  = 'connection_timeout';
+	use OptionsTrait;
 
 	const DEFAULT_CONNECTION_ATTEMPTS = 3;
 	const DEFAULT_CONNECTION_TIMEOUT  = 1; // seconds
@@ -70,141 +59,224 @@ class MongoAdapter implements ProfileableInterface {
 	 * 
 	 * @var MongoClient 
 	 */
-	protected $_client;
-
-	/**
-	 * Connection options
-	 *
-	 * @var array
-	 */
-	protected $_connectionOptions = [];
+	protected $client;
 
 	/**
 	 * Connection pool hosts
 	 *
-	 * @var array
+	 * @var Url[]
 	 */
-	protected $_hosts = [];
+	protected $hosts = [];
 
+	/**
+	 * Default host
+	 *
+	 * @var string
+	 */
+	protected $defaultHost = MongoClient::DEFAULT_HOST;
+	
 	/**
 	 * Default port for all hosts
 	 *
 	 * @var int
 	 */
-	protected $_port = MongoClient::DEFAULT_PORT;
+	protected $defaultPort = MongoClient::DEFAULT_PORT;
+	
+	/**
+	 * Username
+	 *
+	 * @var string
+	 */
+	protected $username;
+	
+	/**
+	 * Password
+	 *
+	 * @var string
+	 */
+	protected $password;
 
 	/**
 	 * Default database
 	 * 
 	 * @var string
 	 */
-	protected $_dbname = 'test';
+	protected $dbname = 'test';
 
 	/**
 	 * Mongo databases
 	 * 
 	 * @var MongoDB[] 
 	 */
-	protected $_databases = [];
+	protected $databases = [];
 
 	/**
 	 * Mongo collections
 	 * 
 	 * @var MongoCollection[] 
 	 */
-	protected $_collections = [];
+	protected $collections = [];
 
 	/**
 	 * Connection attempts
 	 *
 	 * @var int
 	 */
-	protected $_connectionAttempts = self::DEFAULT_CONNECTION_ATTEMPTS;
+	protected $connectionAttempts = self::DEFAULT_CONNECTION_ATTEMPTS;
 
 	/**
 	 * Timeout between connections' attempts in seconds
 	 *
 	 * @var int
 	 */
-	protected $_connectionTimeout = self::DEFAULT_CONNECTION_TIMEOUT;
+	protected $connectionTimeout = self::DEFAULT_CONNECTION_TIMEOUT;
+	
+	/**
+	 * Client connection options
+	 *
+	 * @var array
+	 */
+	protected $connectionOptions = [];
 
 	/**
 	 * Constructor
 	 * 
-	 * @param  mixed $config
-	 * @throws PhpExtensionError
+	 * @param  mixed $options
+	 * @throws Exceptions\PhpExtensionError
 	 */
-	public function __construct($config = null) {
+	public function __construct($options = null) {
 		if (! extension_loaded('mongo')) {
-			throw new PhpExtensionError('Mongo extension is unavailable');
+			throw new Exceptions\PhpExtensionError('Mongo extension is unavailable');
 		}
 
 		$driverVersion = phpversion('mongo');
 		if ((version_compare($driverVersion, '1.3.0')) < 0) {
-			throw new PhpExtensionError('Version ' . $driverVersion . ' of the Mongo extension is too old');
+			throw new Exceptions\PhpExtensionError('Version ' . $driverVersion . ' of the Mongo extension is too old');
 		}
-
-		if ($config !== null) {
-			$this->setConfig($config);
+		
+		if ($options !== null) {
+			$this->setOptions($options, false, false);
 		}
 	}
 
 	/**
-	 * Set the adapter's config
+	 * Set default host for each server
 	 * 
-	 * @param  array | Traversable | string $config
-	 * @throws OptionsError
+	 * @param  string $host
+	 * @return MongoAdapter
 	 */
-	public function setConfig($config) {
-		if (is_string($config)) {
-			$this->addHost($config);
-			return;
+	public function setDefaultHost($host, $port = null) {
+		$this->defaultHost = (string) $host;
+		
+		if ($port !== null) {
+			$this->setDefaultPort($port);
+		}
+		
+		return $this;
+	}
+	
+	/**
+	 * Set default port for each server
+	 * 
+	 * @param  string $host
+	 * @param  int    $port
+	 * @return MongoAdapter
+	 */
+	public function setDefaultPort($port) {
+		$this->defaultPort = (int) $port;
+		
+		return $this;
+	}
+	
+	/**
+	 * Set connection username
+	 * 
+	 * @param  string $username
+	 * @param  string $password
+	 * @return MongoAdapter
+	 */
+	public function setUsername($username, $password = null) {
+		$this->username = (string) $username;
+		
+		if ($password !== null) {
+			$this->setPassword($password);
+		}
+		
+		return $this;
+	}
+	
+	/**
+	 * Set connection password
+	 * 
+	 * @param  string $password
+	 * @return MongoAdapter
+	 */
+	public function setPassword($password) {
+		$this->password = (string) $password;
+		
+		return $this;
+	}
+	
+	/**
+	 * Set database name
+	 * 
+	 * @param  string $name
+	 * @return MongoAdapter
+	 */
+	public function setDBName($name) {
+		$this->dbname = (string) $name;
+		
+		return $this;
+	}
+	
+	/**
+	 * Set the hosts of the connection pool
+	 * 
+	 * @param  array | Traversable $hosts
+	 * @throws Exceptions\OptionsError
+	 * @return MongoAdapter
+	 */
+	public function setHosts($hosts) {
+		$this->hosts = [];
+
+		if (! $hosts instanceof Traversable && ! is_array($hosts)) {
+			throw new Exceptions\OptionsError('Hosts data must be an array or a traversable');
 		}
 
-		if ($config instanceof Traversable) {
-			$config = iterator_to_array($config);
+		foreach ($hosts as $name => $host) {
+			if (is_int($name)) {
+				$this->addHost($host);
+				continue;
+			}
+			
+			$this->addHost($host, $name);
 		}
-
-		if (! is_array($config)) {
-			throw new OptionsError('Config must be an array, a traversable or a string');
-		}
-
-		if (isset($config[self::PARAM_PORT])) {
-			$this->_port = (int) $config[self::PARAM_PORT];
-			unset($config[self::PARAM_PORT]);
-		}
-
-		if (isset($config[self::PARAM_HOST])) {
-			$this->addHost($config[self::PARAM_HOST]);
-			unset($config[self::PARAM_HOST]);
-		}
-		else if (isset($config[self::PARAM_HOSTS])) {
-			$this->setHosts($config[self::PARAM_HOSTS]);
-			unset($config[self::PARAM_HOSTS]);
-		}
-
-		if (isset($config[self::PARAM_DATABASE])) {
-			$this->_dbname = $config[self::PARAM_DATABASE];
-			unset($config[self::PARAM_DATABASE]);
-		}
-		if (isset($config[self::PARAM_PROFILER])) {
-			$this->_profilerEnabled = (bool) $config[self::PARAM_PROFILER];
-			unset($config[self::PARAM_PROFILER]);
-		}
-		if (isset($config[self::PARAM_CONNECTION_ATTEMPTS])) {
-			$this->_connectionAttempts = (int) $config[self::PARAM_CONNECTION_ATTEMPTS];
-			unset($config[self::PARAM_CONNECTION_ATTEMPTS]);
-		}
-		if (isset($config[self::PARAM_CONNECTION_TIMEOUT])) {
-			$this->_connectionTimeout = (int) $config[self::PARAM_CONNECTION_TIMEOUT];
-			unset($config[self::PARAM_CONNECTION_TIMEOUT]);
-		}
-
-		if (! empty($config)) {
-			$this->_connectionOptions = $config;
-		}
+		
+		return $this;
 	}
 
+	/**
+	 * Add the host to the connection pool
+	 * 
+	 * @param  string | array $host
+	 * @param  string         $name
+	 * @throws OptionsError
+	 * @return MongoAdapter
+	 */
+	public function addHost($host, $name = null) {
+		if (! $host instanceof Url) {
+			$host = new Url($host);
+		}
+		
+		if ($name === null) {
+			$this->hosts[] = $host;
+			return $this;
+		}
+		
+		$this->hosts[$name] = $host;
+		return $this;
+	}
+	
 	/**
 	 * Get a databases list
 	 * 
@@ -433,11 +505,11 @@ class MongoAdapter implements ProfileableInterface {
 	 * @return MongoCollection
 	 */
 	public function getCollection($collectionName) {
-		if (! isset($this->_collections[$collectionName])) {
-			$this->_collections[$collectionName] = $this->getDatabase()->selectCollection($collectionName);
+		if (! isset($this->collections[$collectionName])) {
+			$this->collections[$collectionName] = $this->getDatabase()->selectCollection($collectionName);
 		}
 
-		return $this->_collections[$collectionName];
+		return $this->collections[$collectionName];
 	}
 
 	/**
@@ -448,33 +520,36 @@ class MongoAdapter implements ProfileableInterface {
 	 */
 	public function getDatabase($databaseName = null) {
 		if ($databaseName === null) {
-			$databaseName = $this->_dbname;
+			$databaseName = $this->dbname;
 		}
 
-		if (! isset($this->_databases[$databaseName])) {
-			$this->_databases[$databaseName] = $this->getClient()->selectDB($databaseName);
+		if (! isset($this->databases[$databaseName])) {
+			$this->databases[$databaseName] = $this->getClient()->selectDB($databaseName);
 		}
 
-		return $this->_databases[$databaseName];
+		return $this->databases[$databaseName];
 	}
 
 	/**
 	 * Set the mongo client
 	 * 
-	 * @param MongoClient $client
+	 * @param  MongoClient $client
+	 * @return MongoAdapter
 	 */
 	public function setClient(MongoClient $client) {
-		$this->_client = $client;
+		$this->client = $client;
+		
+		return $this;
 	}
 
 	/**
 	 * Get the mongo client
 	 * 
 	 * @return MongoClient
-	 * @throws ConnectionError
+	 * @throws Exceptions\ConnectionError
 	 */
 	public function getClient() {
-		if ($this->_client === null) {
+		if ($this->client === null) {
 			$connectionString  = $this->getConnectionString();
 			$connectionOptions = $this->getConnectionOptions();
 
@@ -482,31 +557,31 @@ class MongoAdapter implements ProfileableInterface {
 				$event = $this->getProfiler()->startInfo('Connect: ' . $connectionString);
 			}
 
-			$attempts = $this->_connectionAttempts;
+			$attempts = $this->connectionAttempts;
 
 			do {
 				try {
-					$this->_client = new MongoClient($connectionString, $connectionOptions);
+					$this->client = new MongoClient($connectionString, $connectionOptions);
 				}
 				catch (MongoConnectionException $exception) {
-					sleep($this->_connectionTimeout);
+					sleep($this->connectionTimeout);
 				}
 				catch (Exception $exception) {
 					if ($this->_profilerEnabled) {
 						$event->stopError();
 					}
 				}
-			} while (-- $attempts > 0);
+			} while ($this->client === null && -- $attempts > 0);
 
-			if ($this->_client === null) {
+			if ($this->client === null) {
 				if ($this->_profilerEnabled) {
 					$event->stopError();
 				}
 
 				if (isset($exception)) {
-					throw new ConnectionError('Unable to connect to the database', $exception->getCode(), $exception);
+					throw new Exceptions\ConnectionError('Unable to connect to the database', $exception->getCode(), $exception);
 				} else {
-					$exception = new ConnectionError('Unable to connect to the database, after ' . $this->_connectionAttempts . ' attempts');
+					$exception = new Exceptions\ConnectionError('Unable to connect to the database, after ' . $this->connectionAttempts . ' attempts');
 				}
 
 				throw $exception;
@@ -523,105 +598,15 @@ class MongoAdapter implements ProfileableInterface {
 			}
 		}
 
-		return $this->_client;
-	}
-
-	/**
-	 * Connect to a database (should be used ONLY for development purposes)
-	 */
-	public function connect() {
-		$this->getClient();
+		return $this->client;
 	}
 
 	/**
 	 * Close all opened connections
 	 */
 	public function disconnect() {
-		if ($this->_client !== null) {
-			$this->_client->close(true);
-		}
-	}
-
-	/**
-	 * Set the hosts of the connection pool
-	 * 
-	 * @param  array | Traversable $hosts
-	 * @throws OptionsError
-	 */
-	public function setHosts($hosts) {
-		$this->_hosts = [];
-
-		if (! $hosts instanceof Traversable && ! is_array($hosts)) {
-			throw new OptionsError('Hosts data must be an array or a traversable');
-		}
-
-		foreach ($hosts as $name => $host) {
-			if ($host instanceof Traversable) {
-				$host = iterator_to_array($host);
-			}
-
-			if (is_int($name)) {
-				$this->addHost($host);
-			} else {
-				$this->addHost($host, $name);
-			}
-		}
-	}
-
-	/**
-	 * Add the host to the connection pool
-	 * 
-	 * @param  string | array $host
-	 * @param  string         $name
-	 * @throws OptionsError
-	 */
-	public function addHost($host, $name = null) {
-		if (is_string($host)) {
-			$host = trim($host);
-
-			// IP address as an url for the parse_url()
-			if (! preg_match('~^[a-z]+://~i', $host)) {
-				$host = 'mongodb://' . $host;
-			}
-
-			$host = parse_url($host);
-
-			if (isset($host['query'])) {
-				parse_str($host['query'], $host[self::PARAM_PARAMS]);
-				ksort($host[self::PARAM_PARAMS]);
-				unset($host['query']);
-			}
-
-			if (isset($host['user'])) {
-				$host[self::PARAM_USERNAME] = $host['user'];
-				unset($host['user']);
-			}
-
-			if (isset($host['pass'])) {
-				$host[self::PARAM_PASSWORD] = $host['pass'];
-				unset($host['pass']);
-			}
-		}
-
-		if (! is_array($host)) {
-			throw new OptionsError('Host parameter must be a string or an array, "' . gettype($host) . '" given.');
-		}
-
-		$host = array_map(function($in) {
-			return is_string($in) ? trim($in) : $in;
-		}, $host);
-
-		if (isset($host[self::PARAM_PORT])) {
-			$host[self::PARAM_PORT] = (int) $host[self::PARAM_PORT];
-		}
-
-		if ($name === null) {
-			ksort($host);
-			$name = crc32(json_encode($host));
-		}
-
-		if (! isset($this->_hosts[$name])) {
-			$this->_hosts[$name] = $host;
+		if ($this->client !== null) {
+			$this->client->close(true);
 		}
 	}
 
@@ -631,73 +616,50 @@ class MongoAdapter implements ProfileableInterface {
 	 * @return string
 	 */
 	public function getConnectionString() {
-		$hostsCount = count($this->_hosts);
-
-		if ($hostsCount === 0) {
-			$hosts = MongoClient::DEFAULT_HOST;
-		} else if ($hostsCount === 1) {
-			$hosts = $this->_assembleHost(current($this->_hosts));
-		} else {
-			$hosts = implode(',', array_map([$this, '_assembleHost'], $this->_hosts));
+		$connection = new Url('mongodb');
+		$connection->setPath($this->dbname);
+		
+		if ($this->username !== null) {
+			$connection->setUsername($this->username);
+			
+			if ($this->password !== null) {
+				$connection->setPassword($this->password);
+			}
 		}
-
-		return 'mongodb://' . $hosts;
+		
+		if (empty($this->hosts)) {
+			$connection->setHost($this->defaultHost)
+			           ->setPort($this->defaultPort);
+			
+			return $connection->assemble();
+		}
+		
+		$hosts = array_map([$this, 'assembleHost'], $this->hosts);
+		$connection->setHost(implode(',', $hosts));
+		
+		return $connection->assemble();
 	}
 
 	/**
 	 * Assemble an url from the host parts
 	 * 
-	 * @param  array $host
+	 * @param  Url $host
 	 * @return string
 	 */
-	protected function _assembleHost(array $host) {
-		$hostString = '';
-
-		// Authentication
-		if (! empty($host[self::PARAM_USERNAME])) {
-			$hostString .= $host[self::PARAM_USERNAME];
-
-			if (! empty($host[self::PARAM_PASSWORD])) {
-				$hostString .= ':' . $host[self::PARAM_PASSWORD];
-			}
-
-			$hostString .= '@';
-			$loginUsed   = true;
+	protected function assembleHost(Url $host) {
+		if (! $host->hasHost()) {
+			$host->setHost($this->defaultHost);
 		}
-
-		// Host
-		if (empty($host[self::PARAM_HOST])) {
-			$hostString .= MongoClient::DEFAULT_HOST;
-		} else {
-			$hostTrimmed = $host[self::PARAM_HOST];
-			$hostString .= $hostTrimmed;
-
-			if (strrpos($hostTrimmed, '.sock') === (strlen($hostTrimmed) - 5)) {
-				$socketUsed = true;
-			}
+		
+		if (preg_match('/\.sock$/i', $host->getHost())) {
+			$host->removePort();
+		} else if (! $host->hasPort()) {
+			$host->setPort($this->defaultPort);
 		}
-
-		// Port
-		if (isset($loginUsed, $socketUsed)) {
-			$hostString .= ':0';
-		} else if (! empty($host[self::PARAM_PORT])) {
-			if ($host[self::PARAM_PORT] !== MongoClient::DEFAULT_PORT) {
-				$hostString .= ':' . $host[self::PARAM_PORT];
-			}
-		} else if ($this->_port !== MongoClient::DEFAULT_PORT) {
-				$hostString .= ':' . $this->_port;
-		}
-
-		// Params
-		if (! empty($host[self::PARAM_PARAMS])) {
-			if (is_array($host[self::PARAM_PARAMS])) {
-				$hostString .= '?' . http_build_query($host[self::PARAM_PARAMS]);
-			} else {
-				$hostString .= '?' . $host[self::PARAM_PARAMS];
-			}
-		}
-
-		return $hostString;
+		
+		$host->removeScheme();
+		
+		return trim($host->assemble(), '/');
 	}
 
 	/**
@@ -706,32 +668,48 @@ class MongoAdapter implements ProfileableInterface {
 	 * @return array
 	 */
 	public function getConnectionOptions() {
-		return $this->_connectionOptions;
+		return $this->connectionOptions;
 	}
 
 	/**
-	 * Profiler init callback
+	 * On unknown option callback
+	 * 
+	 * @param string $option
+	 * @param mixed  $value
 	 */
-	protected function onProfilerInit($profiler) {
-		$profiler->setIcon('dbmongo');
-		$profiler->setName('MongoDB');
+	protected function onUnknownOptionSet($option, $value) {
+		$this->connectionOptions[$option] = $value;
+	}
+	
+	/**
+	 * On profiler init callback
+	 * 
+	 * @param ProfilerInterface $profiler
+	 */
+	protected function onProfilerInit(ProfilerInterface $profiler) {
+		$profiler->setName('MongoDB')
+		         ->setIcon('dbmongo');
 	}
 
 	/**
 	 * Collect an additional information about the MongoDB and a connection and put it to a profiler
 	 */
 	protected function putDetailInfoIntoProfiler() {
-		if (! $this->_profilerEnabled) {
-			return;
-		}
-
 		$profiler = $this->getProfiler();
 
 		if (! $profiler instanceof ProfilerExtendedInterface) {
 			return;
 		}
 
-		$infoRaw = $this->getDatabase('admin')->command(['buildinfo' => 1]);
+		try {
+			$infoRaw = $this->getDatabase()->command(['buildinfo' => 1]);
+		} catch (Exception $exception) {
+			$profiler->setAdditionalInfo([
+				'Buildinfo command error' => $exception->getMessage()
+			]);
+			
+			return;
+		}
 
 		$info = [
 			'MongoDB version'    => $infoRaw['version'] . ' (' . $infoRaw['bits'] . '-bit)',
@@ -756,10 +734,14 @@ class MongoAdapter implements ProfileableInterface {
 
 	public function __sleep() {
 		return [
-			'_hosts',
-			'_port',
-			'_dbname',
-			'_connectionOptions',
+			'defaultHost',
+			'defaultPort',
+			'hosts',
+			'port',
+			'username',
+			'password',
+			'dbname',
+			'connectionOptions',
 			'_profilerEnabled'
 		];
 	}
