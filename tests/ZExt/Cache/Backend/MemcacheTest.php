@@ -15,6 +15,10 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 		if (! extension_loaded('memcache')) {
 			$this->markTestSkipped('The memcache php extension is not loaded');
 		}
+		
+		$this->client = new Memcache();
+		$this->client->connect('127.0.0.1', 11211);
+		$this->client->flush();
 	}
 	
 	public function testInitParams() {
@@ -39,27 +43,23 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testFlush() {
-		$client = $this->getCleanClient();
-		$client->set('testFlush', 1);
+		$this->client->set('testFlush', 1);
 		
 		$backend = new MemcacheBackend();
 		$backend->flush();
 		
-		$this->assertFalse($client->get('testFlush'));
+		$this->assertFalse($this->client->get('testFlush'));
 	}
 	
 	public function testSet() {
-		$client = $this->getCleanClient();
-		
 		$backend = new MemcacheBackend();
 		
 		$this->assertTrue($backend->set('testSet', 1));
-		$this->assertEquals(1, $client->get('testSet'));
+		$this->assertEquals(1, $this->client->get('testSet'));
 	}
 	
 	public function testGet() {
-		$client = $this->getCleanClient();
-		$client->set('testGet', 2);
+		$this->client->set('testGet', 2);
 		
 		$backend = new MemcacheBackend();
 		
@@ -68,8 +68,7 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testHas() {
-		$client = $this->getCleanClient();
-		$client->set('testHas', 3);
+		$this->client->set('testHas', 3);
 		
 		$backend = new MemcacheBackend();
 		
@@ -78,8 +77,7 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testIncDec() {
-		$client = $this->getCleanClient();
-		$client->set('testInt', 10);
+		$this->client->set('testInt', 10);
 		
 		$backend = new MemcacheBackend();
 		
@@ -94,20 +92,17 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testRemove() {
-		$client = $this->getCleanClient();
-		$client->set('testRemove', 100);
+		$this->client->set('testRemove', 100);
 		
 		$backend = new MemcacheBackend();
 		
 		$this->assertTrue($backend->remove('testRemove'));
-		$this->assertFalse($client->get('testRemove'));
+		$this->assertFalse($this->client->get('testRemove'));
 		
 		$this->assertFalse($backend->remove('testNot'));
 	}
 	
 	public function testSetMany() {
-		$client = $this->getCleanClient();
-		
 		$backend = new MemcacheBackend();
 		
 		$result = $backend->setMany([
@@ -117,14 +112,13 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 		
 		$this->assertTrue($result);
 		
-		$this->assertEquals(1, $client->get('key1'));
-		$this->assertEquals(2, $client->get('key2'));
+		$this->assertEquals(1, $this->client->get('key1'));
+		$this->assertEquals(2, $this->client->get('key2'));
 	}
 	
 	public function testGetMany() {
-		$client = $this->getCleanClient();
-		$client->set('key10', 10);
-		$client->set('key11', 11);
+		$this->client->set('key10', 10);
+		$this->client->set('key11', 11);
 		
 		$backend = new MemcacheBackend();
 		
@@ -135,21 +129,19 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testRemoveMany() {
-		$client = $this->getCleanClient();
-		$client->set('key20', 20);
-		$client->set('key21', 21);
+		$this->client->set('key20', 20);
+		$this->client->set('key21', 21);
 		
 		$backend = new MemcacheBackend();
 		
 		$backend->removeMany(['key20', 'key21']);
 		
-		$this->assertFalse($client->get('key20'));
-		$this->assertFalse($client->get('key21'));
+		$this->assertFalse($this->client->get('key20'));
+		$this->assertFalse($this->client->get('key21'));
 	}
 	
 	public function testNamespace() {
-		$client = $this->getCleanClient();
-		$client->set('somenamespace_key1', 100);
+		$this->client->set('somenamespace_key1', 100);
 		
 		$backend = new MemcacheBackend();
 		$backend->setNamespace('somenamespace');
@@ -158,23 +150,7 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 		
 		$backend->set('key2', 200);
 		
-		$this->assertEquals(200, $client->get('somenamespace_key2'));
-	}
-	
-	/**
-	 * Get the clean Memcache client
-	 * 
-	 * @return Memcache
-	 */
-	protected function getCleanClient() {
-		if ($this->client === null) {
-			$this->client = new Memcache();
-			$this->client->connect('127.0.0.1', 11211);
-		}
-		
-		$this->client->flush();
-		
-		return $this->client;
+		$this->assertEquals(200, $this->client->get('somenamespace_key2'));
 	}
 	
 }

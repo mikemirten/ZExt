@@ -117,10 +117,7 @@ class ConfigTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame($source, $config->toArray());
 	}
 	
-	/**
-	 * @dataProvider configSourceProvider
-	 */
-	public function testConfigToFlatArray($source) {
+	public function testConfigToFlatArray() {
 		$config = new Config([
 			'item1'   => 1,
 			'section' => [
