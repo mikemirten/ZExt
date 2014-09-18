@@ -26,7 +26,8 @@
 
 namespace ZExt\Cache\Backend\Decorators;
 
-use ZExt\Profiler\ProfilerExtendedInterface,
+use ZExt\Profiler\ProfilerInterface,
+    ZExt\Profiler\ProfilerExtendedInterface,
     ZExt\Profiler\ProfileableInterface,
     ZExt\Profiler\ProfileableTrait;
 
@@ -227,9 +228,9 @@ class Profileable extends DecoratorAbstract implements ProfileableInterface {
 	/**
 	 * On profiler init
 	 * 
-	 * @param \ZExt\Profiler\ProfilerInterface $profiler
+	 * @param ProfilerInterface $profiler
 	 */
-	protected function onProfilerInit($profiler) {
+	protected function onProfilerInit(ProfilerInterface $profiler) {
 		if ($profiler instanceof ProfilerExtendedInterface) {
 			$name = get_class($this->getBackend());
 			$pos  = strrpos($name, '\\');

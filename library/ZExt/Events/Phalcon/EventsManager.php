@@ -30,7 +30,8 @@ use ZExt\Events\EventsManagerInterface;
 
 use Phalcon\Events\Manager;
 
-use ZExt\Profiler\ProfileableInterface,
+use ZExt\Profiler\ProfilerInterface,
+    ZExt\Profiler\ProfileableInterface,
     ZExt\Profiler\ProfileableTrait;
 
 /**
@@ -70,8 +71,10 @@ class EventsManager extends Manager implements EventsManagerInterface, Profileab
 	
 	/**
 	 * On profiler init callback
+	 * 
+	 * @param ProfilerInterface $profiler
 	 */
-	public function onProfilerInit($profiler) {
+	public function onProfilerInit(ProfilerInterface $profiler) {
 		$profiler->setName('Phalcon based events manager');
 	}
 	

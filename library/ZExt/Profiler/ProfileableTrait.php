@@ -76,8 +76,10 @@ trait ProfileableTrait {
 	
 	/**
 	 * On profiler init callback
+	 * 
+	 * @param ProfilerInterface $profiler
 	 */
-	protected function onProfilerInit(){}
+	protected function onProfilerInit(ProfilerInterface $profiler){}
 	
 	/**
 	 * Switch profiler on/off
