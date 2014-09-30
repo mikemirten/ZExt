@@ -38,7 +38,7 @@ use IteratorAggregate, ArrayIterator;
  * @package    Model
  * @subpackage Model
  * @author     Mike.Mirten
- * @version    2.2
+ * @version    2.2.1
  */
 class Model extends ModelAbstract implements IteratorAggregate {
 	
@@ -85,7 +85,14 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 *
 	 * @var array 
 	 */
-	protected $_initialized = array();
+	protected $_initialized = [];
+	
+	/**
+	 * Names of a properties which been changed
+	 *
+	 * @var array 
+	 */
+	protected $_changed = [];
 	
 	/**
 	 * Parental collection of an object
@@ -135,7 +142,9 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 * @return Model
 	 */
 	public function merge(Model $object) {
-		$this->_data = $object->toArray() + $this->_data;
+		$mergeData       = $object->toArray();
+		$this->_data     = $mergeData + $this->_data;
+		$this->_changed += array_fill_keys(array_keys($mergeData), true);
 		
 		return $this;
 	}
@@ -147,7 +156,8 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 * @return Model
 	 */
 	public function setValues(array $values) {
-		$this->_data = $values + $this->_data;
+		$this->_data     = $values + $this->_data;
+		$this->_changed += array_fill_keys(array_keys($values), true);
 		
 		return $this;
 	}
@@ -159,9 +169,7 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 * @return Model
 	 */
 	public function changeValues(array $values) {
-		$values = array_intersect_key($values, $this->_data);
-		
-		$this->_data = $values + $this->_data;
+		$this->setValues(array_intersect_key($values, $this->_data));
 		
 		return $this;
 	}
@@ -251,12 +259,12 @@ class Model extends ModelAbstract implements IteratorAggregate {
 		
 		if ($property === null) {
 			$properties = array_keys($this->_sources);
-		} else {
-			$properties = array($property);
 		}
 		
-		foreach ($properties as $property) {
-			if (isset($this->_initialized[$property])) continue;
+		foreach ((array) $properties as $property) {
+			if (isset($this->_initialized[$property])) {
+				continue;
+			}
 
 			if (isset($this->_sources[$property])) {
 				$this->_initialize($property, $this->_sources[$property]);
@@ -273,10 +281,12 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 * @return Model
 	 */
 	public function uninitialize() {
-		if (! empty($this->_initialized)) {
-			foreach (array_keys($this->_initialized) as $property) {
-				unset($this->_data[$property]);
-			}
+		if (empty($this->_initialized)) {
+			return $this;
+		}
+		
+		foreach (array_keys($this->_initialized) as $property) {
+			unset($this->_data[$property]);
 		}
 		
 		return $this;
@@ -331,7 +341,10 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 */
 	private function _initOne($property, $method, $mode) {
 		$data = $this->__call($method);
-		if ($data === null) return;
+		
+		if ($data === null) {
+			return;
+		}
 
 		if ($data instanceof Collection) {
 			if ($mode !== self::MODE_CASCADE_MANY) {
@@ -631,6 +644,8 @@ class Model extends ModelAbstract implements IteratorAggregate {
 			$this->_data[$property] = $value;
 		}
 		
+		$this->_changed[$property] = true;
+		
 		return $this->_data[$property];
 	}
 	
@@ -649,7 +664,18 @@ class Model extends ModelAbstract implements IteratorAggregate {
 			$this->_data[$property] =- $value;
 		}
 		
+		$this->_changed[$property] = true;
+		
 		return $this->_data[$property];
+	}
+	
+	/**
+	 * Get only changed values
+	 * 
+	 * @return array
+	 */
+	public function getChangedValues() {
+		return array_intersect_key($this->_data, $this->_changed);
 	}
 	
 	/**
@@ -677,7 +703,8 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 * @param mixed  $value
 	 */
 	public function __set($name, $value) {
-		$this->_data[$name] = $value;
+		$this->_data[$name]    = $value;
+		$this->_changed[$name] = true;
 	}
 	
 	/**
@@ -730,7 +757,7 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 * @param type $name
 	 */
 	public function __unset($name) {
-		unset($this->_data[$name]);
+		unset($this->_data[$name], $this->_changed[$name]);
 	}
 	
 	public function __sleep() {
