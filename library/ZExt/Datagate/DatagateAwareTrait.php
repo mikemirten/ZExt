@@ -24,46 +24,51 @@
  * @version   1.0
  */
 
-namespace ZExt\Model;
+namespace ZExt\Datagate;
 
-use ZExt\Datagate\DatagateInterface;
-
-trait ParentsAwareTrait {
+/**
+ * Datagate aware trait
+ * 
+ * @category   ZExt
+ * @package    Datagate
+ * @subpackage Datagate
+ * @author     Mike.Mirten
+ * @version    1.0
+ */
+trait DatagateAwareTrait {
 	
 	/**
-	 * Parental datagate
+	 * Datagate instance
 	 * 
 	 * @var string 
 	 */
-	protected $_datagate;
+	private $_datagate;
 	
 	/**
 	 * Force the insertion action at the save method calling
 	 *
 	 * @var bool 
 	 */
-	protected $_forceInsert = false;
+	private $_forceInsert = false;
 	
 	/**
 	 * Set the datagate
 	 *  
-	 * @param  object $datagateName
-	 * @return ModelAbstract
+	 * @param  object $datagate
 	 */
 	public function setDatagate(DatagateInterface $datagate) {
 		$this->_datagate = $datagate;
-		
-		return $this;
 	}
 	
 	/**
 	 * Get the datagate
 	 * 
-	 * @return object
+	 * @return DatagateInterface
+	 * @throws Exceptions\NoDatagate
 	 */
 	public function getDatagate() {
 		if ($this->_datagate === null) {
-			throw new Exception('Model isn\'t linked to a datagate');
+			throw new Exceptions\NoDatagate('Model isn\'t linked to a datagate');
 		}
 		
 		return $this->_datagate;
@@ -81,7 +86,7 @@ trait ParentsAwareTrait {
 	/**
 	 * Save a model or changes of a model
 	 * 
-	 * @return ModelAbstract
+	 * @return bool
 	 */
 	public function save() {
 		return $this->getDatagate()->save($this);
@@ -89,33 +94,16 @@ trait ParentsAwareTrait {
 	
 	/**
 	 * Force the insertion action at the save method calling
-	 * 
-	 * @return ModelAbstract
 	 */
 	public function forceInsert() {
 		$this->_forceInsert = true;
-		
-		return $this;
 	}
 	
 	/**
 	 * Unforce the insertion action at the save method calling
-	 * 
-	 * @return ModelAbstract
 	 */
 	public function unforceInsert() {
 		$this->_forceInsert = false;
-		
-		return $this;
-	}
-	
-	/**
-	 * Get data to save
-	 * 
-	 * @return array
-	 */
-	public function toSave() {
-		return $this->_data;
 	}
 	
 	/**
@@ -134,16 +122,6 @@ trait ParentsAwareTrait {
 	 */
 	public function remove() {
 		return $this->getDatagate()->remove($this);
-	}
-	
-	/**
-	 * Get a service by a name
-	 *
-	 * @param  string $id
-	 * @return mixed
-	 */
-	protected function getService($id) {
-		return $this->getLocator()->get($id);
 	}
 	
 }

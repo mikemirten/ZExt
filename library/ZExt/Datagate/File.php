@@ -38,7 +38,7 @@ use ZExt\Datagate\Exceptions\NoPath;
  * @package    ZExt
  * @subpackage Datagate
  * @author     Mike.Mirten
- * @version    1.1
+ * @version    1.2
  */
 class File extends DatagateAbstract {
 	
@@ -240,26 +240,6 @@ class File extends DatagateAbstract {
 		);
 		
 		return $this->createResult($fileIterator->current());
-	}
-
-	/**
-	 * Remove the record or the many of records by the model or the collection of the models
-	 * 
-	 * @param  ModelInterface $model
-	 * @return bool True if succeeded
-	 */
-	public function remove(ModelInterface $model) {
-		throw new OperationError('Impossible to remove the model for the File datagate');
-	}
-
-	/**
-	 * Save the model or the collection of the models
-	 * 
-	 * @param  ModelInterface $model
-	 * @return bool True if succeeded
-	 */
-	public function save(ModelInterface $model) {
-		throw new OperationError('Impossible to save the model for the File datagate');
 	}
 	
 }

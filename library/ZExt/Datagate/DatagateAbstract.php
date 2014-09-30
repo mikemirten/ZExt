@@ -34,7 +34,10 @@ use ZExt\Cache\CacheAwareInterface,
     ZExt\Cache\CacheAwareTrait;
 
 use ZExt\Components\OptionsTrait;
-use ZExt\Model\Iterator;
+
+use ZExt\Model\Iterator,
+    ZExt\Model\Collection,
+    ZExt\Model\Model;
 
 use ReflectionObject, Traversable, ArrayIterator;
 
@@ -45,7 +48,7 @@ use ReflectionObject, Traversable, ArrayIterator;
  * @package    Datagate
  * @subpackage Datagate
  * @author     Mike.Mirten
- * @version    3.0.3
+ * @version    3.2
  */
 abstract class DatagateAbstract
 
@@ -326,6 +329,100 @@ abstract class DatagateAbstract
 		return $collection;
 	}
 
+	/**
+	 * Save the model or the collection of the models
+	 * 
+	 * @param  DatagateAwareInterface $model
+	 * @param  array                  $options
+	 * @return bool True if succeeded
+	 * @throws Exceptions\OperationError
+	 */
+	public function save(DatagateAwareInterface $model, array $options = []) {
+		if ($model->isEmpty()) {
+			throw new Exceptions\OperationError('Model has no data');
+		}
+		
+		if ($model instanceof Model) {
+			return $this->saveModel($model, $options);
+		}
+		
+		
+		if ($model instanceof Collection) {
+			return $this->saveCollection($model, $options);
+		}
+		
+		throw new Exceptions\OperationError('Unknown instance of the "DatagateAwareInterface" was given: "' . get_class($model) . '"');
+	}
+	
+	/**
+	 * Save the model
+	 * 
+	 * @param  Model $model
+	 * @return bool
+	 * @throws Exceptions\OperationError
+	 */
+	protected function saveModel(Model $model) {
+		throw new Exceptions\OperationError('Saving of model doesn\'t implemented in the datagate');
+	}
+	
+	/**
+	 * Save the collection
+	 * 
+	 * @param  Collection $collection
+	 * @return bool
+	 * @throws Exceptions\OperationError
+	 */
+	protected function saveCollection(Collection $collection) {
+		throw new Exceptions\OperationError('Saving of collection doesn\'t implemented in the datagate');
+	}
+	
+	/**
+	 * Remove the record or the many of records by the model or the collection of the models
+	 * 
+	 * @param  DatagateAwareInterface $model
+	 * @param  array                  $options
+	 * @return bool True if succeeded
+	 * @throws Exceptions\OperationError
+	 */
+	public function remove(DatagateAwareInterface $model, array $options = []) {
+		if ($model->isEmpty()) {
+			throw new Exceptions\OperationError('Model has no data');
+		}
+		
+		if ($model instanceof Model) {
+			return $this->removeModel($model, $options);
+		}
+		
+		
+		if ($model instanceof Collection) {
+			return $this->removeCollection($model, $options);
+		}
+		
+		throw new Exceptions\OperationError('Unknown instance of the "DatagateAwareInterface" was given: "' . get_class($model) . '"');
+	}
+	
+	/**
+	 * Remove the model
+	 * 
+	 * @param  Model $model
+	 * @return bool
+	 * @throws Exceptions\OperationError
+	 */
+	protected function removeModel(Model $model) {
+		throw new Exceptions\OperationError('Removing of model doesn\'t implemented in the datagate');
+	}
+	
+	/**
+	 * Remove the collection
+	 * 
+	 * @param  Collection $collection
+	 * @return bool
+	 * @throws Exceptions\OperationError
+	 */
+	protected function removeCollection(Collection $collection) {
+		throw new Exceptions\OperationError('Removing of collection doesn\'t implemented in the datagate');
+	}
+	
 	/**
 	 * Set the model's class
 	 * 

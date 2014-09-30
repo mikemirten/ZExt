@@ -34,8 +34,7 @@ use ZExt\Paginator\Adapter\MongoCursorAdapter as PaginatorAdapter,
 	ZExt\Paginator\Paginator,
     ZExt\Model\Iterator;
 
-use ZExt\Model\ModelInterface,
-	ZExt\Model\Collection,
+use ZExt\Model\Collection,
 	ZExt\Model\Model;
 
 use MongoId, MongoCursor;
@@ -46,7 +45,7 @@ use MongoId, MongoCursor;
  * @category   ZExt
  * @package    Datagate
  * @subpackage MongoDB
- * @version    2.1
+ * @version    2.2
  */
 class MongoCollection extends DatagateAbstract {
 	
@@ -102,7 +101,7 @@ class MongoCollection extends DatagateAbstract {
 	 * Find a record or a dataset by the primary id or an array of the ids
 	 * 
 	 * @param  mixed $id The primary key or an array of the primary keys
-	 * @return ModelInterface | Collection | Iterator
+	 * @return Model | Collection | Iterator
 	 */
 	public function findByPrimaryId($id) {
 		$primary = $this->getPrimaryName();
@@ -131,37 +130,13 @@ class MongoCollection extends DatagateAbstract {
 	}
 	
 	/**
-	 * Save the model or the collection of the models
-	 * 
-	 * @param  ModelInterface $model
-	 * @param  array          $options
-	 * @return bool True if succeeded
-	 */
-	public function save(ModelInterface $model, array $options = []) {
-		if ($model->isEmpty()) {
-			throw new Exceptions\OperationError('Model has no data');
-		}
-		
-		if ($model instanceof Model) {
-			return $this->saveModel($model, $options);
-		}
-		
-		
-		if ($model instanceof Collection) {
-			return $this->saveCollection($model, $options);
-		}
-		
-		throw new Exceptions\OperationError('Unknown instance of the "ModelInterface" was given: "' . get_class($model) . '"');
-	}
-	
-	/**
 	 * Save the model
 	 * 
 	 * @param  Model $model
 	 * @param  array $options
 	 * @return bool
 	 */
-	private function saveModel(Model $model, array $options = []) {
+	protected function saveModel(Model $model, array $options = []) {
 		if ($model->isInsertForced()) {
 			unset($model->_id);
 			$model->unforceInsert();
@@ -169,15 +144,15 @@ class MongoCollection extends DatagateAbstract {
 		
 		// Update
 		if (isset($model->_id)) {
-			$data = $model->toSave();
+			$data = $model->getDataForUpdate();
 			unset($data['_id']);
 
 			$id = $this->normalizeId($model->_id);
 			
 			return $this->getAdapter()->update(
 				$this->getTableName(),
-				['$set' => $data],
 				['_id'  => $id],
+				['$set' => $data],
 				$options
 			);
 		}
@@ -185,7 +160,7 @@ class MongoCollection extends DatagateAbstract {
 		// Insert
 		return $this->getAdapter()->insert(
 			$this->getTableName(),
-			$model->toSave(), 
+			$model->getDataForInsert(),
 			$options
 		);
 	}
@@ -197,7 +172,7 @@ class MongoCollection extends DatagateAbstract {
 	 * @param  array $options
 	 * @return bool
 	 */
-	private function saveCollection(Collection $collection, array $options = []) {
+	protected function saveCollection(Collection $collection, array $options = []) {
 		if ($collection->isInsertForced()) {
 			unset($collection->_id);
 			$collection->unforceInsert();
@@ -213,31 +188,6 @@ class MongoCollection extends DatagateAbstract {
 		
 		return $result;
 	}
-
-	/**
-	 * Remove the record or the many of records by the model or the collection of the models
-	 * 
-	 * @param  ModelInterface $model
-	 * @param  array          $options
-	 * @return bool True if succeeded
-	 * @throws Exceptions\OperationError
-	 */
-	public function remove(ModelInterface $model, array $options = []) {
-		if ($model->isEmpty()) {
-			throw new Exceptions\OperationError('Model has no data');
-		}
-		
-		if ($model instanceof Model) {
-			return $this->removeModel($model, $options);
-		}
-		
-		
-		if ($model instanceof Collection) {
-			return $this->removeCollection($model, $options);
-		}
-		
-		throw new Exceptions\OperationError('Unknown instance of the "ModelInterface" was given: "' . get_class($model) . '"');
-	}
 	
 	/**
 	 * Remove the model
@@ -247,7 +197,7 @@ class MongoCollection extends DatagateAbstract {
 	 * @return bool
 	 * @throws Exceptions\OperationError
 	 */
-	private function removeModel(Model $model, array $options = []) {
+	protected function removeModel(Model $model, array $options = []) {
 		if (! isset($model->_id)) {
 			throw new Exceptions\OperationError('The model has no ID');
 		}
@@ -269,7 +219,7 @@ class MongoCollection extends DatagateAbstract {
 	 * @return bool
 	 * @throws Exceptions\OperationError
 	 */
-	private function removeCollection(Collection $collection, array $options = []) {
+	protected function removeCollection(Collection $collection, array $options = []) {
 		$ids = $collection->_id;
 		
 		if (count($ids) !== $collection->count()) {

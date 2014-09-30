@@ -39,7 +39,6 @@ use Phalcon\Mvc\Model\Criteria            as PhalconCriteria,
 
 use ZExt\Datagate\Criteria\PhalconCriteria as Criteria,
     ZExt\Datagate\Phalcon\Model            as PhalconModel,
-    ZExt\Model\ModelInterface,
     ZExt\Model\Collection,
     ZExt\Model\Model;
 
@@ -56,7 +55,7 @@ use ZExt\Datagate\Exceptions\NoAdapter,
  * @package    Datagate
  * @subpackage Datagate
  * @author     Mike.Mirten
- * @version    1.0beta
+ * @version    1.1beta
  */
 class PhalconTable extends DatagateAbstract {
 	
@@ -144,7 +143,7 @@ class PhalconTable extends DatagateAbstract {
 	 * Find a record or a dataset by the primary id or an array of the ids
 	 * 
 	 * @param  mixed $id The primary key or an array of the primary keys
-	 * @return ModelInterface | Collection | Iterator
+	 * @return Model | Collection | Iterator
 	 */
 	public function findByPrimaryId($id) {
 		if (is_array($id)) {
@@ -231,59 +230,51 @@ class PhalconTable extends DatagateAbstract {
 	}
 
 	/**
-	 * Save the model or the collection of the models
+	 * Save the model
 	 * 
-	 * @param  ModelInterface | Collection $model
-	 * @return bool True if succeeded
+	 * @param  Model $model
+	 * @return bool
 	 */
-	public function save(ModelInterface $model) {
-		if ($model instanceof Model) {
-			$phalconModel = $this->createTableModel();
-			$phalconModel->assign($model->toSave());
-			
-			return $this->_save($model, $phalconModel);
+	protected function saveModel(Model $model) {
+		return $this->saveThroughPhalconModel($model);
+	}
+	
+	/**
+	 * Save the collection
+	 * 
+	 * @param  Collection $collection
+	 * @return bool
+	 */
+	protected function saveCollection(Collection $collection) {
+		if ($collection->count() === 1) {
+			return $this->save($collection->getFirst());
 		}
-		
-		if ($model instanceof Collection) {
-			if ($model->isEmpty()) {
-				return true;
+
+		$transaction = $this->getTransactionsManager()->get(true);
+
+		foreach ($collection as $model) {
+			if (! $this->saveThroughPhalconModel($model, $transaction)) {
+				$transaction->rollback();
 			}
-			
-			if ($model->count() === 1) {
-				return $this->save($model->getFirst());
-			}
-			
-			$isInsert    = $model->isInsertForced();
-			$transaction = $this->getTransactionsManager()->get(true);
-			
-			foreach ($model as $item) {
-				if ($isInsert) {
-					$item->forceInsert();
-				}
-				
-				$phalconModel = $this->createTableModel();
-				$phalconModel->setTransaction($transaction);
-				$phalconModel->assign($item->toSave());
-				
-				if (! $this->_save($item, $phalconModel)) {
-					$transaction->rollback();
-				}
-			}
-			
-			$transaction->commit();
-			return true;
 		}
+
+		$transaction->commit();
+		return true;
 	}
 	
 	/**
 	 * Save the model
 	 * 
-	 * @param  Model        $model
-	 * @param  PhalconModel $phalconModel
+	 * @param  Model $model
 	 * @return bool  True if succeeded
 	 */
-	private function _save(Model $model, PhalconModel $phalconModel) {
-		$primary = $this->getPrimaryName();
+	private function saveThroughPhalconModel(Model $model, $transaction = null) {
+		$primary      = $this->getPrimaryName();
+		$phalconModel = $this->createTableModel($model);
+		
+		if ($transaction !== null) {
+			$phalconModel->setTransaction($transaction);
+		}
 		
 		// If the primary is unresolvable, let's phalcon try it
 		if ($primary === null) {
@@ -327,35 +318,35 @@ class PhalconTable extends DatagateAbstract {
 	}
 	
 	/**
-	 * Remove the record or the many of records by the model or the collection of the models
+	 * Remove the model
 	 * 
-	 * @param  ModelInterface | Collection $model
-	 * @return bool True if succeeded
+	 * @param  Model $model
+	 * @return bool
 	 */
-	public function remove(ModelInterface $model) {
-		if ($model instanceof Model) {
-			$phalconModel = $this->createTableModel();
-			$phalconModel->assign($model->toSave());
+	protected function removeModel(Model $model) {
+		return $this->createTableModel($model)->delete();
+	}
+	
+	/**
+	 * Remove the collection
+	 * 
+	 * @param  Collection $collection
+	 * @return bool
+	 */
+	protected function removeCollection(Collection $collection) {
+		$transaction = $this->getTransactionsManager()->get(true);
 			
-			return $phalconModel->delete();
-		}
-		
-		if ($model instanceof Collection) {
-			$transaction = $this->getTransactionsManager()->get(true);
-			
-			foreach ($model as $item) {
-				$phalconModel = $this->createTableModel();
-				$phalconModel->setTransaction($transaction);
-				$phalconModel->assign($item->toSave());
-				
-				if (! $phalconModel->delete()) {
-					$transaction->rollback();
-				}
+		foreach ($collection as $model) {
+			$phalconModel = $this->createTableModel($model);
+			$phalconModel->setTransaction($transaction);
+
+			if (! $phalconModel->delete()) {
+				$transaction->rollback();
 			}
-			
-			$transaction->commit();
-			return true;
 		}
+
+		$transaction->commit();
+		return true;
 	}
 	
 	/**
@@ -495,13 +486,18 @@ class PhalconTable extends DatagateAbstract {
 	/**
 	 * Create the phalcon model instance
 	 * 
+	 * @param  Model $model
 	 * @return PhalconModel
 	 */
-	protected function createTableModel() {
-		$model = new PhalconModel($this->getTableModelDi());
-		$model->setDatagate($this);
+	protected function createTableModel(Model $model = null) {
+		$phalconModel = new PhalconModel($this->getTableModelDi());
+		$phalconModel->setDatagate($this);
 		
-		return $model;
+		if ($model !== null) {
+			$phalconModel->assign($model->getData());
+		}
+		
+		return $phalconModel;
 	}
 	
 	/**

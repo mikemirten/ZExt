@@ -32,6 +32,9 @@ use ZExt\Di\LocatorAwareInterface,
 use ZExt\Log\LoggerAwareInterface,
     ZExt\Log\LoggerAwareTrait;
 
+use ZExt\Datagate\DatagateAwareInterface,
+    ZExt\Datagate\DatagateAwareTrait;
+
 use ZExt\Events\EventsManagerAwareInterface,
     ZExt\Events\EventsManagerAwareTrait;
 
@@ -42,14 +45,20 @@ use ZExt\Events\EventsManagerAwareInterface,
  * @package    Model
  * @subpackage ModelAbstract
  * @author     Mike.Mirten
- * @version    2.0.1
+ * @version    3.0
  */
-abstract class ModelAbstract implements ModelInterface, LocatorAwareInterface, LoggerAwareInterface, EventsManagerAwareInterface {
+abstract class ModelAbstract
+
+	implements ModelInterface,
+	           LocatorAwareInterface,
+	           LoggerAwareInterface,
+	           DatagateAwareInterface,
+	           EventsManagerAwareInterface {
 	
-	use ParentsAwareTrait;
-	use LocatorAwareTrait;
-	use LoggerAwareTrait;
-	use EventsManagerAwareTrait;
+	use LocatorAwareTrait,
+	    LoggerAwareTrait,
+	    DatagateAwareTrait,
+	    EventsManagerAwareTrait;
 	
 	/**
 	 * Model's data
@@ -63,7 +72,7 @@ abstract class ModelAbstract implements ModelInterface, LocatorAwareInterface, L
 	 * 
 	 * @var Model
 	 */
-	protected $_meta;
+	private $_meta;
 	
 	/**
 	 * For extensions
@@ -150,6 +159,24 @@ abstract class ModelAbstract implements ModelInterface, LocatorAwareInterface, L
 	 */
 	public function hasMetadata() {
 		return $this->_meta !== null && ! $this->_meta->isEmpty();
+	}
+	
+	/**
+	 * Get data for insert into a database
+	 * 
+	 * @return array
+	 */
+	public function getDataForInsert() {
+		return $this->getData();
+	}
+	
+	/**
+	 * Get data for update in a database
+	 * 
+	 * @return array
+	 */
+	public function getDataForUpdate() {
+		return $this->getData();
 	}
 	
 	/**

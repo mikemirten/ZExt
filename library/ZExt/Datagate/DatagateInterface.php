@@ -26,9 +26,6 @@
 
 namespace ZExt\Datagate;
 
-use ZExt\Model\ModelInterface;
-use ZExt\Model\Collection;
-
 /**
  * Interface of a gateway to a data and a data to a model mapper
  * 
@@ -54,7 +51,7 @@ interface DatagateInterface {
 	 * Find all records of a data
 	 * 
 	 * @param  mixed $criteria Query criteria
-	 * @return Collection | Iterator
+	 * @return \ZExt\Model\Collection | ZExt\Model\Iterator
 	 */
 	public function find($criteria = null);
 	
@@ -62,7 +59,7 @@ interface DatagateInterface {
 	 * Find a first record
 	 * 
 	 * @param  mixed $criteria Query criteria
-	 * @return ModelInterface
+	 * @return \ZExt\Model\Model
 	 */
 	public function findFirst($criteria = null);
 
@@ -70,31 +67,31 @@ interface DatagateInterface {
 	 * Find a record or a dataset by the primary id or an array of the ids
 	 * 
 	 * @param  mixed $id The primary key or an array of the primary keys
-	 * @return ModelInterface | Collection | Iterator
+	 * @return \ZExt\Model\Model | \ZExt\Model\Collection | ZExt\Model\Iterator
 	 */
 	public function findByPrimaryId($id);
 
 	/**
 	 * Save the model or the collection of the models
 	 * 
-	 * @param  ModelInterface $model
+	 * @param  DatagateAwareInterface $model
 	 * @return bool True if succeeded
 	 */
-	public function save(ModelInterface $model);
+	public function save(DatagateAwareInterface $model);
 
 	/**
 	 * Remove the record or the many of records by the model or the collection of the models
 	 * 
-	 * @param  ModelInterface $model
+	 * @param  DatagateAwareInterface $model
 	 * @return bool True if succeeded
 	 */
-	public function remove(ModelInterface $model);
+	public function remove(DatagateAwareInterface $model);
 
 	/**
 	 * Create a new model, empty or with the supplied data
 	 * 
 	 * @param  array $data initial data for the the model
-	 * @return ModelInterface
+	 * @return \ZExt\Model\Model
 	 */
 	public function create(array &$data = null);
 
@@ -102,7 +99,7 @@ interface DatagateInterface {
 	 * Create a new collection, empty or with the supplied data
 	 * 
 	 * @param  array $data initial data for the collection
-	 * @return Collection
+	 * @return \ZExt\Model\Collection
 	 */
 	public function createCollection(array &$data = null);
 

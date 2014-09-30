@@ -38,7 +38,7 @@ use IteratorAggregate, ArrayIterator;
  * @package    Model
  * @subpackage Model
  * @author     Mike.Mirten
- * @version    2.2.1
+ * @version    2.3
  */
 class Model extends ModelAbstract implements IteratorAggregate {
 	
@@ -85,21 +85,21 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 *
 	 * @var array 
 	 */
-	protected $_initialized = [];
+	private $_initialized = [];
 	
 	/**
 	 * Names of a properties which been changed
 	 *
 	 * @var array 
 	 */
-	protected $_changed = [];
+	private $_changed = [];
 	
 	/**
 	 * Parental collection of an object
 	 *
 	 * @var Collection 
 	 */
-	protected $_parentCollection;
+	private $_parentCollection;
 	
 	/**
 	 * Items' factory
@@ -676,6 +676,26 @@ class Model extends ModelAbstract implements IteratorAggregate {
 	 */
 	public function getChangedValues() {
 		return array_intersect_key($this->_data, $this->_changed);
+	}
+	
+	/**
+	 * Get data for update in a database
+	 * Alias to getChangedValues()
+	 * 
+	 * @return array
+	 */
+	public function getDataForUpdate() {
+		return $this->getChangedValues();
+	}
+	
+	/**
+	 * Is the property changed ?
+	 * 
+	 * @param  string $property
+	 * @return bool
+	 */
+	public function isChanged($property) {
+		return isset($this->_changed[$property]);
 	}
 	
 	/**
