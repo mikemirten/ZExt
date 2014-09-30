@@ -71,7 +71,7 @@ class StrategyDomain extends StrategyAbstract {
 	/**
 	 * Store the catalogs in the cache
 	 * 
-	 * @param  array $catalog
+	 * @param  array $catalogs
 	 * @return bool
 	 */
 	public function setCatalogs(array $catalogs) {
