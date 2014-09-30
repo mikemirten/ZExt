@@ -328,9 +328,10 @@ class MongoAdapter implements ProfileableInterface {
 	/**
 	 * Insert the data into the collection
 	 * 
-	 * @param string $collectionName
-	 * @param array  $data
-	 * @param array  $options
+	 * @param  string $collectionName
+	 * @param  array  $data
+	 * @param  array  $options
+	 * @return bool
 	 */
 	public function insert($collectionName, array $data, array $options = []) {
 		$collection = $this->getCollection($collectionName);
@@ -340,11 +341,16 @@ class MongoAdapter implements ProfileableInterface {
 			$event   = $this->getProfiler()->startInsert($message);
 		}
 
-		$collection->insert($data, $options);
-
+		$result  = $collection->insert($data, $options);
+		$success = (bool) $result['ok'];
+		
 		if ($this->_profilerEnabled) {
-			$event->stopSuccess();
+			$success
+				? $event->stopSuccess()
+				: $event->stopError();
 		}
+		
+		return $success;
 	}
 
 	/**
@@ -425,17 +431,16 @@ class MongoAdapter implements ProfileableInterface {
 			$event   = $this->getProfiler()->startRead($message);
 		}
 
-		$result = $collection->aggregate($pipeline);
+		$result  = $collection->aggregate($pipeline);
+		$success = (bool) $result['ok'];
 		
 		if ($this->_profilerEnabled) {
-			if ($result['ok'] == 1) {
-				$event->stopSuccess();
-			} else {
-				$event->stopError();
-			}
+			$success
+				? $event->stopSuccess()
+				: $event->stopError();
 		}
 		
-		if (($result['ok'] == 0)) {
+		if (! $success) {
 			throw new Exceptions\OperationError('Aggregation error: "' . $result['errmsg'] . '"', $result['code']);
 		}
 		
@@ -464,13 +469,16 @@ class MongoAdapter implements ProfileableInterface {
 			$event = $this->getProfiler()->startWrite($message);
 		}
 
-		$result = $collection->update($criteria, $data, $options);
-
+		$result  = $collection->update($criteria, $data, $options);
+		$success = (bool) $result['ok'];
+		
 		if ($this->_profilerEnabled) {
-			$event->stopSuccess();
+			$success
+				? $event->stopSuccess()
+				: $event->stopError();
 		}
 		
-		return $result;
+		return $success;
 	}
 
 	/**
@@ -489,13 +497,16 @@ class MongoAdapter implements ProfileableInterface {
 			$event   = $this->getProfiler()->startDelete($message);
 		}
 
-		$result = $collection->remove($criteria, $options);
-
+		$result  = $collection->remove($criteria, $options);
+		$success = (bool) $result['ok'];
+		
 		if ($this->_profilerEnabled) {
-			$event->stopSuccess();
+			$success
+				? $event->stopSuccess()
+				: $event->stopError();
 		}
 		
-		return $result;
+		return $success;
 	}
 
 	/**
