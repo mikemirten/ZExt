@@ -29,6 +29,9 @@ namespace ZExt\Model;
 use ZExt\Di\LocatorAwareInterface,
     ZExt\Di\LocatorAwareTrait;
 
+use ZExt\Datagate\DatagateAwareInterface,
+    ZExt\Datagate\DatagateAwareTrait;
+
 use Iterator  as IteratorInterface,
     Countable as CountableInterface,
     ReflectionClass;
@@ -40,12 +43,17 @@ use Iterator  as IteratorInterface,
  * @package    Model
  * @subpackage Iterator
  * @author     Mike.Mirten
- * @version    1.0.1
+ * @version    1.1
  */
-class Iterator implements IteratorInterface, CountableInterface, LocatorAwareInterface {
+class Iterator
+
+	implements IteratorInterface,
+	           CountableInterface,
+	           LocatorAwareInterface,
+	           DatagateAwareInterface {
 	
 	use LocatorAwareTrait;
-	use ParentsAwareTrait;
+	use DatagateAwareTrait;
 	
 	const PRIMARY_MODEL = 'ZExt\Model\Model';
 	
@@ -186,15 +194,15 @@ class Iterator implements IteratorInterface, CountableInterface, LocatorAwareInt
 	public function toArray($recursively = false) {
 		if ($recursively) {
 			return iterator_to_array($this->_iterator);
-		} else {
-			$models = array();
-			
-			foreach ($this->_iterator as $data) {
-				$models[] = $this->createModel($data);
-			}
-			
-			return $models;
 		}
+		
+		$models = [];
+
+		foreach ($this->_iterator as $data) {
+			$models[] = $this->createModel($data);
+		}
+
+		return $models;
 	}
 	
 	/**
@@ -258,6 +266,24 @@ class Iterator implements IteratorInterface, CountableInterface, LocatorAwareInt
 	public function isEmpty() {
 		return $this->_iterator->count() === 0;
 	}
+	
+	/**
+	 * Get data for insert into a database
+	 * 
+	 * @return array
+	 */
+	public function getDataForInsert() {
+		return $this->toArray();
+	}
+	
+	/**
+	 * Get data for update in a database
+	 * 
+	 * @return array
+	 */
+	public function getDataForUpdate() {
+		return $this->toArray();
+	}
 
 	/**
 	 * Get the dump of the iterator's condition
@@ -302,5 +328,5 @@ class Iterator implements IteratorInterface, CountableInterface, LocatorAwareInt
 	public function count() {
 		return $this->_iterator->count();
 	}
-	
+
 }
