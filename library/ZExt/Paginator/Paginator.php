@@ -114,7 +114,7 @@ class Paginator implements PaginatorInterface, LocatorAwareInterface {
 	/**
 	 * Constructor
 	 * 
-	 * @param AdapterInterface $adapter Data adapter
+	 * @param AdapterInterface        $adapter Data adapter
 	 * @param ControlHandlerInterface $handler Pagination control handler
 	 */
 	public function __construct(AdapterInterface $adapter = null, ControlHandlerInterface $handler = null) {
@@ -162,7 +162,7 @@ class Paginator implements PaginatorInterface, LocatorAwareInterface {
 	/**
 	 * Set the pagination control handler
 	 * 
-	 * @param  ControlHandlerInterface $control
+	 * @param  ControlHandlerInterface $handler
 	 * @return Paginator
 	 */
 	public function setControlHandler(ControlHandlerInterface $handler) {

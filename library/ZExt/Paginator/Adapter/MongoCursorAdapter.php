@@ -77,9 +77,9 @@ class MongoCursorAdapter implements AdapterInterface {
 
 		if ($this->datagate === null) {
 			return new Collection($data);
-		} else {
-			return $this->datagate->createCollection($data);
 		}
+		
+		return $this->datagate->createCollection($data);
 	}
 	
 	/**
