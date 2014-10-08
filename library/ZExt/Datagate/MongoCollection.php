@@ -415,16 +415,14 @@ class MongoCollection extends DatagateAbstract {
 	 * 
 	 * @param  mixed $data
 	 * @param  array $options
-	 * @return Model
+	 * @return bool
 	 */
 	public function insert(array $data, array $options = []) {
-		$this->getAdapter()->insert(
+		return $this->getAdapter()->insert(
 			$this->getTableName(),
 			$data,
 			$options
 		);
-		
-		return $this->createResult($data);
 	}
 	
 	/**
