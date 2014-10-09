@@ -265,8 +265,25 @@ class MongoAdapter implements ProfileableInterface {
 	 */
 	public function addHost($host, $name = null) {
 		if (! $host instanceof Url) {
+			if (is_string($host) && ! preg_match('~^[a-z]://~', $host)) {
+				$host = 'mongo://' . $host;
+			}
+			
 			$host = new Url($host);
 		}
+		
+		if ($host->hasUsername()) {
+			$this->setUsername($host->getUsername());
+			
+			
+			if ($host->hasPassword()) {
+				$this->setPassword($host->getPassword());
+			}
+		}
+		
+		$host->removeScheme();
+		$host->removeUsername();
+		$host->removePassword();
 		
 		if ($name === null) {
 			$this->hosts[] = $host;
@@ -667,8 +684,6 @@ class MongoAdapter implements ProfileableInterface {
 		} else if (! $host->hasPort()) {
 			$host->setPort($this->defaultPort);
 		}
-		
-		$host->removeScheme();
 		
 		return trim($host->assemble(), '/');
 	}
