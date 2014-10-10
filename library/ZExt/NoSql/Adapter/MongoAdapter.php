@@ -258,19 +258,13 @@ class MongoAdapter implements ProfileableInterface {
 	/**
 	 * Add the host to the connection pool
 	 * 
-	 * @param  string | array $host
-	 * @param  string         $name
+	 * @param  mixed  $host
+	 * @param  string $name
 	 * @throws OptionsError
 	 * @return MongoAdapter
 	 */
 	public function addHost($host, $name = null) {
-		if (! $host instanceof Url) {
-			if (is_string($host) && ! preg_match('~^[a-z]://~', $host)) {
-				$host = 'mongo://' . $host;
-			}
-			
-			$host = new Url($host);
-		}
+		$host = $this->normalizeHost($host);
 		
 		if ($host->hasUsername()) {
 			$this->setUsername($host->getUsername());
@@ -292,6 +286,28 @@ class MongoAdapter implements ProfileableInterface {
 		
 		$this->hosts[$name] = $host;
 		return $this;
+	}
+	
+	/**
+	 * Normalize host
+	 * 
+	 * @param  mixed $host
+	 * @return Url
+	 */
+	protected function normalizeHost($host) {
+		if ($host instanceof Url) {
+			return $host;
+		}
+		
+		if (is_numeric($host)) {
+			return new Url(['port' => $host]);
+		}
+		
+		if (is_string($host) && ! preg_match('~^[a-z]://~', $host)) {
+			return new Url('mongodb://' . $host);
+		}
+		
+		return new Url($host);
 	}
 	
 	/**
