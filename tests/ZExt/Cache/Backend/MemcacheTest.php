@@ -14,6 +14,7 @@ class MemcacheTest extends PHPUnit_Framework_TestCase {
 	public function setUp() {
 		if (! extension_loaded('memcache')) {
 			$this->markTestSkipped('The memcache php extension is not loaded');
+			return;
 		}
 		
 		$this->client = new Memcache();
