@@ -10,6 +10,10 @@
 			<directory>./tests/ZExt/Config</directory>
 		</testsuite>
 		
+		<testsuite name="Url">
+			<directory>./tests/ZExt/Url</directory>
+		</testsuite>
+		
 		<testsuite name="Datagate">
 			<directory>./tests/ZExt/Datagate</directory>
 		</testsuite>
