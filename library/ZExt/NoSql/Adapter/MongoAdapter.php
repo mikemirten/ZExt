@@ -154,9 +154,21 @@ class MongoAdapter implements ProfileableInterface {
 			throw new Exceptions\PhpExtensionError('Version ' . $driverVersion . ' of the Mongo extension is too old');
 		}
 		
-		if ($options !== null) {
-			$this->setOptions($options, false, false);
+		if ($options === null) {
+			return;
 		}
+		
+		if (is_string($options)) {
+			$this->addHost($options);
+			return;
+		}
+
+		if ($options instanceof MongoClient) {
+			$this->setClient($options);
+			return;
+		}
+
+		$this->setOptions($options, false, false);
 	}
 
 	/**
