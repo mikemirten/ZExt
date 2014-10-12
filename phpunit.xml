@@ -13,6 +13,10 @@
 		<testsuite name="Datagate">
 			<directory>./tests/ZExt/Datagate</directory>
 		</testsuite>
+		
+		<testsuite name="NoSql">
+			<directory>./tests/ZExt/NoSql</directory>
+		</testsuite>
 	</testsuites>
 	
 </phpunit>
