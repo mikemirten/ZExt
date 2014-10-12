@@ -280,16 +280,20 @@ class MongoAdapter implements ProfileableInterface {
 		
 		if ($host->hasUsername()) {
 			$this->setUsername($host->getUsername());
-			
+			$host->removeUsername();
 			
 			if ($host->hasPassword()) {
 				$this->setPassword($host->getPassword());
+				$host->removePassword();
 			}
 		}
 		
+		if ($host->hasPath()) {
+			$this->setDBName(trim($host->getPath(), '/'));
+			$host->removePath();
+		}
+		
 		$host->removeScheme();
-		$host->removeUsername();
-		$host->removePassword();
 		
 		if ($name === null) {
 			$this->hosts[] = $host;
