@@ -32,7 +32,7 @@ namespace ZExt\Html;
  * @package    Html
  * @subpackage Tag
  * @author     Mike.Mirten
- * @version    1.2
+ * @version    1.2.1
  */
 class Tag {
 	
@@ -95,6 +95,29 @@ class Tag {
 	 * @var string
 	 */
 	protected $_tagCached;
+	
+	/**
+	 * Create tag by method's name
+	 * 
+	 * Tag::div('content')
+	 * 
+	 * @param  string $name
+	 * @param  array  $arguments
+	 * @return Tag
+	 */
+	public static function __callStatic($name, $arguments) {
+		$argsNm = count($arguments);
+		
+		if ($argsNm === 0) {
+			return new static($name);
+		}
+		
+		if ($argsNm === 1) {
+			return new static($name, $arguments[0]);
+		}
+		
+		return new static($name, $arguments[0], $arguments[1]);
+	}
 	
 	/**
 	 * Constructor
