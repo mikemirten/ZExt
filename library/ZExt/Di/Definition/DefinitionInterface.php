@@ -24,57 +24,70 @@
  * @version   1.0
  */
 
-namespace ZExt\Di;
-
-use ZExt\Di\Exception\NoLocator;
+namespace ZExt\Di\Definition;
 
 /**
- * Locator aware trait
+ * Definition of service or group of services
  * 
  * @category   ZExt
  * @package    Di
- * @subpackage Di
+ * @subpackage Definition
  * @author     Mike.Mirten
  * @version    1.0
  */
-trait LocatorAwareTrait {
+interface DefinitionInterface {
 	
 	/**
-	 * Services locator
-	 *
-	 * @var LocatorInterface
-	 */
-	private $_locator;
-	
-	/**
-	 * Set a services locator
+	 * Get service by ID
 	 * 
-	 * @param LocatorInterface $locator
+	 * @param  mixed $args Arguments for service constructor
+	 * @return mixed
 	 */
-	public function setLocator(LocatorInterface $locator) {
-		$this->_locator = $locator;
-	}
+	public function getService($args = null);
 	
 	/**
-	 * Get a services' locator
+	 * Set arguments for constructor of service
 	 * 
-	 * @return LocatorInterface
+	 * @param  mixed $args
+	 * @return DefinitionInterface
 	 */
-	public function getLocator() {
-		if ($this->_locator === null) {
-			throw new NoLocator('Hasn\'t been locator provided');
-		}
-		
-		return $this->_locator;
-	}
+	public function setArguments($args);
 	
 	/**
-	 * Has a services' locator
+	 * Get arguments for constructor of service
 	 * 
-	 * @return boolean
+	 * @return mixed
 	 */
-	public function hasLocator() {
-		return $this->_locator !== null;
-	}
+	public function getArguments();
+	
+	/**
+	 * Has service initialized ?
+	 * 
+	 * @param  mixed $args Arguments which was service initialized
+	 * @return bool
+	 */
+	public function hasInitialized($args = null);
+	
+	/**
+	 * Reset instance of service
+	 * 
+	 * @param mixed $args Arguments which was service initialized
+	 */
+	public function reset($args = null);
+	
+	/**
+	 * Set factory mode
+	 * 
+	 * @param  bool $factory
+	 * @return Callback
+	 */
+	public function setFactoryMode($factory = true);
+	
+	/**
+	 * Is factory mode on ?
+	 * 
+	 * @return bool
+	 */
+	public function isFactory();
 	
 }

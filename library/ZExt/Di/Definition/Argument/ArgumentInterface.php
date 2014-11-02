@@ -24,32 +24,24 @@
  * @version   1.0
  */
 
-namespace ZExt\Di;
+namespace ZExt\Di\Definition\Argument;
 
 /**
- * A service locator extended interface
+ * Interface of argument for definition
  * 
- * Able to provide a services by a custom arguments set
+ * @category   ZExt
+ * @package    Di
+ * @subpackage Definition
+ * @author     Mike.Mirten
+ * @version    1.0
  */
-interface LocatorByArgumentsInterface extends LocatorInterface {
+interface ArgumentInterface {
 	
 	/**
-	 * Get the service with the custom arguments set
+	 * Get argument's value
 	 * 
-	 * @param  string $id            An id of a service
-	 * @param  mixed  $args          Argument or an arguments set
-	 * @param  int    $failBehaviour On a service locate fail behaviour
 	 * @return mixed
 	 */
-	public function getByArguments($id, $args, $failBehaviour = LocatorInterface::BEHAVIOUR_FAIL_EXCEPTION);
-	
-	/**
-	 * Check for a service has been initialized with the arguments set
-	 * 
-	 * @param  string $name An id of a service
-	 * @param  mixed  $args Argument or an arguments set
-	 * @return boolean
-	 */
-	public function hasInitializedByArguments($id, $args);
+	public function getValue();
 	
 }

@@ -26,6 +26,15 @@
 
 namespace ZExt\Di;
 
+/**
+ * Locator aware interface
+ * 
+ * @category   ZExt
+ * @package    Di
+ * @subpackage Di
+ * @author     Mike.Mirten
+ * @version    1.0
+ */
 interface LocatorAwareInterface {
 	
 	/**

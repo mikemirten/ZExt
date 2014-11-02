@@ -24,57 +24,76 @@
  * @version   1.0
  */
 
-namespace ZExt\Di;
+namespace ZExt\Di\Definition;
 
-use ZExt\Di\Exception\NoLocator;
+use Closure;
 
 /**
- * Locator aware trait
+ * Callback type definition
  * 
  * @category   ZExt
  * @package    Di
- * @subpackage Di
+ * @subpackage Definition
  * @author     Mike.Mirten
  * @version    1.0
  */
-trait LocatorAwareTrait {
+class CallbackDefinition extends DefinitionAbstract {
 	
 	/**
-	 * Services locator
+	 * Callback
 	 *
-	 * @var LocatorInterface
+	 * @var Closure 
 	 */
-	private $_locator;
+	protected $callback;
 	
 	/**
-	 * Set a services locator
+	 * Constructor
 	 * 
-	 * @param LocatorInterface $locator
+	 * @param Closure $callback Callback of service init
+	 * @param mixed   $args     Arguments for constructor of service
 	 */
-	public function setLocator(LocatorInterface $locator) {
-		$this->_locator = $locator;
+	public function __construct(Closure $callback, $args = null) {
+		$this->setCallback($callback);
+		
+		if ($args !== null) {
+			$this->setParameters($args);
+		}
 	}
 	
 	/**
-	 * Get a services' locator
+	 * Set callback
 	 * 
-	 * @return LocatorInterface
+	 * @param  Closure $callback
+	 * @return CallbackDefinition
 	 */
-	public function getLocator() {
-		if ($this->_locator === null) {
-			throw new NoLocator('Hasn\'t been locator provided');
+	public function setCallback(Closure $callback) {
+		$this->callback = $callback;
+		$this->reset();
+		
+		return $this;
+	}
+	
+	/**
+	 * Get callback
+	 * 
+	 * @return Closure
+	 */
+	public function getCallback() {
+		return $this->callback;
+	}
+	
+	/**
+	 * Initialize service
+	 * 
+	 * @param  array $args
+	 * @return mixed
+	 */
+	protected function initService(array $args = null) {
+		if ($args === null) {
+			return $this->callback->__invoke();
 		}
 		
-		return $this->_locator;
-	}
-	
-	/**
-	 * Has a services' locator
-	 * 
-	 * @return boolean
-	 */
-	public function hasLocator() {
-		return $this->_locator !== null;
+		return call_user_func_array($this->callback, $args);
 	}
 	
 }

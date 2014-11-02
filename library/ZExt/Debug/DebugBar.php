@@ -28,7 +28,7 @@ namespace ZExt\Debug;
 
 use ZExt\Components\OptionsTrait;
 
-use ZExt\Di\LocatorByArgumentsInterface,
+use ZExt\Di\LocatorInterface,
     ZExt\Di\InitializerNamespace;
 
 use ZExt\Profiler\ProfilerInterface,
@@ -70,7 +70,7 @@ class DebugBar {
 	/**
 	 * Collectors' locator
 	 *
-	 * @var LocatorByArgumentsInterface 
+	 * @var LocatorInterface 
 	 */
 	protected $collectorsLocator;
 	
@@ -410,7 +410,7 @@ class DebugBar {
 		$locator = $this->getCollectorsLocator();
 		
 		try {
-			return $locator->getByArguments(ucfirst($name), [$params]);
+			return $locator->get(ucfirst($name), $params);
 		} catch (Exception $exception) {
 			$this->pushException($exception);
 		}
@@ -419,7 +419,7 @@ class DebugBar {
 	/**
 	 * Get the collectors' locator
 	 * 
-	 * @return LocatorByArgumentsInterface
+	 * @return LocatorInterface
 	 */
 	public function getCollectorsLocator() {
 		if ($this->collectorsLocator === null) {

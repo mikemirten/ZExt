@@ -35,7 +35,7 @@ namespace ZExt\Di;
  * @author     Mike.Mirten
  * @version    1.1
  */
-abstract class InitializerAbstract implements InitializerInterface, LocatorAwareInterface {
+abstract class InitializerMethodCallback implements LocatorInterface, LocatorAwareInterface {
 	
 	use LocatorAwareTrait;
 	

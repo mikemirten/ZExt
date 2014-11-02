@@ -27,34 +27,51 @@
 namespace ZExt\Di;
 
 /**
- * A service container interface
+ * Services' container interface
+ * 
+ * @category   ZExt
+ * @package    Di
+ * @subpackage Di
+ * @author     Mike.Mirten
+ * @version    1.0
  */
 interface ContainerInterface extends LocatorInterface {
 	
-	const BEHAVIOUR_EXISTS_EXCEPTION = 1;
-	const BEHAVIOUR_EXISTS_OVERRIDE  = 2;
-	
 	/**
-	 * Set a service
+	 * Set service definition
 	 * 
-	 * @param string $id              An id of a service
-	 * @param mixed  $service         A service
-	 * @param int    $existsBehaviour A service already exists behaviour
+	 * @param  string $id         ID of service
+	 * @param  mixed  $definition Definition of service
+	 * @param  mixed  $args       Arguments for constructor of service
+	 * @param  bool   $factory    Factory mode: new instance for each request of service
+	 * @return DefinitionInterface
+	 * @throws Exceptions\ServiceOverride
 	 */
-	public function set($id, $service, $existsBehaviour = self::BEHAVIOUR_EXISTS_EXCEPTION);
+	public function set($id, $definition, $args = null, $factory = false);
 	
 	/**
-	 * Remove a service
+	 * Set alias for service
 	 * 
-	 * @param string $id
+	 * @param  string $existsId ID of exists service
+	 * @param  string $newId    Alias ID
+	 * @throws Exceptions\ServiceOverride
+	 */
+	public function setAlias($existsId, $newId);
+	
+	/**
+	 * Get definition of service by service ID
+	 * 
+	 * @param  string $id ID of service
+	 * @return Definition\DefinitionInterface
+	 * @throws Exceptions\ServiceNotFound
+	 */
+	public function getDefinition($id);
+	
+	/**
+	 * Remove service
+	 * 
+	 * @param string $id ID of service
 	 */
 	public function remove($id);
-	
-	/**
-	 * Get an initialized services
-	 * 
-	 * @return array
-	 */
-	public function getInitialized();
 	
 }

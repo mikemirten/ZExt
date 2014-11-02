@@ -24,22 +24,24 @@
  * @version   1.0
  */
 
-namespace ZExt\Di\Phalcon;
-
-use ZExt\Di\ContainerInterface;
-use Phalcon\Di;
+namespace ZExt\Di\Config;
 
 /**
- * Dependency injection service container based on the Phalcon DI
+ * Configuration reader interface
  * 
  * @category   ZExt
  * @package    Di
- * @subpackage Container
+ * @subpackage Config
  * @author     Mike.Mirten
  * @version    1.0
  */
-class Container extends Di implements ContainerInterface {
+interface ReaderInterface {
 	
-	use ContainerTrait;
+	/**
+	 * Get definitions configuration
+	 * 
+	 * @return array
+	 */
+	public function getConfiguration();
 	
 }

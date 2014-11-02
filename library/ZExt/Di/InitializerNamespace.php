@@ -26,9 +26,6 @@
 
 namespace ZExt\Di;
 
-use ZExt\Di\Exception\NoService,
-    ZExt\Di\Exception\NoNamespaces;
-
 use ZExt\Log\LoggerAwareInterface,
     ZExt\Log\LoggerAwareTrait;
 
@@ -48,8 +45,7 @@ use Closure, ReflectionClass;
  */
 class InitializerNamespace
 
-	implements InitializerInterface,
-	           LocatorByArgumentsInterface,
+	implements LocatorInterface,
 	           LocatorAwareInterface,
 	           LoggerAwareInterface,
 	           ConfigAwareInterface {
@@ -113,13 +109,6 @@ class InitializerNamespace
 	 * @var Closure
 	 */
 	protected $_onInit;
-	
-	/**
-	 * Misses while class loading
-	 *
-	 * @var int
-	 */
-	protected $_loadMisses = 0;
 	
 	/**
 	 * Prefix for the config's service id
@@ -249,21 +238,21 @@ class InitializerNamespace
 	 * @param  array  $args
 	 * @return mixed
 	 */
-	public function initialize($id, $arguments = null) {
-		if ($arguments === null) {
+	public function get($id, $args = null) {
+		if ($args === null) {
 			if (isset($this->_services[$id])) {
 				return $this->_services[$id];
 			}
 		} else {
-			$arguments = array_values((array) $arguments);
-			$argsId    = $this->argumentsHashFunction($arguments);
+			$args = array_values((array) $args);
+			$argsId    = $this->argumentsHashFunction($args);
 			
 			if (isset($this->_services[$id][$argsId])) {
 				return $this->_services[$id][$argsId];
 			}
 		}
 		
-		$service = $this->loadService($id, false, $arguments);
+		$service = $this->loadService($id, false, $args);
 		
 		if ($this->_onInit !== null) {
 			$this->_onInit->__invoke($service);
@@ -289,7 +278,7 @@ class InitializerNamespace
 			}
 		}
 		
-		if ($arguments === null) {
+		if ($args === null) {
 			$this->_services[$id] = $service;
 		} else {
 			$this->_services[$id][$argsId] = $service;
@@ -304,7 +293,7 @@ class InitializerNamespace
 	 * @param  string $id
 	 * @return boolean
 	 */
-	public function isAvailable($id) {
+	public function has($id) {
 		if (isset($this->_services[$id]) || isset($this->_servicesArgs[$id])) {
 			return true;
 		}
@@ -323,17 +312,14 @@ class InitializerNamespace
 	 * @param  bool   $onlyCheck
 	 * @param  array  $arguments
 	 * @return object | bool
-	 * @throws NoNamespaces
-	 * @throws NoHelper
+	 * @throws \RuntimeException
 	 */
 	protected function loadService($id, $onlyCheck = false, $arguments = null) {
 		if (empty($this->_namespaces)) {
-			throw new NoNamespaces('Weren\'t a namespaces registered');
+			throw new \RuntimeException('Weren\'t a namespaces registered');
 		}
 		
-		set_error_handler(function() {
-			++ $this->_loadMisses;
-		});
+		set_error_handler(function() {});
 
 		foreach ($this->_namespaces as $namespace) {
 			if ($this->_dirForEachService) {
@@ -375,92 +361,18 @@ class InitializerNamespace
 		if ($onlyCheck) {
 			return false;
 		} else {
-			throw new NoService('Unable to load the service "' . $id . '", registered namespaces: "' . implode('", "', $this->_namespaces) . '"');
+			throw new Exceptions\ServiceNotFound('Unable to load the service "' . $id . '", registered namespaces: "' . implode('", "', $this->_namespaces) . '"');
 		}
-	}
-	
-	/**
-	 * Get a misses number which were occurred while a class loading
-	 * 
-	 * @return int
-	 */
-	public function getMissesNumber() {
-		return $this->_loadMisses;
-	}
-	
-	/**
-	 * Get the service
-	 * 
-	 * @param  string $id            An id of a service
-	 * @param  int    $failBehaviour On a service locate fail behaviour
-	 * @return mixed
-	 */
-	public function get($id, $failBehaviour = self::BEHAVIOUR_FAIL_EXCEPTION) {
-		if ($failBehaviour === self::BEHAVIOUR_FAIL_NULL) {
-			try {
-				return $this->initialize($id);
-			} catch (NoService $e) {
-				return;
-			}
-		} else {
-			return $this->initialize($id);
-		}
-	}
-	
-	/**
-	 * Get the service with the custom arguments set
-	 * 
-	 * @param  string $id            An id of a service
-	 * @param  mixed  $args          Argument or an arguments set
-	 * @param  int    $failBehaviour On a service locate fail behaviour
-	 * @return mixed
-	 */
-	public function getByArguments($id, $args, $failBehaviour = self::BEHAVIOUR_FAIL_EXCEPTION) {
-		if ($failBehaviour === self::BEHAVIOUR_FAIL_NULL) {
-			try {
-				return $this->initialize($id, $args);
-			} catch (NoService $e) {
-				return;
-			}
-		} else {
-			return $this->initialize($id, $args);
-		}
-	}
-	
-	/**
-	 * Has the service
-	 * 
-	 * @param  string $name An id of a service
-	 * @return boolean
-	 */
-	public function has($id) {
-		return $this->isAvailable($id);
 	}
 	
 	/**
 	 * Check for a service has been initialized
 	 * 
-	 * @param  string $name An id of a service
+	 * @param  string $id An id of a service
 	 * @return boolean
 	 */
-	public function hasInitialized($id) {
+	public function hasInitialized($id, $args = null) {
 		return isset($this->_services[$id]);
-	}
-	
-	/**
-	 * Check for a service has been initialized with the arguments set
-	 * 
-	 * @param  string $name An id of a service
-	 * @param  mixed  $args Argument or an arguments set
-	 * @return boolean
-	 */
-	public function hasInitializedByArguments($id, $args) {
-		if (isset($this->_servicesArgs[$id])) {
-			$argsId = $this->argumentsHashFunction($args);
-			return isset($this->_servicesArgs[$id][$argsId]);
-		}
-			
-		return false;
 	}
 
 	/**
@@ -479,8 +391,8 @@ class InitializerNamespace
 	 * @param  string $id
 	 * @return boolean
 	 */
-	public function __isset($name) {
-		return $this->isAvailable($name);
+	public function __isset($id) {
+		return $this->has($id);
 	}
 	
 	/**
@@ -489,8 +401,8 @@ class InitializerNamespace
 	 * @param  string $id
 	 * @return mixed
 	 */
-	public function __get($name) {
-		return $this->initialize($name);
+	public function __get($id) {
+		return $this->get($id);
 	}
 	
 }

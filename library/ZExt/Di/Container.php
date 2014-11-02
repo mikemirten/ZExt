@@ -26,12 +26,7 @@
 
 namespace ZExt\Di;
 
-use ZExt\Di\Exception\NoService,
-    ZExt\Di\Exception\ServiceExists,
-    ZExt\Di\Exception\ServiceType,
-    ZExt\Di\Exception\InitializerExists,
-    ZExt\Di\Exception\LocatorExists;
-
+use ZExt\Di\Definition\DefinitionInterface;
 use Closure;
 
 /**
@@ -41,282 +36,132 @@ use Closure;
  * @package    Di
  * @subpackage Container
  * @author     Mike.Mirten
- * @version    1.1.1
+ * @version    2.0
  */
 class Container implements ContainerInterface {
 	
 	/**
-	 * Classes of a services
+	 * Definitions of services
 	 *
-	 * @var string[]
+	 * @var DefinitionInterface
 	 */
-	protected $_classes = [];
+	protected $_definitions = [];
 	
 	/**
-	 * Callbacks
+	 * Locators
 	 *
-	 * @var Closure[] 
-	 */
-	protected $_callbacks = [];
-	
-	/**
-	 * Initializers
-	 *
-	 * @var InitializerInterface[] 
-	 */
-	protected $_initializers = [];
-	
-	/**
-	 * Initialized services
-	 *
-	 * @var array
-	 */
-	protected $_services = [];
-	
-	/**
-	 * Aliases of a services' id's
-	 *
-	 * @var string[]
-	 */
-	protected $_aliases = [];
-	
-	/**
-	 * Services locators
-	 *
-	 * @var LocatorInterface[]
+	 * @var LocatorInterface
 	 */
 	protected $_locators = [];
 	
 	/**
-	 * On class init callback, calls after a class instantiation
-	 *
-	 * @var Closure 
-	 */
-	protected $_onClassInit;
-	
-	/**
-	 * Register a resources' initializer
+	 * Set service definition
 	 * 
-	 * @param  InitializerInterface $initializer
-	 * @param  string $id
-	 * @param  int    $existsBehaviour
-	 * @return Container
-	 * @throws InitializerExists
+	 * @param  string $id         ID of service
+	 * @param  mixed  $definition Definition of service
+	 * @param  mixed  $args       Arguments for constructor of service
+	 * @param  bool   $factory    Factory mode: new instance for each request of service
+	 * @return DefinitionInterface
+	 * @throws Exceptions\ServiceOverride
 	 */
-	public function registerInitializer(InitializerInterface $initializer, $id = null, $existsBehaviour = self::BEHAVIOUR_EXISTS_EXCEPTION) {
-		if ($id === null) {
-			$id = $this->_createIdByObject($initializer);
+	public function set($id, $definition, $args = null, $factory = false) {
+		if (isset($this->_definitions[$id])) {
+			throw new Exceptions\ServiceOverride('Service "' . $id . '" already exists');
 		}
 		
-		if (isset($this->_initializers[$id]) && $existsBehaviour === self::BEHAVIOUR_EXISTS_EXCEPTION) {
-			throw new InitializerExists('Initializer with id: "' . $id . '" already registered');
+		$definition = $this->normalizeDefinition($definition);
+		
+		if ($args !== null) {
+			$definition->setArguments($args);
 		}
 		
-		if ($initializer instanceof LocatorAwareInterface && ! $initializer->hasLocator()) {
-			$initializer->setLocator($this);
+		if ($factory) {
+			$definition->setFactoryMode();
 		}
 		
-		$this->_initializers[$id] = $initializer;
+		$this->_definitions[$id] = $definition;
 		
-		return $this;
+		return $definition;
 	}
 	
 	/**
-	 * Register a chained services' locator
+	 * Set alias for service
 	 * 
-	 * @param  LocatorAwareInterface $locator
-	 * @param  string $id
-	 * @param  int    $existsBehaviour
-	 * @return Container
-	 * @throws LocatorExists
+	 * @param  string $existsId ID of exists service
+	 * @param  string $newId    Alias ID
+	 * @throws Exceptions\ServiceOverride
 	 */
-	public function registerLocator(LocatorInterface $locator, $id = null, $existsBehaviour = self::BEHAVIOUR_EXISTS_EXCEPTION) {
-		if ($id === null) {
-			$id = $this->_createIdByObject($locator);
+	public function setAlias($existsId, $newId) {
+		if (isset($this->definition[$newId])) {
+			throw new Exceptions\ServiceOverride('Service "' . $newId . '" already exists');
 		}
 		
-		if (isset($this->_locators[$id]) && $existsBehaviour === self::BEHAVIOUR_EXISTS_EXCEPTION) {
-			throw new LocatorExists();
+		$this->definition[$newId] = $this->getDefinition($existsId);
+	}
+	
+	/**
+	 * Normalize definition
+	 * 
+	 * @param  mixed $definition Definition of service
+	 * @return DefinitionInterface
+	 */
+	protected function normalizeDefinition($definition) {
+		if ($definition instanceof DefinitionInterface) {
+			return $definition;
 		}
 		
-		$this->_locators[$id] = $locator;
-		
-		return $this;
-	}
-	
-	/**
-	 * Create string id by passed object
-	 * 
-	 * @param  object $object
-	 * @return string
-	 */
-	protected function _createIdByObject($object) {
-		$id = preg_replace('/[^0-9a-z]+/i', ' ', get_class($object));
-		return str_replace(' ', '', ucwords($id)) . '_' . spl_object_hash($object);
-	}
-	
-	/**
-	 * Set callback on a class init
-	 * 
-	 * @param  Closure $callback
-	 * @return Container
-	 */
-	public function setOnClassInit(Closure $callback) {
-		$this->_onClassInit = $callback;
-		
-		return $this;
-	}
-	
-	/**
-	 * Set an alias to a service
-	 * 
-	 * @param  string $alias
-	 * @param  string $id
-	 * @return Container
-	 */
-	public function setAlias($alias, $id) {
-		$this->_aliases[$alias] = $id;
-		
-		return $this;
-	}
-	
-	/**
-	 * Set an aliases to a services (Overwrites the existing aliases !)
-	 * 
-	 * @param  array $aliases
-	 * @return Container
-	 */
-	public function setAliases(array $aliases) {
-		$this->_aliases = $aliases;
-		
-		return $this;
-	}
-	
-	/**
-	 * Set a service
-	 * 
-	 * @param  string $id
-	 * @param  mixed  $service
-	 * @param  int    $existsBehaviour
-	 * @return Container
-	 * @throws ServiceExists
-	 * @throws ServiceType
-	 */
-	public function set($id, $service, $existsBehaviour = self::BEHAVIOUR_EXISTS_EXCEPTION) {
-		if ($existsBehaviour === self::BEHAVIOUR_EXISTS_EXCEPTION && $this->has($id)) {
-			throw new ServiceExists('Service "' . $id . '" already registred');
+		if ($definition instanceof Closure) {
+			return new Definition\CallbackDefinition($definition);
 		}
 		
-		if (is_string($service)) {
-			$this->_classes[$id] = $service;
-		} else if (is_callable($service)) {
-			$this->_callbacks[$id] = $service;
-		} else if (is_object($service) || is_array($service)) {
-			$this->_services[$id] = $service;
-		} else {
-			throw new ServiceType('Uncnown the type "' . gettype($service) . '" of the service: "' . $id);
+		if (is_string($definition)) {
+			return new Definition\ClassDefinition($definition);
 		}
 		
-		return $this;
+		return new Definition\InstanceDefinition($definition);
 	}
 	
 	/**
-	 * Get a service
+	 * Get service by ID
 	 * 
-	 * @param  string $id
-	 * @param  int    $failBehaviour
-	 * @param  bool   $recursively
+	 * @param  string $id   ID of service
+	 * @param  mixed  $args Arguments for constructor of service
 	 * @return mixed
-	 * @throws NoService
+	 * @throws Exceptions\ServiceNotFound
 	 */
-	public function get($id, $failBehaviour = self::BEHAVIOUR_FAIL_EXCEPTION, $recursively = true) {
-		if (isset($this->_aliases[$id])) {
-			$id = $this->_aliases[$id];
+	public function get($id, $args = null) {
+		if ($args !== null && func_num_args() > 2) {
+			$args = func_get_args();
+			array_shift($args);
 		}
 		
-		if (isset($this->_services[$id])) {
-			return $this->_services[$id];
+		if (isset($this->_definitions[$id])) {
+			return $this->_definitions[$id]->getService($args);
 		}
 		
-		// Trying the class
-		if (isset($this->_classes[$id])) {
-			$service = new $this->_classes[$id]();
-			
-			if ($this->_onClassInit !== null) {
-				$this->_onClassInit->__invoke($service);
-			}
-			
-			$this->_services[$id] = $service;
-			return $this->_services[$id];
-		}
-		
-		// Trying the callback
-		if (isset($this->_callbacks[$id])) {
-			$this->_services[$id] = $this->_callbacks[$id]();
-			
-			return $this->_services[$id];
-		}
-		
-		// Trying the initializers
-		if (! empty($this->_initializers)) {
-			foreach ($this->_initializers as $initializer) {
-				$service = $initializer->initialize($id);
-
-				if ($service !== null) {
-					$this->_services[$id] = $service;
-					return $service;
-				}
+		foreach ($this->_locators as $locator) {
+			if ($locator->has($id)) {
+				return $locator->get($id, $args);
 			}
 		}
-		
-		// Trying the chained locators
-		if ($recursively && ! empty($this->_locators)) {
-			foreach ($this->_locators as $locator) {
-				$service = $locator->get($id, self::BEHAVIOUR_FAIL_NULL);
-				
-				if ($service !== null) {
-					$this->_services[$id] = $service;
-					return $service;
-				}
-			}
-		}
-		
-		if ($failBehaviour === self::BEHAVIOUR_FAIL_EXCEPTION) {
-			throw new NoService('Unable to provide the service: "' . $id . '"');
-		}
+			
+		throw new Exceptions\ServiceNotFound('Unable to found the service "' . $id . '"');
 	}
-	
+
 	/**
-	 * Has a service
+	 * Is service available for obtain ?
 	 * 
-	 * @param  string $id
-	 * @param  bool   $recursively
+	 * @param  string $id ID of service
 	 * @return bool
 	 */
-	public function has($id, $recursively = true) {
-		if (isset($this->_aliases[$id])) {
-			$id = $this->_aliases[$id];
-		}
-		
-		if (isset($this->_services[$id])
-		 || isset($this->_classes[$id])
-		 || isset($this->_callbacks[$id])) {
+	public function has($id) {
+		if (isset($this->_definitions[$id])) {
 			return true;
 		}
 		
-		if (! empty($this->_initializers)) {
-			foreach ($this->_initializers as $initializer) {
-				if ($initializer->isAvailable($id)) {
-					return true;
-				}
-			}
-		}
-		
-		if ($recursively && ! empty($this->_locators)) {
-			foreach ($this->_locators as $locator) {
-				if ($locator->has($id)) {
-					return true;
-				}
+		foreach ($this->_locators as $locator) {
+			if ($locator->has($id)) {
+				return true;
 			}
 		}
 		
@@ -324,92 +169,104 @@ class Container implements ContainerInterface {
 	}
 	
 	/**
-	 * Remove a service
+	 * Get definition of service by service ID
 	 * 
-	 * @param  string $id
-	 * @param  bool   $recursively
+	 * @param  string $id ID of service
+	 * @return DefinitionInterface
+	 * @throws Exceptions\ServiceNotFound
+	 */
+	public function getDefinition($id) {
+		if (isset($this->_definitions[$id])) {
+			return $this->_definitions[$id];
+		}
+		
+		throw new Exceptions\ServiceNotFound('Unable to found the service "' . $id . '"');
+	}
+	
+	/**
+	 * Has service initialized ?
+	 * 
+	 * @param  string $id   ID of service
+	 * @param  mixed  $args Arguments which was service initialized
+	 * @return bool
+	 * @throws Exceptions\ServiceNotFound
+	 */
+	public function hasInitialized($id, $args = null) {
+		return $this->getDefinition($id)->hasInitialized($args);
+	}
+	
+	/**
+	 * Remove service
+	 * 
+	 * @param string $id ID of service
+	 */
+	public function remove($id) {
+		unset($this->_definitions[$id]);
+	}
+	
+	/**
+	 * Add fallback locator
+	 * 
+	 * @param  LocatorInterface $locator Locator instance
+	 * @param  string           $id      Locator unique ID
 	 * @return Container
 	 */
-	public function remove($id, $recursively = false) {
-		unset(
-			$this->_aliases[$id],
-			$this->_classes[$id],
-			$this->_callbacks[$id],
-			$this->_services[$id]
-		);
-		
-		if ($recursively && ! empty($this->_locators)) {
-			foreach ($this->_locators as $locator) {
-				if ($locator instanceof ContainerInterface) {
-					$locator->remove($id);
-				}
-			}
+	public function addLocator(LocatorInterface $locator, $id = null) {
+		if ($id === null) {
+			$this->_locators[] = $locator;
+		} else {
+			$this->_locators[$id] = $locator;
 		}
 		
 		return $this;
 	}
 	
 	/**
-	 * Check for a service has been initialized
+	 * Get locator by ID
 	 * 
-	 * @param  string $id
-	 * @param  bool   $recursively
-	 * @return bool
+	 * @param  string | int $id
+	 * @return LocatorInterface | null
 	 */
-	public function hasInitialized($id, $recursively = true) {
-		if (isset($this->_aliases[$id])) {
-			$id = $this->_aliases[$id];
+	public function getLocator($id) {
+		if (isset($this->_locators[$id])) {
+			return $this->_locators[$id];
 		}
-		
-		if (isset($this->_services[$id])) {
-			return true;
-		}
-		
-		if ($recursively && ! empty($this->_locators)) {
-			foreach ($this->_locators as $locator) {
-				if ($locator->hasInitialized($id)) {
-					return true;
-				}
-			}
-		}
-		
-		return false;
 	}
 	
 	/**
-	 * Get an initialized resources
+	 * Set service definition
 	 * 
-	 * @param  bool $recursively
-	 * @return array
+	 * @param string $id ID of service
+	 * @param mixed  $definition
 	 */
-	public function getInitialized($recursively = true) {
-		if ($recursively && ! empty($this->_locators)) {
-			$services = $this->_services;
-			
-			foreach ($this->_locators as $locator) {
-				if ($locator instanceof ContainerInterface) {
-					$services += $locator->getInitialized();
-				}
-			}
-			
-			return $services;
-		}
-		
-		return $this->_services;
+	public function __set($id, $definition) {
+		$this->set($id, $definition);
 	}
 	
+	/**
+	 * Get service by ID
+	 * 
+	 * @param string $id ID of service
+	 */
 	public function __get($id) {
 		return $this->get($id);
 	}
 	
-	public function __set($id, $service) {
-		$this->set($id, $service);
-	}
-	
+	/**
+	 * Is service available for obtain ?
+	 * 
+	 * @param  string $id ID of service
+	 * @return bool
+	 */
 	public function __isset($id) {
 		return $this->has($id);
 	}
 	
+	/**
+	 * Remove service
+	 * 
+	 * @param string $id ID of service
+	 */
 	public function __unset($id) {
 		$this->remove($id);
 	}

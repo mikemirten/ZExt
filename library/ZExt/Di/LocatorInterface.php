@@ -27,36 +27,41 @@
 namespace ZExt\Di;
 
 /**
- * A service locator interface
+ * Services' locator interface
+ * 
+ * @category   ZExt
+ * @package    Di
+ * @subpackage Di
+ * @author     Mike.Mirten
+ * @version    1.0
  */
 interface LocatorInterface {
 	
-	const BEHAVIOUR_FAIL_EXCEPTION = 1;
-	const BEHAVIOUR_FAIL_NULL      = 2;
-	
 	/**
-	 * Get a service
+	 * Get service by ID
 	 * 
-	 * @param  string $id            An id of a service
-	 * @param  int    $failBehaviour On a service locate fail behaviour
+	 * @param  string $id   ID of service
+	 * @param  mixed  $args Arguments for constructor of service
 	 * @return mixed
+	 * @throws Exceptions\ServiceNotFound
 	 */
-	public function get($id, $failBehaviour = self::BEHAVIOUR_FAIL_EXCEPTION);
+	public function get($id, $args = null);
 	
 	/**
-	 * Has a service
+	 * Is service available for obtain ?
 	 * 
-	 * @param  string $name An id of a service
-	 * @return boolean
+	 * @param  string $id ID of service
+	 * @return bool
 	 */
 	public function has($id);
 	
 	/**
-	 * Check for a service has been initialized
+	 * Has service initialized ?
 	 * 
-	 * @param  string $name An id of a service
-	 * @return boolean
+	 * @param  string $id ID of service
+	 * @return bool
+	 * @throws Exceptions\ServiceNotFound
 	 */
-	public function hasInitialized($id);
+	public function hasInitialized($id, $args = null);
 	
 }
