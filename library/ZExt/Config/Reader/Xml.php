@@ -27,6 +27,8 @@
 namespace ZExt\Config\Reader;
 
 use ZExt\Config\Reader\Exceptions\InvalidContent;
+use ZExt\Components\Std;
+
 use SimpleXMLElement;
 
 /**
@@ -72,7 +74,7 @@ class XMl implements ReaderInterface {
 			
 			if (isset($content['@attributes'])){
 				if (isset($content['@attributes']['value'])) {
-					$result[$name] = $this->parseValue($content['@attributes']['value']);
+					$result[$name] = Std::parseValue($content['@attributes']['value']);
 					continue;
 				}
 				
@@ -80,7 +82,7 @@ class XMl implements ReaderInterface {
 			}
 			
 			if (empty($content)) {
-				$result[$name] = $this->parseValue($element);
+				$result[$name] = Std::parseValue($element);
 				continue;
 			}
 			
@@ -88,33 +90,6 @@ class XMl implements ReaderInterface {
 		}
 		
 		return $result;
-	}
-	
-	/**
-	 * Parse a value
-	 * 
-	 * @param  string $value
-	 * @return mixed
-	 */
-	public function parseValue($value) {
-		$value = trim($value);
-		
-		if (is_numeric($value)) {
-			$valueOrigin = $value;
-
-			if (strpos($value, '.') === false) {
-				$value = (int) $value;
-			} else {
-				$value = (float) $value;
-			}
-
-			// Overflow checking
-			if ($valueOrigin !== (string) $value) {
-				$value = $valueOrigin;
-			}
-		}
-		
-		return $value;
 	}
 	
 }

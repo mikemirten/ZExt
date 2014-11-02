@@ -29,6 +29,8 @@ use ZExt\Config\Reader\Exceptions\InvalidIniSection,
     ZExt\Config\Reader\Exceptions\InvalidIniKey,
 	ZExt\Config\Reader\Exceptions\OptionsError;
 
+use ZExt\Components\Std;
+
 /**
  * Ini config reader
  * 
@@ -185,10 +187,10 @@ class Ini implements ReaderInterface {
 		
 		if ($point === false) {
 			if (is_array($value)) {
-				return [$key => array_map([$this, 'parseValue'], $value)];
+				return [$key => array_map(['ZExt\Components\Std', 'parseValue'], $value)];
 			}
 			
-			return [$key => $this->parseValue($value)];
+			return [$key => Std::parseValue($value)];
 		}
 		
 		$keyCurrent = trim(substr($key, 0, $point));
@@ -199,31 +201,6 @@ class Ini implements ReaderInterface {
 		}
 
 		return [$keyCurrent => $this->parseKey($keyRemains, $value)];
-	}
-	
-	/**
-	 * Parse a value
-	 * 
-	 * @param  string $value
-	 * @return mixed
-	 */
-	public function parseValue($value) {
-		if (is_numeric($value)) {
-			$valueOrigin = trim($value);
-
-			if (strpos($value, '.') === false) {
-				$value = (int) $value;
-			} else {
-				$value = (float) $value;
-			}
-
-			// Overflow checking
-			if ($valueOrigin !== (string) $value) {
-				$value = $valueOrigin;
-			}
-		}
-		
-		return $value;
 	}
 	
 }

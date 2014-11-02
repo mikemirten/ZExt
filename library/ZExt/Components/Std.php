@@ -44,7 +44,7 @@ class Std {
 	 * @param  Traversable $iterator
 	 * @return array
 	 */
-	static function iteratorToArray(Traversable $iterator) {
+	static public function iteratorToArray(Traversable $iterator) {
 		$array = [];
 		
 		foreach ($iterator as $key => $value) {
@@ -56,6 +56,33 @@ class Std {
 		}
 		
 		return $array;
+	}
+	
+	/**
+	 * Parse value, convert to integer or float if value is numeric
+	 * 
+	 * @param  string $value
+	 * @return string | int | float
+	 */
+	static public function parseValue($value) {
+		$value = trim($value);
+		
+		if (is_numeric($value)) {
+			$valueOrigin = $value;
+
+			if (strpos($value, '.') === false) {
+				$value = (int) $value;
+			} else {
+				$value = (float) $value;
+			}
+
+			// Overflow checking
+			if ($valueOrigin !== (string) $value) {
+				$value = $valueOrigin;
+			}
+		}
+		
+		return $value;
 	}
 	
 }
