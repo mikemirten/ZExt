@@ -302,8 +302,7 @@ class BBCodes implements PluginInterface {
 	 */
 	public function getFormattersInitializer() {
 		if ($this->formattersInitializer === null) {
-			$this->formattersInitializer = new InitializerNamespace();
-			$this->formattersInitializer->registerNamespace('ZExt\Formatter');
+			$this->formattersInitializer = new InitializerNamespace('ZExt\Formatter');
 		}
 		
 		return $this->formattersInitializer;

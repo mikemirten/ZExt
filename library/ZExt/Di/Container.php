@@ -130,7 +130,7 @@ class Container implements ContainerInterface {
 	 * @throws Exceptions\ServiceNotFound
 	 */
 	public function get($id, $args = null) {
-		if ($args !== null && func_num_args() > 2) {
+		if (isset($args[2])) {
 			$args = func_get_args();
 			array_shift($args);
 		}
@@ -246,7 +246,9 @@ class Container implements ContainerInterface {
 	/**
 	 * Get service by ID
 	 * 
-	 * @param string $id ID of service
+	 * @param  string $id ID of service
+	 * @return mixed
+	 * @throws Exceptions\ServiceNotFound
 	 */
 	public function __get($id) {
 		return $this->get($id);
@@ -269,6 +271,18 @@ class Container implements ContainerInterface {
 	 */
 	public function __unset($id) {
 		$this->remove($id);
+	}
+	
+	/**
+	 * Get service by a method name as an ID
+	 * 
+	 * @param  string $id   ID of service
+	 * @param  array  $args Arguments for constructor of service
+	 * @return mixed
+	 * @throws Exceptions\ServiceNotFound
+	 */
+	public function __call($id, $args) {
+		return $this->get($id, $args);
 	}
 	
 }

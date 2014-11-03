@@ -423,10 +423,7 @@ class DebugBar {
 	 */
 	public function getCollectorsLocator() {
 		if ($this->collectorsLocator === null) {
-			$locator = new InitializerNamespace();
-			$locator->registerNamespace(self::NAMESPACE_COLLECTORS);
-			
-			$this->collectorsLocator = $locator;
+			$this->collectorsLocator = new InitializerNamespace(self::NAMESPACE_COLLECTORS);
 		}
 		
 		return $this->collectorsLocator;
