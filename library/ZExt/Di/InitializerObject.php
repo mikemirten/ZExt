@@ -35,7 +35,7 @@ namespace ZExt\Di;
  * @author     Mike.Mirten
  * @version    2.0
  */
-abstract class InitializerObject extends InitializerAbstract implements LocatorAwareInterface, DefinitionAwareInterface {
+abstract class InitializerObject extends InitializerAbstract implements LocatorAwareInterface {
 	
 	use LocatorAwareTrait;
 	
@@ -46,6 +46,17 @@ abstract class InitializerObject extends InitializerAbstract implements LocatorA
 	 */
 	protected $methodNameTemplate = '%sInit';
 
+	/**
+	 * Constructor
+	 * 
+	 * @param LocatorInterface $locator
+	 */
+	public function __construct(LocatorInterface $locator = null) {
+		if ($locator !== null) {
+			$this->setLocator($locator);
+		}
+	}
+	
 	/**
 	 * Initialize service by ID
 	 * 
