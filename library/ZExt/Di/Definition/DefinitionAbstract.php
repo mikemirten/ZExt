@@ -228,4 +228,8 @@ abstract class DefinitionAbstract implements DefinitionInterface {
 		unset($this->servicesByArgs[$id]);
 	}
 	
+	public function __sleep() {
+		return ['arguments', 'factoryMode'];
+	}
+	
 }

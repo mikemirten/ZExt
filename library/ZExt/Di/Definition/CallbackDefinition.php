@@ -26,6 +26,9 @@
 
 namespace ZExt\Di\Definition;
 
+use Closure;
+use Jeremeamia\SuperClosure\SerializableClosure;
+
 /**
  * Callback type definition
  * 
@@ -40,17 +43,17 @@ class CallbackDefinition extends DefinitionAbstract {
 	/**
 	 * Callback
 	 *
-	 * @var \Closure 
+	 * @var Closure 
 	 */
 	protected $callback;
 	
 	/**
 	 * Constructor
 	 * 
-	 * @param \Closure $callback Callback of service init
+	 * @param Closure $callback Callback of service init
 	 * @param mixed   $args     Arguments for constructor of service
 	 */
-	public function __construct($callback, $args = null) {
+	public function __construct(Closure $callback, $args = null) {
 		$this->setCallback($callback);
 		
 		if ($args !== null) {
@@ -61,10 +64,10 @@ class CallbackDefinition extends DefinitionAbstract {
 	/**
 	 * Set callback
 	 * 
-	 * @param  \Closure $callback
+	 * @param  Closure $callback
 	 * @return CallbackDefinition
 	 */
-	public function setCallback($callback) {
+	public function setCallback(Closure $callback) {
 		$this->callback = $callback;
 		$this->reset();
 		
@@ -74,7 +77,7 @@ class CallbackDefinition extends DefinitionAbstract {
 	/**
 	 * Get callback
 	 * 
-	 * @return \Closure
+	 * @return Closure
 	 */
 	public function getCallback() {
 		return $this->callback;
@@ -92,6 +95,15 @@ class CallbackDefinition extends DefinitionAbstract {
 		}
 		
 		return call_user_func_array($this->callback, $args);
+	}
+	
+	public function __sleep() {
+		$properties   = parent::__sleep();
+		$properties[] = 'callback';
+		
+		$this->callback = new SerializableClosure($this->callback);
+		
+		return $properties;
 	}
 	
 }

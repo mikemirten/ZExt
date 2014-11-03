@@ -40,7 +40,7 @@ abstract class InitializerObject extends InitializerAbstract implements LocatorA
 	use LocatorAwareTrait;
 	
 	/**
-	 * Template of method name
+	 * Template of method name in "sprintf()" format
 	 *
 	 * @var string
 	 */
@@ -81,19 +81,19 @@ abstract class InitializerObject extends InitializerAbstract implements LocatorA
 	}
 	
 	/**
-	 * Get definition of service by service ID
+	 * Initialize a definition for service
 	 * 
-	 * @param  string $id ID of service
+	 * @param  string $id Service ID
 	 * @return Definition\DefinitionInterface
-	 * @throws Exceptions\ServiceNotFound
 	 */
-	public function getDefinition($id) {
-		if (! $this->has($id)) {
-			throw new Exceptions\ServiceNotFound('Unable to found the service "' . $id . '"');
-		}
-	
-		$call = [$this, 'get'];
-		$args = [$id, $this->getArguments()];
+	protected function initDefinition($id) {
+		$initializer = $this; // Superclosure won't works without this trick
+		
+		$call = function($args = null) use($initializer, $id) {
+			return $initializer->get($id, $args);
+		};
+		
+		$args = $this->getArguments();
 		
 		$definition = new Definition\CallbackDefinition($call, $args);
 		

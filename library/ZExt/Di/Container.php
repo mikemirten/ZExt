@@ -180,6 +180,12 @@ class Container implements ContainerInterface {
 			return $this->_definitions[$id];
 		}
 		
+		foreach ($this->_locators as $locator) {
+			if ($locator instanceof DefinitionAwareInterface && $locator->has($id)) {
+				return $locator->getDefinition($id);
+			}
+		}
+		
 		throw new Exceptions\ServiceNotFound('Unable to found the service "' . $id . '"');
 	}
 	

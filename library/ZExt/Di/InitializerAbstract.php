@@ -37,7 +37,7 @@ use ZExt\Di\Definition\ArgumentsTrait;
  * @author     Mike.Mirten
  * @version    2.0
  */
-abstract class InitializerAbstract implements LocatorInterface {
+abstract class InitializerAbstract implements LocatorInterface, DefinitionAwareInterface {
 	
 	use ArgumentsTrait;
 	
@@ -58,9 +58,16 @@ abstract class InitializerAbstract implements LocatorInterface {
 	/**
 	 * Instances of services
 	 *
-	 * @var mixed
+	 * @var array
 	 */
-	protected $services;
+	protected $services = [];
+	
+	/**
+	 * Instances of service's definitions
+	 *
+	 * @var Definition\DefinitionInterface[]
+	 */
+	protected $definitions = [];
 	
 	/**
 	 * IDs of services which checked on availability
@@ -240,6 +247,25 @@ abstract class InitializerAbstract implements LocatorInterface {
 	}
 	
 	/**
+	 * Get definition of service by service ID
+	 * 
+	 * @param  string $id ID of service
+	 * @return Definition\DefinitionInterface
+	 * @throws Exceptions\ServiceNotFound
+	 */
+	public function getDefinition($id) {
+		if (! $this->has($id)) {
+			throw new Exceptions\ServiceNotFound('Unable to found the service "' . $id . '"');
+		}
+		
+		if (! isset($this->definitions[$id])) {
+			$this->definitions[$id] = $this->initDefinition($id);
+		}
+		
+		return $this->definitions[$id];
+	}
+	
+	/**
 	 * Is service available for obtain ?
 	 * 
 	 * @param  string $id ID of service
@@ -257,6 +283,15 @@ abstract class InitializerAbstract implements LocatorInterface {
 	 */
 	abstract protected function initService($id, array $args = null);
 	
+	/**
+	 * Initialize a definition for service
+	 * 
+	 * @param  string $id Service ID
+	 * @return Definition\DefinitionInterface
+	 */
+	abstract protected function initDefinition($id);
+
+
 	/**
 	 * Get service by ID
 	 * 

@@ -85,6 +85,15 @@ class InstanceDefinition extends DefinitionAbstract {
 	 * @param  array $args
 	 * @return mixed
 	 */
-	protected function initService(array $args = null) {}
+	protected function initService(array $args = null) {
+		
+	}
+	
+	public function __sleep() {
+		$properties   = parent::__sleep();
+		$properties[] = 'service';
+		
+		return $properties;
+	}
 	
 }

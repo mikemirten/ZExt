@@ -102,4 +102,11 @@ class PrototypeDefinition extends DefinitionAbstract {
 		return $copy;
 	}
 	
+	public function __sleep() {
+		$properties   = parent::__sleep();
+		$properties[] = 'prototype';
+		
+		return $properties;
+	}
+	
 }
