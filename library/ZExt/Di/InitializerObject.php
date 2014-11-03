@@ -35,7 +35,7 @@ namespace ZExt\Di;
  * @author     Mike.Mirten
  * @version    2.0
  */
-abstract class InitializerObject extends InitializerAbstract implements LocatorAwareInterface {
+abstract class InitializerObject extends InitializerAbstract implements LocatorAwareInterface, DefinitionAwareInterface {
 	
 	use LocatorAwareTrait;
 	
@@ -78,6 +78,30 @@ abstract class InitializerObject extends InitializerAbstract implements LocatorA
 		$method = sprintf($this->methodNameTemplate, lcfirst($id));
 		
 		return method_exists($this, $method);
+	}
+	
+	/**
+	 * Get definition of service by service ID
+	 * 
+	 * @param  string $id ID of service
+	 * @return Definition\DefinitionInterface
+	 * @throws Exceptions\ServiceNotFound
+	 */
+	public function getDefinition($id) {
+		if (! $this->has($id)) {
+			throw new Exceptions\ServiceNotFound('Unable to found the service "' . $id . '"');
+		}
+	
+		$call = [$this, 'get'];
+		$args = [$id, $this->getArguments()];
+		
+		$definition = new Definition\CallbackDefinition($call, $args);
+		
+		if ($this->isFactory()) {
+			$definition->setFactoryMode();
+		}
+		
+		return $definition;
 	}
 	
 	/**

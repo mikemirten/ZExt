@@ -35,7 +35,7 @@ namespace ZExt\Di;
  * @author     Mike.Mirten
  * @version    1.0
  */
-interface ContainerInterface extends LocatorInterface {
+interface ContainerInterface extends LocatorInterface, DefinitionAwareInterface {
 	
 	/**
 	 * Set service definition
@@ -57,15 +57,6 @@ interface ContainerInterface extends LocatorInterface {
 	 * @throws Exceptions\ServiceOverride
 	 */
 	public function setAlias($existsId, $newId);
-	
-	/**
-	 * Get definition of service by service ID
-	 * 
-	 * @param  string $id ID of service
-	 * @return Definition\DefinitionInterface
-	 * @throws Exceptions\ServiceNotFound
-	 */
-	public function getDefinition($id);
 	
 	/**
 	 * Remove service

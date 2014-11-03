@@ -37,7 +37,7 @@ use ReflectionClass, ReflectionException;
  * @author     Mike.Mirten
  * @version    2.0
  */
-class InitializerNamespace extends InitializerAbstract {
+class InitializerNamespace extends InitializerAbstract implements DefinitionAwareInterface {
 	
 	/**
 	 * Namespaces
@@ -203,6 +203,32 @@ class InitializerNamespace extends InitializerAbstract {
 	 */
 	protected function hasService($id) {
 		return $this->getReflectionById($id) !== null;
+	}
+	
+	/**
+	 * Get definition of service by service ID
+	 * 
+	 * @param  string $id ID of service
+	 * @return Definition\DefinitionInterface
+	 * @throws Exceptions\ServiceNotFound
+	 */
+	public function getDefinition($id) {
+		$reflection = $this->getReflectionById($id);
+		
+		if ($reflection === null) {
+			throw new Exceptions\ServiceNotFound('Unable to found the service "' . $id . '"');
+		}
+		
+		$class = $reflection->getName();
+		$args  = $this->getArguments();
+		
+		$definition = new Definition\ClassDefinition($class, $args);
+		
+		if ($this->isFactory()) {
+			$definition->setFactoryMode();
+		}
+		
+		return $definition;
 	}
 	
 }

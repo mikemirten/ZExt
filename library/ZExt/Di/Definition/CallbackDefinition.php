@@ -26,8 +26,6 @@
 
 namespace ZExt\Di\Definition;
 
-use Closure;
-
 /**
  * Callback type definition
  * 
@@ -42,31 +40,31 @@ class CallbackDefinition extends DefinitionAbstract {
 	/**
 	 * Callback
 	 *
-	 * @var Closure 
+	 * @var \Closure 
 	 */
 	protected $callback;
 	
 	/**
 	 * Constructor
 	 * 
-	 * @param Closure $callback Callback of service init
+	 * @param \Closure $callback Callback of service init
 	 * @param mixed   $args     Arguments for constructor of service
 	 */
-	public function __construct(Closure $callback, $args = null) {
+	public function __construct($callback, $args = null) {
 		$this->setCallback($callback);
 		
 		if ($args !== null) {
-			$this->setParameters($args);
+			$this->setArguments($args);
 		}
 	}
 	
 	/**
 	 * Set callback
 	 * 
-	 * @param  Closure $callback
+	 * @param  \Closure $callback
 	 * @return CallbackDefinition
 	 */
-	public function setCallback(Closure $callback) {
+	public function setCallback($callback) {
 		$this->callback = $callback;
 		$this->reset();
 		
@@ -76,7 +74,7 @@ class CallbackDefinition extends DefinitionAbstract {
 	/**
 	 * Get callback
 	 * 
-	 * @return Closure
+	 * @return \Closure
 	 */
 	public function getCallback() {
 		return $this->callback;
@@ -90,7 +88,7 @@ class CallbackDefinition extends DefinitionAbstract {
 	 */
 	protected function initService(array $args = null) {
 		if ($args === null) {
-			return $this->callback->__invoke();
+			return call_user_func($this->callback);
 		}
 		
 		return call_user_func_array($this->callback, $args);
