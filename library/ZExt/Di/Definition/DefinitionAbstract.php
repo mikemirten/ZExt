@@ -26,9 +26,6 @@
 
 namespace ZExt\Di\Definition;
 
-use ZExt\Config\Config;
-use Traversable;
-
 /**
  * Definition abstract
  * 
@@ -39,6 +36,8 @@ use Traversable;
  * @version    1.0
  */
 abstract class DefinitionAbstract implements DefinitionInterface {
+	
+	use ArgumentsTrait;
 	
 	/**
 	 * Arguments for constructor of service
@@ -227,55 +226,6 @@ abstract class DefinitionAbstract implements DefinitionInterface {
 		$id   = $this->getIdByArgs($args);
 		
 		unset($this->servicesByArgs[$id]);
-	}
-	
-	/**
-	 * Calculate ID by arguments
-	 * 
-	 * @param  array $args
-	 * @return string
-	 */
-	protected function getIdByArgs(array $args) {
-		return json_encode($args);
-	}
-	
-	/**
-	 * Normalize arguments
-	 * 
-	 * @param  mixed $args
-	 * @return array
-	 */
-	protected function normalizeArgs($args) {
-		if (is_array($args)) {
-			return $args;
-		}
-		
-		if ($args instanceof Config) {
-			return $args->toArray();
-		}
-		
-		if ($args instanceof Traversable) {
-			return iterator_to_array($args);
-		}
-		
-		return [$args];
-	}
-	
-	/**
-	 * Process arguments
-	 * 
-	 * @param  array $args
-	 * @return array
-	 */
-	protected function processArgs(array $args) {
-		foreach ($args as &$arg) {
-			if ($arg instanceof Argument\ArgumentInterface) {
-				$arg = $arg->getValue();
-			}
-		}
-		unset($arg);
-		
-		return $args;
 	}
 	
 }

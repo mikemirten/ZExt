@@ -26,6 +26,7 @@
 
 namespace ZExt\Di\Definition;
 
+use ZExt\Di\Exceptions\InitializationFailure;
 use ReflectionClass, ReflectionException;
 
 /**
@@ -92,7 +93,7 @@ class ClassDefinition extends DefinitionAbstract {
 		try {
 			$reflection = new ReflectionClass($this->class);
 		} catch (ReflectionException $exception) {
-			throw new Exceptions\InitializationFailure('Error occurred while service initialization by class "' . $this->class . '"', 0, $exception);
+			throw new InitializationFailure('Error occurred while service initialization by class "' . $this->class . '"', 0, $exception);
 		}
 		
 		if ($args === null) {
