@@ -43,16 +43,23 @@ class Container implements ContainerInterface {
 	/**
 	 * Definitions of services
 	 *
-	 * @var DefinitionInterface
+	 * @var DefinitionInterface[]
 	 */
 	protected $_definitions = [];
 	
 	/**
 	 * Locators
 	 *
-	 * @var LocatorInterface
+	 * @var LocatorInterface[]
 	 */
 	protected $_locators = [];
+	
+	/**
+	 * Locators by resolved ID
+	 *
+	 * @var LocatorInterface[] 
+	 */
+	protected $_locatorsResolved = [];
 	
 	/**
 	 * Set service definition
@@ -139,10 +146,10 @@ class Container implements ContainerInterface {
 			return $this->_definitions[$id]->getService($args);
 		}
 		
-		foreach ($this->_locators as $locator) {
-			if ($locator->has($id)) {
-				return $locator->get($id, $args);
-			}
+		$locator = $this->getLocatorByServiceId($id);
+		
+		if ($locator !== null) {
+			return $locator->get($id, $args);
 		}
 			
 		throw new Exceptions\ServiceNotFound('Unable to found the service "' . $id . '"');
@@ -159,13 +166,26 @@ class Container implements ContainerInterface {
 			return true;
 		}
 		
-		foreach ($this->_locators as $locator) {
-			if ($locator->has($id)) {
-				return true;
-			}
+		return $this->getLocatorByServiceId($id) !== null;
+	}
+	
+	/**
+	 * Get resolve locator by service ID
+	 * 
+	 * @param  string $id Service ID
+	 * @return LocatorInterface
+	 */
+	protected function getLocatorByServiceId($id) {
+		if (isset($this->_locatorsResolved[$id])) {
+			return $this->_locatorsResolved[$id];
 		}
 		
-		return false;
+		foreach ($this->_locators as $locator) {
+			if ($locator->has($id)) {
+				$this->_locatorsResolved[$id] = $locator;
+				return $locator;
+			}
+		}
 	}
 	
 	/**
@@ -180,10 +200,17 @@ class Container implements ContainerInterface {
 			return $this->_definitions[$id];
 		}
 		
-		foreach ($this->_locators as $locator) {
-			if ($locator instanceof DefinitionAwareInterface && $locator->has($id)) {
-				return $locator->getDefinition($id);
+		$locator = $this->getLocatorByServiceId($id);
+		
+		if ($locator !== null) {
+			if ($locator instanceof DefinitionAwareInterface) {
+				$definition = $locator->getDefinition($id);
+				
+				$this->_definitions[$id] = $definition;
+				return $definition;
 			}
+			
+			throw new Exceptions\ServiceNotFound('Unable to provide definition for the service "' . $id . '"');
 		}
 		
 		throw new Exceptions\ServiceNotFound('Unable to found the service "' . $id . '"');
@@ -289,6 +316,10 @@ class Container implements ContainerInterface {
 	 */
 	public function __call($id, $args) {
 		return $this->get($id, $args);
+	}
+	
+	public function __sleep() {
+		return ['_definitions', '_locators'];
 	}
 	
 }
