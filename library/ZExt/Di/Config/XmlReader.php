@@ -52,6 +52,13 @@ class XmlReader implements ReaderInterface {
 	protected $path;
 	
 	/**
+	 * Config
+	 *
+	 * @var Element 
+	 */
+	protected $config;
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param  string $path
@@ -68,37 +75,68 @@ class XmlReader implements ReaderInterface {
 	}
 	
 	/**
-	 * Get definitions configuration
+	 * Get configuration
 	 * 
-	 * @return array
+	 * @return Element
+	 * @throws Exceptions\InvalidPath
+	 * @throws Exceptions\InvalidConfig
+	 */
+	protected function getConfig() {
+		if ($this->config === null) {
+			$content = file_get_contents($this->path);
+
+			if ($content === false) {
+				throw new Exceptions\InvalidPath('File "' . $this->path . '" is unreadable');
+			}
+
+			$this->config = Xml::parse($content);
+
+			if ($this->config->getName() !== 'container') {
+				throw new Exceptions\InvalidConfig('Root element of config must be a "container"');
+			}
+		}
+		
+		return $this->config;
+	}
+	
+	/**
+	 * Gets definitions of services
+	 * 
+	 * @return object
 	 * @throws Exceptions\InvalidPath
 	 * @throws Exceptions\InvalidConfig
 	 */
 	public function getConfiguration() {
-		$content = file_get_contents($this->path);
+		$services     = [];
+		$initializers = [];
 		
-		if ($content === false) {
-			throw new Exceptions\InvalidPath('File "' . $this->path . '" is unreadable');
-		}
-		
-		$container = Xml::parse($content);
-		
-		if ($container->getName() !== 'container') {
-			throw new Exceptions\InvalidConfig('Root element of config must be a "container"');
-		}
-		
-		$definitions = [];
-		
-		foreach ($container->getContent() as $element) {
-			if ($element->getName() === 'services') {
-				$definitions = array_merge($definitions, $this->processServices($element));
+		foreach ($this->getConfig()->getContent() as $element) {
+			$name = $element->getName();
+			
+			if ($name === 'services') {
+				$services = array_merge($services, $this->processServices($element));
+				continue;
+			}
+			
+			if ($name === 'initializers') {
+				$initializers = array_merge($initializers, $this->processInitializers($element));
 				continue;
 			}
 			
 			throw new Exceptions\InvalidConfig('Unknown element "' . $element->getName() . '" in container');
 		}
 		
-		return $definitions;
+		$configuration = new stdClass();
+		
+		if (! empty($services)) {
+			$configuration->services = $services;
+		}
+		
+		if (! empty($services)) {
+			$configuration->initializers = $initializers;
+		}
+		
+		return $configuration;
 	}
 	
 	/**
@@ -129,6 +167,7 @@ class XmlReader implements ReaderInterface {
 	 * @param  Element $service
 	 * @param  string  $namespace
 	 * @return object
+	 * @throws Exceptions\InvalidConfig
 	 */
 	protected function processService(Element $service, $namespace = null) {
 		$definition = new stdClass();
@@ -159,6 +198,61 @@ class XmlReader implements ReaderInterface {
 		return $definition;
 	}
 	
+	/**
+	 * Process initializers
+	 * 
+	 * @param  Element $initializers
+	 * @return array
+	 * @throws Exceptions\InvalidConfig
+	 */
+	protected function processInitializers(Element $initializers) {
+		$definitions = [];
+		
+		foreach ($initializers->getContent() as $initializer) {
+			if ($initializer->getName() === 'initializer') {
+				$definitions[] = $this->processInitializer($initializer);
+				continue;
+			}
+			
+			throw new Exceptions\InvalidConfig('Unknown element "' . $initializers->getName() . '" in initializers');
+		}
+		
+		return $definitions;
+	}
+	
+	/**
+	 * Process initializer
+	 * 
+	 * @param  Element $initializer
+	 * @return object
+	 * @throws Exceptions\InvalidConfig
+	 */
+	protected function processInitializer(Element $initializer) {
+		$definition = new stdClass();
+		
+		if (isset($initializer->namespace)) {
+			$definition->type      = 'namespace';
+			$definition->namespace = $initializer->namespace;
+		}
+		else if (isset($initializer->class)) {
+			$definition->type  = 'object';
+			$definition->class = $initializer->class;
+		}
+		
+		if ($initializer->factory === 'true') {
+			$definition->factory = true;
+		}
+		
+		$content = $initializer->getContent();
+		
+		if (! empty($content)) {
+			$this->processParameters($content, $definition);
+		}
+		
+		return $definition;
+	}
+
+
 	/**
 	 * Process parameters
 	 * 

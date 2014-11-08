@@ -65,4 +65,13 @@ interface ContainerInterface extends LocatorInterface, DefinitionAwareInterface 
 	 */
 	public function remove($id);
 	
+	/**
+	 * Add fallback locator
+	 * 
+	 * @param  LocatorInterface $locator Locator instance
+	 * @param  string           $id      Locator unique ID
+	 * @return ContainerInterface
+	 */
+	public function addLocator(LocatorInterface $locator, $id = null);
+	
 }

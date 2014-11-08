@@ -29,6 +29,8 @@ namespace ZExt\Di;
 use ZExt\Di\Config\Exceptions\InvalidConfig;
 use ZExt\Di\Definition\Argument\ServiceReferenceArgument;
 
+use stdClass;
+
 /**
  * Configurator of dependency injection container
  * 
@@ -118,7 +120,14 @@ class Configurator {
 	public function configure() {
 		$config = $this->mergeConfigs($this->configs);
 		
-		$this->applyConfig($config);
+		if (isset($config->services)) {
+			$this->applyServices($config->services);
+		}
+		
+		if (isset($config->initializers)) {
+			$this->applyInitializers($config->initializers);
+		}
+		
 		return $this->container;
 	}
 	
@@ -127,7 +136,7 @@ class Configurator {
 	 * 
 	 * @param array $config
 	 */
-	protected function applyConfig(array $config) {
+	protected function applyServices(array $config) {
 		foreach ($config as $definitionConf) {
 			if (! isset($definitionConf->type)) {
 				throw new InvalidConfig('Service definition must contain a "type" property"');
@@ -155,6 +164,44 @@ class Configurator {
 			}
 			
 			throw new InvalidConfig('Unknown type of service: "' . $definitionConf->type . '"');
+		}
+	}
+	
+	protected function applyInitializers(array $config) {
+		foreach ($config as $definitionConf) {
+			if (! isset($definitionConf->type)) {
+				throw new InvalidConfig('Service definition must contain a "type" property"');
+			}
+			
+			if ($definitionConf->type === 'namespace') {
+				if (! isset($definitionConf->namespace)) {
+					throw new InvalidConfig('Initializer definition of type "namespace" must contain a "namespace" property');
+				}
+				
+				$initializer = new InitializerNamespace($definitionConf->namespace);
+			}
+			else if ($definitionConf->type === 'object') {
+				if (! isset($definitionConf->class)) {
+					throw new InvalidConfig('Initializer definition of type "object" must contain a "class" property');
+				}
+				
+				$initializer = new $definitionConf->class();
+			}
+			else {
+				throw new InvalidConfig('Unknown type of initializer: "' . $definitionConf->type . '"');
+			}
+			
+			if (! empty($definitionConf->factory)) {
+				$initializer->setFactoryMode();
+			}
+
+			if (isset($definitionConf->arguments)) {
+				$args = $this->processArguments($definitionConf->arguments);
+
+				$initializer->setArguments($args);
+			}
+
+			$this->container->addLocator($initializer);
 		}
 	}
 	
@@ -214,27 +261,46 @@ class Configurator {
 	 * @throws InvalidConfig
 	 */
 	protected function mergeConfigs(array $configs) {
-		$mergedConfigs = [];
+		$services     = [];
+		$initializers = [];
 		
 		foreach ($configs as $config) {
 			if ($config instanceof Config\ReaderInterface) {
 				$config = $config->getConfiguration();
 			}
 			
-			foreach ($config as $definition) {
-				if (! isset($definition->id)) {
-					throw new InvalidConfig('Service definition must contain an "id" property');
-				}
+			if (isset($config->services)) {
+				foreach ($config->services as $definition) {
+					if (! isset($definition->id)) {
+						throw new InvalidConfig('Service definition must contain an "id" property');
+					}
 
-				if (! $this->overridingEnabled && isset($mergedConfigs[$definition->id])) {
-					throw new Exceptions\ServiceOverride('Double definition for the service "' . $definition->id . '"');
-				}
+					if (! $this->overridingEnabled && isset($services[$definition->id])) {
+						throw new Exceptions\ServiceOverride('Double definition for the service "' . $definition->id . '"');
+					}
 
-				$mergedConfigs[$definition->id] = $definition;
+					$services[$definition->id] = $definition;
+				}
+			}
+			
+			if (isset($config->initializers)) {
+				foreach ($config->initializers as $initializer) {
+					$initializers[] = $initializer;
+				}
 			}
 		}
 		
-		return array_values($mergedConfigs);
+		$merged = new stdClass();
+		
+		if (! empty($services)) {
+			$merged->services = $services;
+		}
+		
+		if (! empty($initializers)) {
+			$merged->initializers = $initializers;
+		}
+		
+		return $merged;
 	}
 	
 }

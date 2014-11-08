@@ -40,7 +40,7 @@ interface ReaderInterface {
 	/**
 	 * Get definitions configuration
 	 * 
-	 * @return array
+	 * @return object
 	 */
 	public function getConfiguration();
 	
