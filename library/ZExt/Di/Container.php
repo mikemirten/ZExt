@@ -225,6 +225,11 @@ class Container implements ContainerInterface {
 	 * @throws Exceptions\ServiceNotFound
 	 */
 	public function hasInitialized($id, $args = null) {
+		if (isset($args[2])) {
+			$args = func_get_args();
+			array_shift($args);
+		}
+		
 		return $this->getDefinition($id)->hasInitialized($args);
 	}
 	
