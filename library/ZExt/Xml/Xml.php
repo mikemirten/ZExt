@@ -26,6 +26,9 @@
 
 namespace ZExt\Xml;
 
+use ZExt\File\FileInterface,
+    ZExt\File\File;
+
 use SimpleXMLElement;
 
 /**
@@ -38,6 +41,20 @@ use SimpleXMLElement;
  * @version    1.0
  */
 class Xml {
+	
+	/**
+	 * Read and parse XML from file
+	 * 
+	 * @param  File | string $file
+	 * @return Element
+	 */
+	static public function read($file) {
+		if (! $file instanceof FileInterface) {
+			$file = new File($file);
+		}
+		
+		return static::parse($file->getContent());
+	}
 	
 	/**
 	 * Parse XML from string
