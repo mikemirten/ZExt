@@ -25,7 +25,7 @@
  */
 namespace ZExt\Components;
 
-use Traversable;
+use Traversable, stdClass;
 
 /**
  * Standart functions library
@@ -56,6 +56,26 @@ class Std {
 		}
 		
 		return $array;
+	}
+	
+	/**
+	 * Merge abjects into one
+	 * 
+	 * @param  stdClass $object1
+	 * @param  stdClass $object2
+	 * @param  stdClass $objectN
+	 * @return stdClass
+	 */
+	static public function objectMerge() {
+		$result = new stdClass();
+		
+		foreach (func_get_args() as $object) {
+			foreach ($object as $key => $value) {
+				$result->$key = $value;
+			}
+		}
+		
+		return $result;
 	}
 	
 	/**
