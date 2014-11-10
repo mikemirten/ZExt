@@ -47,6 +47,13 @@ class PrototypeDefinition extends DefinitionAbstract {
 	protected $prototype;
 	
 	/**
+	 * Factory mode
+	 *
+	 * @var bool
+	 */
+	protected $factoryMode = true;
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param mixed   $prototype Prototype of service
