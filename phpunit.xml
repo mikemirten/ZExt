@@ -2,24 +2,8 @@
 <phpunit bootstrap="./tests/bootstrap.php" colors="true">
 	
 	<testsuites>
-		<testsuite name="Cache">
-			<directory>./tests/ZExt/Cache</directory>
-		</testsuite>
-
-		<testsuite name="Config">
-			<directory>./tests/ZExt/Config</directory>
-		</testsuite>
-		
-		<testsuite name="Url">
-			<directory>./tests/ZExt/Url</directory>
-		</testsuite>
-		
-		<testsuite name="Datagate">
-			<directory>./tests/ZExt/Datagate</directory>
-		</testsuite>
-		
-		<testsuite name="NoSql">
-			<directory>./tests/ZExt/NoSql</directory>
+		<testsuite name="Framework">
+			<directory>./tests/ZExt</directory>
 		</testsuite>
 	</testsuites>
 	
