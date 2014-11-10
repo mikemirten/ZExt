@@ -67,6 +67,7 @@ class Configurator {
 	 * Constructor
 	 * 
 	 * @param Config\ReaderInterface | array $config
+	 * @param ContainerInterface             $container
 	 */
 	public function __construct($config, ContainerInterface $container) {
 		$this->addConfig($config);
