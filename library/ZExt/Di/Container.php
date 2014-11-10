@@ -99,11 +99,11 @@ class Container implements ContainerInterface {
 	 * @throws Exceptions\ServiceOverride
 	 */
 	public function setAlias($existsId, $newId) {
-		if (isset($this->definition[$newId])) {
+		if (isset($this->_definitions[$newId])) {
 			throw new Exceptions\ServiceOverride('Service "' . $newId . '" already exists');
 		}
 		
-		$this->definition[$newId] = $this->getDefinition($existsId);
+		$this->_definitions[$newId] = $this->getDefinition($existsId);
 	}
 	
 	/**
