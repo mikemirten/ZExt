@@ -31,6 +31,9 @@ use ZExt\Xml\Xml,
 
 use ZExt\Components\Std;
 
+use ZExt\File\FileInterface,
+    ZExt\File\File;	
+
 use stdClass;
 
 /**
@@ -47,9 +50,9 @@ class XmlReader implements ReaderInterface {
 	/**
 	 * Path to config
 	 *
-	 * @var string 
+	 * @var ZExt\File\FileInterface
 	 */
-	protected $path;
+	protected $file;
 	
 	/**
 	 * Config
@@ -59,41 +62,40 @@ class XmlReader implements ReaderInterface {
 	protected $config;
 	
 	/**
+	 * Override enabled
+	 *
+	 * @var bool
+	 */
+	protected $override;
+	
+	/**
 	 * Constructor
 	 * 
-	 * @param  string $path
-	 * @throws Exceptions\InvalidPath
+	 * @param FileInterface | string $file
 	 */
-	public function __construct($path) {
-		$path = realpath($path);
-		
-		if ($path === false) {
-			throw new Exceptions\InvalidPath('File "' . $path . '" doesn\'t exists or inaccsessible');
+	public function __construct($file) {
+		if ($file instanceof FileInterface) {
+			$this->file = $file;
+		} else {
+			$this->file = new File($file);
 		}
-		
-		$this->path = $path;
 	}
 	
 	/**
-	 * Get configuration
+	 * Get configuration content
 	 * 
 	 * @return Element
-	 * @throws Exceptions\InvalidPath
 	 * @throws Exceptions\InvalidConfig
 	 */
-	protected function getConfig() {
+	protected function getContent() {
 		if ($this->config === null) {
-			$content = file_get_contents($this->path);
-
-			if ($content === false) {
-				throw new Exceptions\InvalidPath('File "' . $this->path . '" is unreadable');
-			}
-
-			$this->config = Xml::parse($content);
+			$this->config = Xml::read($this->file);
 
 			if ($this->config->getName() !== 'container') {
-				throw new Exceptions\InvalidConfig('Root element of config must be a "container"');
+				throw new Exceptions\InvalidConfig('Root element of a config must be a "container"');
 			}
+			
+			$this->override = ($this->config->override === 'true');
 		}
 		
 		return $this->config;
@@ -103,23 +105,22 @@ class XmlReader implements ReaderInterface {
 	 * Gets definitions of services
 	 * 
 	 * @return object
-	 * @throws Exceptions\InvalidPath
 	 * @throws Exceptions\InvalidConfig
 	 */
 	public function getConfiguration() {
-		$services     = [];
-		$initializers = [];
+		$services     = new stdClass();
+		$initializers = new stdClass();
 		
-		foreach ($this->getConfig()->getContent() as $element) {
+		foreach ($this->getContent()->getContent() as $element) {
 			$name = $element->getName();
 			
 			if ($name === 'services') {
-				$services = array_merge($services, $this->processServices($element));
+				$services = Std::objectMerge($services, $this->processServices($element));
 				continue;
 			}
 			
 			if ($name === 'initializers') {
-				$initializers = array_merge($initializers, $this->processInitializers($element));
+				$initializers = Std::objectMerge($initializers, $this->processInitializers($element));
 				continue;
 			}
 			
@@ -142,16 +143,25 @@ class XmlReader implements ReaderInterface {
 	/**
 	 * Process services
 	 * 
-	 * @param Element $services
+	 * @param  Element $services
+	 * @return object
 	 */
 	protected function processServices(Element $services) {
-		$definitions = [];
+		$definitions = new stdClass();
 		
 		$namespace = isset($services->namespace) ? $services->namespace : null;
 		
 		foreach ($services->getContent() as $service) {
 			if ($service->getName() === 'service') {
-				$definitions[] = $this->processService($service, $namespace);
+				if (! isset($service->id)) {
+					throw new Exceptions\InvalidConfig('Service definition must contain an ID of service');
+				}
+				
+				if (! $this->override && isset($definitions->{$service->id})) {
+					throw new Exceptions\InvalidConfig('Service "' . $service->id . '" is already been set and cannot be overridden');
+				}
+				
+				$definitions->{$service->id} = $this->processService($service, $namespace);
 				continue;
 			}
 			
@@ -171,12 +181,6 @@ class XmlReader implements ReaderInterface {
 	 */
 	protected function processService(Element $service, $namespace = null) {
 		$definition = new stdClass();
-		
-		if (! isset($service->id)) {
-			throw new Exceptions\InvalidConfig('Service definition must contain an ID of service');
-		}
-		
-		$definition->id = $service->id;
 		
 		if (isset($service->class)) {
 			$definition->type  = 'class';
@@ -206,11 +210,21 @@ class XmlReader implements ReaderInterface {
 	 * @throws Exceptions\InvalidConfig
 	 */
 	protected function processInitializers(Element $initializers) {
-		$definitions = [];
+		$definitions = new stdClass();
 		
 		foreach ($initializers->getContent() as $initializer) {
 			if ($initializer->getName() === 'initializer') {
-				$definitions[] = $this->processInitializer($initializer);
+				$initializerDefinition = $this->processInitializer($initializer);
+				
+				$id = isset($initializer->id)
+					? $initializer->id
+					: substr(md5(json_encode($initializerDefinition)), 24);
+				
+				if (! $this->override && isset($definitions->$id)) {
+					throw new Exceptions\InvalidConfig('Initializer "' . $id . '" is already been set and cannot be overridden');
+				}
+				
+				$definitions->$id = $initializerDefinition;
 				continue;
 			}
 			
@@ -252,7 +266,6 @@ class XmlReader implements ReaderInterface {
 		return $definition;
 	}
 
-
 	/**
 	 * Process parameters
 	 * 
@@ -261,16 +274,37 @@ class XmlReader implements ReaderInterface {
 	 */
 	protected function processParameters(array $params, stdClass $definition) {
 		foreach ($params as $param) {
-			if ($param->getName() === 'argument') {
+			if ($param->getName() === 'arguments') {
+				$content = $param->getContent();
+				
+				if (! empty($content)) {
+					$this->processArguments($content, $definition);
+				}
+				continue;
+			}
+			
+			throw new Exceptions\InvalidConfig('Unknown element "' . $arg->getName() . '" in service devinition');
+		}
+	}
+	
+	/**
+	 * Process arguments
+	 * 
+	 * @param array    $args
+	 * @param stdClass $definition
+	 */
+	protected function processArguments(array $args, stdClass $definition) {
+		foreach ($args as $arg) {
+			if ($arg->getName() === 'argument') {
 				if (! isset($definition->arguments)) {
 					$definition->arguments = [];
 				}
 				
-				$definition->arguments[] = $this->processArgument($param);
+				$definition->arguments[] = $this->processArgument($arg);
 				continue;
 			}
 			
-			throw new Exceptions\InvalidConfig('Unknown element "' . $param->getName() . '" in service devinition');
+			throw new Exceptions\InvalidConfig('Unknown element "' . $arg->getName() . '" in service devinition');
 		}
 	}
 	

@@ -38,9 +38,31 @@ namespace ZExt\Di\Config;
 interface ReaderInterface {
 	
 	/**
-	 * Get definitions configuration
+	 * Get configuration of service's definitions
+	 * 
+	 * {
+	 *     "services": {
+	 *         "serviceId": {
+	 *             "type": "serviceType",
+	 *             ...
+	 *             "arguments": [
+	 *                 {
+	 *                     "type": "argumentType",
+	 *                     ...
+	 *                 }
+	 *             ]
+	 *         }
+	 *     },
+	 *     "initializers": {
+	 *         "initializerId": {
+	 *             "type": "initializerType",
+	 *             ...
+	 *         }
+	 *     }
+	 * }
 	 * 
 	 * @return object
+	 * @throws Exceptions\InvalidConfig
 	 */
 	public function getConfiguration();
 	
