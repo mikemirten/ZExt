@@ -62,7 +62,7 @@ interface ReaderInterface {
 	 * }
 	 * 
 	 * @return object
-	 * @throws Exceptions\InvalidConfig
+	 * @throws \ZExt\Di\Exceptions\InvalidConfig
 	 */
 	public function getConfiguration();
 	

@@ -1,6 +1,6 @@
 <?php
 
-namespace ZExt\Di\Config\Exceptions;
+namespace ZExt\Di\Exceptions;
 
 class InvalidConfig extends \ZExt\Exception {
 	

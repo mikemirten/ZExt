@@ -26,7 +26,6 @@
 
 namespace ZExt\Di;
 
-use ZExt\Di\Config\Exceptions\InvalidConfig;
 use ZExt\Di\Definition\Argument\ServiceReferenceArgument;
 
 use stdClass;
@@ -61,15 +60,15 @@ class Configurator {
 	 *
 	 * @var bool
 	 */
-	protected $overridingEnabled = false;
+	protected $override = false;
 	
 	/**
 	 * Constructor
 	 * 
-	 * @param Config\ReaderInterface | array $config
-	 * @param ContainerInterface             $container
+	 * @param Config\ReaderInterface $config
+	 * @param ContainerInterface     $container
 	 */
-	public function __construct($config, ContainerInterface $container) {
+	public function __construct(Config\ReaderInterface $config, ContainerInterface $container) {
 		$this->addConfig($config);
 		
 		$this->container = $container;
@@ -81,11 +80,7 @@ class Configurator {
 	 * @param  Config\ReaderInterface | array $config
 	 * @return Configurator
 	 */
-	public function addConfig($config) {
-		if (! $config instanceof Config\ReaderInterface && ! is_array($config)) {
-			throw new InvalidConfig('Config must be an instance of "ZExt\Di\Config\ReaderInterface" or an array, "' . gettype($config) . '" given.');
-		}
-		
+	public function addConfig(Config\ReaderInterface $config) {
 		$this->configs[] = $config;
 		
 		return $this;
@@ -97,7 +92,7 @@ class Configurator {
 	 * @return Configurator
 	 */
 	public function enableOverriding() {
-		$this->overridingEnabled = true;
+		$this->override = true;
 		
 		return $this;
 	}
@@ -108,7 +103,7 @@ class Configurator {
 	 * @return bool
 	 */
 	public function isOverridingEnabled() {
-		return $this->overridingEnabled;
+		return $this->override;
 	}
 	
 	/**
@@ -116,7 +111,7 @@ class Configurator {
 	 * 
 	 * @return ContainerInterface
 	 * @throws Exceptions\ServiceOverride
-	 * @throws InvalidConfig
+	 * @throws Exceptions\InvalidConfig
 	 */
 	public function configure() {
 		$config = $this->mergeConfigs($this->configs);
@@ -137,15 +132,15 @@ class Configurator {
 	 * 
 	 * @param array $config
 	 */
-	protected function applyServices(array $config) {
-		foreach ($config as $definitionConf) {
+	protected function applyServices(stdClass $config) {
+		foreach ($config as $id => $definitionConf) {
 			if (! isset($definitionConf->type)) {
-				throw new InvalidConfig('Service definition must contain a "type" property"');
+				throw new Exceptions\InvalidConfig('Service definition must contain a "type" property"');
 			}
 			
 			if ($definitionConf->type === 'class') {
 				if (! isset($definitionConf->class)) {
-					throw new InvalidConfig('Service definition of type "class" must contain a "class" property');
+					throw new Exceptions\InvalidConfig('Service definition of type "class" must contain a "class" property');
 				}
 				
 				$definition = new Definition\ClassDefinition($definitionConf->class);
@@ -160,36 +155,36 @@ class Configurator {
 					$definition->setArguments($args);
 				}
 				
-				$this->container->set($definitionConf->id, $definition);
+				$this->container->set($id, $definition);
 				continue;
 			}
 			
-			throw new InvalidConfig('Unknown type of service: "' . $definitionConf->type . '"');
+			throw new Exceptions\InvalidConfig('Unknown type of service: "' . $definitionConf->type . '"');
 		}
 	}
 	
-	protected function applyInitializers(array $config) {
-		foreach ($config as $definitionConf) {
+	protected function applyInitializers(stdClass $config) {
+		foreach ($config as $id => $definitionConf) {
 			if (! isset($definitionConf->type)) {
-				throw new InvalidConfig('Service definition must contain a "type" property"');
+				throw new Exceptions\InvalidConfig('Service definition must contain a "type" property"');
 			}
 			
 			if ($definitionConf->type === 'namespace') {
 				if (! isset($definitionConf->namespace)) {
-					throw new InvalidConfig('Initializer definition of type "namespace" must contain a "namespace" property');
+					throw new Exceptions\InvalidConfig('Initializer definition of type "namespace" must contain a "namespace" property');
 				}
 				
 				$initializer = new InitializerNamespace($definitionConf->namespace);
 			}
 			else if ($definitionConf->type === 'object') {
 				if (! isset($definitionConf->class)) {
-					throw new InvalidConfig('Initializer definition of type "object" must contain a "class" property');
+					throw new Exceptions\InvalidConfig('Initializer definition of type "object" must contain a "class" property');
 				}
 				
 				$initializer = new $definitionConf->class();
 			}
 			else {
-				throw new InvalidConfig('Unknown type of initializer: "' . $definitionConf->type . '"');
+				throw new Exceptions\InvalidConfig('Unknown type of initializer: "' . $definitionConf->type . '"');
 			}
 			
 			if (! empty($definitionConf->factory)) {
@@ -202,7 +197,7 @@ class Configurator {
 				$initializer->setArguments($args);
 			}
 
-			$this->container->addLocator($initializer);
+			$this->container->addLocator($initializer, $id);
 		}
 	}
 	
@@ -211,19 +206,19 @@ class Configurator {
 	 * 
 	 * @param  array $arguments
 	 * @return array
-	 * @throws InvalidConfig
+	 * @throws Exceptions\InvalidConfig
 	 */
 	protected function processArguments(array $arguments) {
 		$processedArgs = [];
 		
 		foreach ($arguments as $argument) {
 			if (! isset($argument->type)) {
-				throw new InvalidConfig('Argument definition must contain a "type" property"');
+				throw new Exceptions\InvalidConfig('Argument definition must contain a "type" property"');
 			}
 			
 			if ($argument->type === 'value') {
 				if (! isset($argument->value)) {
-					throw new InvalidConfig('Argument of type "value" must contain a "value" property');
+					throw new Exceptions\InvalidConfig('Argument of type "value" must contain a "value" property');
 				}
 				
 				$processedArgs[] = $argument->value;
@@ -232,7 +227,7 @@ class Configurator {
 			
 			if ($argument->type === 'service') {
 				if (! isset($argument->id)) {
-					throw new InvalidConfig('Argument of type "service" must contain an "id" property');
+					throw new Exceptions\InvalidConfig('Argument of type "service" must contain an "id" property');
 				}
 				
 				$reference = new ServiceReferenceArgument($this->container, $argument->id);
@@ -247,7 +242,7 @@ class Configurator {
 				continue;
 			}
 			
-			throw new InvalidConfig('Unknown type of argument: "' . $argument->type . '"');
+			throw new Exceptions\InvalidConfig('Unknown type of argument: "' . $argument->type . '"');
 		}
 		
 		return $processedArgs;
@@ -257,36 +252,34 @@ class Configurator {
 	 * Merge configs into one
 	 * 
 	 * @param  array $configs
-	 * @return array
+	 * @return object
 	 * @throws Exceptions\ServiceOverride
-	 * @throws InvalidConfig
+	 * @throws Exceptions\InvalidConfig
 	 */
 	protected function mergeConfigs(array $configs) {
-		$services     = [];
-		$initializers = [];
+		$services     = new stdClass();
+		$initializers = new stdClass();
 		
 		foreach ($configs as $config) {
-			if ($config instanceof Config\ReaderInterface) {
-				$config = $config->getConfiguration();
-			}
+			$config = $config->getConfiguration();
 			
 			if (isset($config->services)) {
-				foreach ($config->services as $definition) {
-					if (! isset($definition->id)) {
-						throw new InvalidConfig('Service definition must contain an "id" property');
+				foreach ($config->services as $id => $service) {
+					if (! $this->override && isset($services->$id)) {
+						throw new Exceptions\ServiceOverride('Service "' . $id . '" is already been set and cannot be overridden');
 					}
 
-					if (! $this->overridingEnabled && isset($services[$definition->id])) {
-						throw new Exceptions\ServiceOverride('Double definition for the service "' . $definition->id . '"');
-					}
-
-					$services[$definition->id] = $definition;
+					$services->$id = $service;
 				}
 			}
 			
 			if (isset($config->initializers)) {
-				foreach ($config->initializers as $initializer) {
-					$initializers[] = $initializer;
+				foreach ($config->initializers as $id => $initializer) {
+					if (! $this->override && isset($initializer->$id)) {
+						throw new Exceptions\ServiceOverride('Initializer "' . $id . '" is already been set and cannot be overridden');
+					}
+					
+					$initializers->$id = $initializer;
 				}
 			}
 		}
