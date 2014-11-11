@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<container>
+	<services>
+		<service id="service" class="TestClass" />
+		
+		<service id="serviceFactory" class="TestClass" factory="true" />
+		
+		<service id="serviceArgBoolean" class="TestClass">
+			<arguments>
+				<argument type="boolean" value="true" />
+				<argument type="boolean" value="false" />
+			</arguments>
+		</service>
+		
+		<service id="serviceArgInteger" class="TestClass">
+			<arguments>
+				<argument value="65535" />
+				<argument value="255" />
+			</arguments>
+		</service>
+		
+		<service id="serviceArgString" class="TestClass">
+			<arguments>
+				<argument value="qwerty" />
+				<argument value="asdfgh" />
+			</arguments>
+		</service>
+		
+		<service id="serviceArgNull" class="TestClass">
+			<arguments>
+				<argument type="null" />
+				<argument type="null" />
+			</arguments>
+		</service>
+		
+		<service id="serviceArgArray" class="TestClass">
+			<arguments>
+				<argument type="array">
+					<element value="2" />
+					<element value="4" />
+					<element value="8" />
+				</argument>
+				
+				<argument type="array">
+					<value>3</value>
+					<value>6</value>
+					<value>9</value>
+				</argument>
+			</arguments>
+		</service>
+		
+		<service id="serviceArgArrayRecursive" class="TestClass">
+			<arguments>
+				<argument type="array">
+					<element type="array">
+						<element value="2" />
+						<element value="4" />
+						<element value="8" />
+					</element>
+				</argument>
+			</arguments>
+		</service>
+		
+		<service id="serviceArgService" class="TestClass">
+			<arguments>
+				<argument type="service" id="service1" />
+				<argument type="service" id="service2" />
+			</arguments>
+		</service>
+		
+		<service id="serviceArgArrayService" class="TestClass">
+			<arguments>
+				<argument type="array">
+					<element id="service1" />
+					<element id="service2" />
+				</argument>
+			</arguments>
+		</service>
+		
+		<service id="serviceArgServiceWithArgs" class="TestClass">
+			<arguments>
+				<argument type="service" id="service">
+					<arguments>
+						<argument value="255" />
+						<argument value="qwerty" />
+					</arguments>
+				</argument>
+			</arguments>
+		</service>
+		
+		<service id="serviceArgArrayServiceWithArgs" class="TestClass">
+			<arguments>
+				<argument type="array">
+					<element id="service1">
+						<arguments>
+							<argument value="255" />
+							<argument value="qwerty" />
+						</arguments>
+					</element>
+				</argument>
+			</arguments>
+		</service>
+	</services>
+	
+	<services namespace="Library">
+		<service id="serviceNamespace" class="TestClass" />
+	</services>
+	
+	<initializers>
+		<initializer id="forms" namespace="Forms" />
+		<initializer id="tags" namespace="Tags" factory="true" />
+		
+		<initializer id="models" namespace="Models">
+			<arguments>
+				<argument id="adapter" />
+				<argument value="qwerty" />
+			</arguments>
+		</initializer>
+		
+		<initializer id="app" class="AppInitializer" />
+	</initializers>
+</container>
