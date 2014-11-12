@@ -80,6 +80,11 @@ trait ArgumentsTrait {
 	 */
 	protected function processArgs(array $args) {
 		foreach ($args as &$arg) {
+			if (is_array($arg)) {
+				$arg = $this->processArgs($arg);
+				continue;
+			}
+			
 			if ($arg instanceof Argument\ArgumentInterface) {
 				$arg = $arg->getValue();
 			}

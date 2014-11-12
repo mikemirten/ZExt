@@ -94,6 +94,16 @@ class DefinitionAbstractTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame([12], $this->definition->getService($argument));
 	}
 	
+	public function testGetServiceWithArgDefinitonInArray() {
+		$argument = $this->getMock('ZExt\Di\Definition\Argument\ArgumentInterface');
+		
+		$argument->expects($this->any())
+		         ->method('getValue')
+		         ->will($this->returnValue(12));
+		
+		$this->assertSame([[[12]]], $this->definition->getService([[[$argument]]]));
+	}
+	
 	public function testGetServiceByFactory() {
 		$definition = $this->getMockForAbstractClass('ZExt\Di\Definition\DefinitionAbstract');
 		$definition->setFactoryMode();
