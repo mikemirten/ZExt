@@ -42,9 +42,19 @@
 				</argument>
 				
 				<argument type="array">
+					<element key="x" value="2" />
+					<element key="y" value="4" />
+				</argument>
+				
+				<argument type="array">
 					<value>3</value>
 					<value>6</value>
 					<value>9</value>
+				</argument>
+				
+				<argument type="array">
+					<value key="a">3</value>
+					<value key="b">6</value>
 				</argument>
 			</arguments>
 		</service>

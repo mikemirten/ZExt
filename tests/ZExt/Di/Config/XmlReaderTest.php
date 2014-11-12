@@ -71,9 +71,17 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 				(object) ['type' => 'value', 'value' => 8]
 			]],
 			(object) ['type' => 'value', 'value' => [
+				'x' => (object) ['type' => 'value', 'value' => 2],
+				'y' => (object) ['type' => 'value', 'value' => 4],
+			]],
+			(object) ['type' => 'value', 'value' => [
 				(object) ['type' => 'value', 'value' => 3],
 				(object) ['type' => 'value', 'value' => 6],
 				(object) ['type' => 'value', 'value' => 9]
+			]],
+			(object) ['type' => 'value', 'value' => [
+				'a' => (object) ['type' => 'value', 'value' => 3],
+				'b' => (object) ['type' => 'value', 'value' => 6]
 			]]
 		], self::$config->services->serviceArgArray->arguments);
 	}
