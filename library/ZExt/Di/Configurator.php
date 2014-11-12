@@ -221,6 +221,11 @@ class Configurator {
 					throw new Exceptions\InvalidConfig('Argument of type "value" must contain a "value" property');
 				}
 				
+				if (is_array($argument->value)) {
+					$processedArgs[] = $this->processArguments($argument->value);
+					continue;
+				}
+				
 				$processedArgs[] = $argument->value;
 				continue;
 			}
