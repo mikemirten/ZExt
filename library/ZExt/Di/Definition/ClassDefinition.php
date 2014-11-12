@@ -63,7 +63,7 @@ class ClassDefinition extends DefinitionAbstract {
 	 */
 	public function __construct($class, $args = null) {
 		if (is_string($class)) {
-			$this->setClassname($class);
+			$this->setClass($class);
 		}
 		else if ($class instanceof ReflectionClass) {
 			$this->setReflection($class);
@@ -83,7 +83,7 @@ class ClassDefinition extends DefinitionAbstract {
 	 * @param  string $classname
 	 * @return ClassDefinition
 	 */
-	public function setClassname($classname) {
+	public function setClass($classname) {
 		$this->class      = trim($classname, '\\');
 		$this->reflection = null;
 		
@@ -97,7 +97,7 @@ class ClassDefinition extends DefinitionAbstract {
 	 * 
 	 * @return string
 	 */
-	public function getClassname() {
+	public function getClass() {
 		return $this->class;
 	}
 	
