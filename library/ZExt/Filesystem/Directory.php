@@ -26,8 +26,10 @@
 
 namespace ZExt\Filesystem;
 
+use ZExt\Filesystem\Exceptions\InvalidPath;
+
 /**
- * File abstraction
+ * Directory abstraction
  * 
  * @category   ZExt
  * @package    File
@@ -35,10 +37,10 @@ namespace ZExt\Filesystem;
  * @author     Mike.Mirten
  * @version    1.0
  */
-class File implements FileInterface {
+class Directory implements DirectoryInterface {
 	
 	/**
-	 * Path to file
+	 * Path to directory
 	 *
 	 * @var string 
 	 */
@@ -47,47 +49,28 @@ class File implements FileInterface {
 	/**
 	 * Constructor
 	 * 
-	 * @param string $path
+	 * @param  string $path
+	 * @throws InvalidPath
 	 */
 	public function __construct($path) {
 		$this->path = $path;
 	}
 	
 	/**
-	 * Get content of file
+	 * Get a file from directory
 	 * 
-	 * @return string
-	 * @throws Exceptions\InvalidPath
+	 * @param  string $path Relative path
+	 * @return File
+	 * @throws InvalidPath
 	 */
-	public function getContent() {
-		$path = realpath($this->path);
+	public function getFile($path) {
+		$path = realpath($path);
 		
 		if ($path === false) {
-			throw new Exceptions\InvalidPath('Path "' . $this->path . '" doesn\'t exists or inaccsessible', null, null, $this->path);
+			throw new InvalidPath('Path "' . $path . '" doesn\'t exists or inaccsessible', null, null, func_get_arg(0));
 		}
 		
-		$content = file_get_contents($path);
-		
-		if ($content === false) {
-			throw new Exceptions\InvalidPath('File "' . $path . '" is unreadable', null, null, $this->path);
-		}
-		
-		return $content;
-	}
-	
-	/**
-	 * Get extension of file
-	 * 
-	 * @return string | null
-	 */
-	public function getExtension() {
-		$dotPos = strrpos($this->path, '.');
-		
-		if ($dotPos === false) {
-			return;
-		}
-		
-		return substr($this->path, $dotPos + 1);
+		return new File($this->path . DIRECTORY_SEPARATOR . $path);
 	}
 	
 }

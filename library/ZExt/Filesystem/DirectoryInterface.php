@@ -27,7 +27,7 @@
 namespace ZExt\Filesystem;
 
 /**
- * File abstraction
+ * Interface of a directory abstraction
  * 
  * @category   ZExt
  * @package    File
@@ -35,59 +35,14 @@ namespace ZExt\Filesystem;
  * @author     Mike.Mirten
  * @version    1.0
  */
-class File implements FileInterface {
+interface DirectoryInterface {
 	
 	/**
-	 * Path to file
-	 *
-	 * @var string 
-	 */
-	protected $path;
-	
-	/**
-	 * Constructor
+	 * Get a file from directory
 	 * 
-	 * @param string $path
+	 * @param  string $path Relative path
+	 * @return File
 	 */
-	public function __construct($path) {
-		$this->path = $path;
-	}
-	
-	/**
-	 * Get content of file
-	 * 
-	 * @return string
-	 * @throws Exceptions\InvalidPath
-	 */
-	public function getContent() {
-		$path = realpath($this->path);
-		
-		if ($path === false) {
-			throw new Exceptions\InvalidPath('Path "' . $this->path . '" doesn\'t exists or inaccsessible', null, null, $this->path);
-		}
-		
-		$content = file_get_contents($path);
-		
-		if ($content === false) {
-			throw new Exceptions\InvalidPath('File "' . $path . '" is unreadable', null, null, $this->path);
-		}
-		
-		return $content;
-	}
-	
-	/**
-	 * Get extension of file
-	 * 
-	 * @return string | null
-	 */
-	public function getExtension() {
-		$dotPos = strrpos($this->path, '.');
-		
-		if ($dotPos === false) {
-			return;
-		}
-		
-		return substr($this->path, $dotPos + 1);
-	}
+	public function getFile($path);
 	
 }

@@ -41,7 +41,15 @@ interface FileInterface {
 	 * Get content of file
 	 * 
 	 * @return string
+	 * @throws ZExt\Filesystem\Exceptions\InvalidPath
 	 */
 	public function getContent();
+	
+	/**
+	 * Get extension of file
+	 * 
+	 * @return string
+	 */
+	public function getExtension();
 	
 }
