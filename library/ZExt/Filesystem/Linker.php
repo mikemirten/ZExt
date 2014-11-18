@@ -24,10 +24,10 @@
  * @version   1.0
  */
 
-namespace ZExt\File;
+namespace ZExt\Filesystem;
 
-use ZExt\File\Exceptions\InvalidPath,
-    ZExt\File\Exceptions\OperationError;
+use ZExt\Filesystem\Exceptions\InvalidPath,
+    ZExt\Filesystem\Exceptions\OperationError;
 
 use SplQueue, IteratorAggregate, Countable, Exception;
 

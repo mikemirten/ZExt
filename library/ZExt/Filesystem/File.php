@@ -24,10 +24,10 @@
  * @version   1.0
  */
 
-namespace ZExt\File;
+namespace ZExt\Filesystem;
 
 /**
- * Interface of a file abstraction
+ * File abstraction
  * 
  * @category   ZExt
  * @package    File
@@ -35,13 +35,44 @@ namespace ZExt\File;
  * @author     Mike.Mirten
  * @version    1.0
  */
-interface FileInterface {
+class File implements FileInterface {
+	
+	/**
+	 * Path to file
+	 *
+	 * @var string 
+	 */
+	protected $path;
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param string $path
+	 */
+	public function __construct($path) {
+		$this->path = $path;
+	}
 	
 	/**
 	 * Get content of file
 	 * 
 	 * @return string
+	 * @throws Exceptions\InvalidPath
 	 */
-	public function getContent();
+	public function getContent() {
+		$path = realpath($this->path);
+		
+		if ($path === false) {
+			throw new Exceptions\InvalidPath('File "' . $path . '" doesn\'t exists or inaccsessible', null, null, $this->path);
+		}
+		
+		$content = file_get_contents($path);
+		
+		if ($content === false) {
+			throw new Exceptions\InvalidPath('File "' . $path . '" is unreadable', null, null, $this->path);
+		}
+		
+		return $content;
+	}
 	
 }

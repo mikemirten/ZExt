@@ -1,5 +1,5 @@
 <?php
-namespace ZExt\File\Exceptions;
+namespace ZExt\Filesystem\Exceptions;
 
 use ZExt\Exceptions\ExceptionAbstract;
 

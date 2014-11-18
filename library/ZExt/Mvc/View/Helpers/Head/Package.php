@@ -26,7 +26,7 @@
 
 namespace ZExt\Mvc\View\Helpers\Head;
 
-use ZExt\File\Linker;
+use ZExt\Filesystem\Linker;
 use SplQueue, IteratorAggregate, Countable;
 
 /**

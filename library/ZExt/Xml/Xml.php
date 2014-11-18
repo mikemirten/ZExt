@@ -26,8 +26,8 @@
 
 namespace ZExt\Xml;
 
-use ZExt\File\FileInterface,
-    ZExt\File\File;
+use ZExt\Filesystem\FileInterface,
+    ZExt\Filesystem\File;
 
 use SimpleXMLElement;
 

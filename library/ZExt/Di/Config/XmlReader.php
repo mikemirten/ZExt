@@ -31,8 +31,8 @@ use ZExt\Xml\Xml,
 
 use ZExt\Components\Std;
 
-use ZExt\File\FileInterface,
-    ZExt\File\File;	
+use ZExt\Filesystem\FileInterface,
+    ZExt\Filesystem\File;	
 
 use ZExt\Di\Exceptions\InvalidConfig;
 
@@ -52,7 +52,7 @@ class XmlReader implements ReaderInterface {
 	/**
 	 * Path to config
 	 *
-	 * @var ZExt\File\FileInterface
+	 * @var ZExt\Filesystem\FileInterface
 	 */
 	protected $file;
 	
