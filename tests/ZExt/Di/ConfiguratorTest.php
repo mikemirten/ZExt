@@ -34,8 +34,8 @@ class ConfiguratorTest extends PHPUnit_Framework_TestCase {
 		
 		$container = new Container();
 		
-		$configurator = new Configurator($config, $container);
-		$configurator->configure();
+		$configurator = new Configurator($container);
+		$configurator->addConfig($config)->configure();
 		
 		$descriptor = $container->getDefinition('service');
 		

@@ -27,6 +27,8 @@
 namespace ZExt\Di;
 
 use ZExt\Di\Definition\Argument\ServiceReferenceArgument;
+use ZExt\Filesystem\DirectoryInterface;
+use ZExt\Filesystem\FileInterface;
 
 use stdClass;
 
@@ -42,11 +44,18 @@ use stdClass;
 class Configurator {
 	
 	/**
-	 * Configs
+	 * Directory with configs
+	 * 
+	 * @var DirectoryInterface 
+	 */
+	protected $configsDir;
+	
+	/**
+	 * Content of configuration
 	 *
 	 * @var Config\ReaderInterface[]
 	 */
-	protected $configs = [];
+	protected $configReaders = [];
 	
 	/**
 	 * Services' container
@@ -65,25 +74,12 @@ class Configurator {
 	/**
 	 * Constructor
 	 * 
-	 * @param Config\ReaderInterface $config
-	 * @param ContainerInterface     $container
+	 * @param ContainerInterface $container
+	 * @param DirectoryInterface $configsDir
 	 */
-	public function __construct(Config\ReaderInterface $config, ContainerInterface $container) {
-		$this->addConfig($config);
-		
-		$this->container = $container;
-	}
-	
-	/**
-	 * Add config
-	 * 
-	 * @param  Config\ReaderInterface | array $config
-	 * @return Configurator
-	 */
-	public function addConfig(Config\ReaderInterface $config) {
-		$this->configs[] = $config;
-		
-		return $this;
+	public function __construct(ContainerInterface $container, DirectoryInterface $configsDir = null) {
+		$this->container  = $container;
+		$this->configsDir = $configsDir;
 	}
 	
 	/**
@@ -107,6 +103,58 @@ class Configurator {
 	}
 	
 	/**
+	 * Add configuration reader
+	 * 
+	 * @param  Config\ReaderInterface $config
+	 * @return Configurator
+	 */
+	public function addConfig(Config\ReaderInterface $config) {
+		$this->configReaders[] = $config;
+		
+		return $this;
+	}
+	
+	/**
+	 * Load configuration file
+	 * 
+	 * @param  string $config
+	 * @return Configurator
+	 * @throws Exceptions\InvalidConfig
+	 */
+	public function load($config) {
+		if (isset($this->configReaders[$config])) {
+			throw new Exceptions\InvalidConfig('Configuration file "' . $config . '" already been loaded');
+		}
+		
+		if ($this->configsDir === null) {
+			new Exceptions\ConfiguratorError('Directory of configuration files did not been set');
+		}
+		
+		$file = $this->configsDir->getFile($config);
+		
+		$this->configReaders[$config] = $this->loadReader($file);
+		
+		return $this;
+	}
+	
+	/**
+	 * Load reader by config file
+	 * 
+	 * @param  FileInterface $file
+	 * @return Config\ReaderInterface;
+	 * @throws Exceptions\InvalidConfig
+	 */
+	protected function loadReader(FileInterface $file) {
+		$extension = $file->getExtension();
+		
+		if ($extension === 'xml') {
+			return new Config\XmlReader($file);
+		}
+		
+		throw new Exceptions\InvalidConfig('Unknown type of configuration "' . $extension . '"');
+	}
+	
+	/**
 	 * Configure container
 	 * 
 	 * @return ContainerInterface
@@ -114,7 +162,7 @@ class Configurator {
 	 * @throws Exceptions\InvalidConfig
 	 */
 	public function configure() {
-		$config = $this->mergeConfigs($this->configs);
+		$config = $this->mergeConfigs($this->configReaders);
 		
 		if (isset($config->services)) {
 			$this->applyServices($config->services);
