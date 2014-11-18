@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <container>
+	<includes>
+		<include load="acl.xml" />
+		<include>config.xml</include>
+	</includes>
+	
 	<services>
 		<service id="service" class="TestClass" />
 		

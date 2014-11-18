@@ -31,8 +31,7 @@ use ZExt\Xml\Xml,
 
 use ZExt\Components\Std;
 
-use ZExt\Filesystem\FileInterface,
-    ZExt\Filesystem\File;	
+use ZExt\Filesystem\FileInterface;
 
 use ZExt\Di\Exceptions\InvalidConfig;
 
@@ -57,9 +56,9 @@ class XmlReader implements ReaderInterface {
 	protected $file;
 	
 	/**
-	 * Config
+	 * Parts of configuration
 	 *
-	 * @var Element 
+	 * @var object
 	 */
 	protected $config;
 	
@@ -73,34 +72,61 @@ class XmlReader implements ReaderInterface {
 	/**
 	 * Constructor
 	 * 
-	 * @param FileInterface | string $file
+	 * @param FileInterface $file
 	 */
-	public function __construct($file) {
-		if ($file instanceof FileInterface) {
-			$this->file = $file;
-		} else {
-			$this->file = new File($file);
-		}
+	public function __construct(FileInterface $file) {
+		$this->file = $file;
 	}
 	
 	/**
-	 * Get configuration content
+	 * Initialize configuration
 	 * 
-	 * @return Element
 	 * @throws InvalidConfig
 	 */
-	protected function getContent() {
-		if ($this->config === null) {
-			$this->config = Xml::read($this->file);
+	protected function initConfig() {
+		$config = Xml::read($this->file);
 
-			if ($this->config->getName() !== 'container') {
-				throw new InvalidConfig('Root element of a config must be a "container"');
+		if ($config->getName() !== 'container') {
+			throw new InvalidConfig('Root element of a config must be a "container"');
+		}
+
+		$this->override = ($config->override === 'true');
+		
+		$this->config = new stdClass();
+		
+		$this->config->includes     = [];
+		$this->config->services     = new stdClass();
+		$this->config->initializers = new stdClass();
+		
+		foreach ($config->getContent() as $element) {
+			$name = $element->getName();
+			
+			if ($name === 'includes') {
+				$this->config->includes = array_merge(
+					$this->config->includes,
+					$this->processIncludes($element)
+				);
+				continue;
 			}
 			
-			$this->override = ($this->config->override === 'true');
+			if ($name === 'services') {
+				$this->config->services = Std::objectMerge(
+					$this->config->services,
+					$this->processServices($element)
+				);
+				continue;
+			}
+			
+			if ($name === 'initializers') {
+				$this->config->initializers = Std::objectMerge(
+					$this->config->initializers,
+					$this->processInitializers($element)
+				);
+				continue;
+			}
+			
+			throw new InvalidConfig('Unknown element "' . $element->getName() . '" in container');
 		}
-		
-		return $this->config;
 	}
 	
 	/**
@@ -110,36 +136,43 @@ class XmlReader implements ReaderInterface {
 	 * @throws InvalidConfig
 	 */
 	public function getConfiguration() {
-		$services     = new stdClass();
-		$initializers = new stdClass();
+		if ($this->config === null) {
+			$this->initConfig();
+		}
 		
-		foreach ($this->getContent()->getContent() as $element) {
-			$name = $element->getName();
-			
-			if ($name === 'services') {
-				$services = Std::objectMerge($services, $this->processServices($element));
-				continue;
+		return $this->config;
+	}
+	
+	/**
+	 * Process includes
+	 * 
+	 * @param  Element $includes
+	 * @return array
+	 */
+	protected function ProcessIncludes(Element $includes) {
+		$definitions = [];
+		
+		foreach ($includes->getContent() as $include) {
+			if ($include->getName() === 'include') {
+				if (isset($include->load)) {
+					$definitions[] = $include->load;
+					continue;
+				}
+				
+				$content = $include->getValue();
+				
+				if (! empty($content)) {
+					$definitions[] = $content;
+					continue;
+				}
+				
+				throw new InvalidConfig('Include must contain value or "load" attribute');
 			}
 			
-			if ($name === 'initializers') {
-				$initializers = Std::objectMerge($initializers, $this->processInitializers($element));
-				continue;
-			}
-			
-			throw new InvalidConfig('Unknown element "' . $element->getName() . '" in container');
+			throw new InvalidConfig('Unknown element "' . $include->getName() . '" in includes');
 		}
 		
-		$configuration = new stdClass();
-		
-		if (! empty($services)) {
-			$configuration->services = $services;
-		}
-		
-		if (! empty($services)) {
-			$configuration->initializers = $initializers;
-		}
-		
-		return $configuration;
+		return $definitions;
 	}
 	
 	/**

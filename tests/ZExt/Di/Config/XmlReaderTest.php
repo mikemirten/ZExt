@@ -1,6 +1,7 @@
 <?php
 
 use ZExt\Di\Config\XmlReader;
+use ZExt\Filesystem\File;
 
 class XmlReaderTest extends PHPUnit_Framework_TestCase {
 	
@@ -12,7 +13,7 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 	protected static $config;
 	
 	public static function setUpBeforeClass() {
-		$reader = new XmlReader(__DIR__ . DIRECTORY_SEPARATOR . 'config.xml');
+		$reader = new XmlReader(new File(__DIR__ . DIRECTORY_SEPARATOR . 'config.xml'));
 		
 		self::$config = $reader->getConfiguration();
 	}
@@ -165,6 +166,10 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 			(object) ['type' => 'service', 'id' => 'adapter'],
 			(object) ['type' => 'value', 'value' => 'qwerty']
 		], self::$config->initializers->models->arguments);
+	}
+	
+	public function testIncludes() {
+		$this->assertEquals(['acl.xml', 'config.xml'], self::$config->includes);
 	}
 	
 }
