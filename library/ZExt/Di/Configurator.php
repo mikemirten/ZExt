@@ -316,38 +316,34 @@ class Configurator {
 	 * @throws Exceptions\ServiceOverride
 	 */
 	protected function mergeConfigs(array $configs) {
-		$services     = new stdClass();
-		$initializers = new stdClass();
+		$result = new stdClass();
+		
+		$result->services     = new stdClass();
+		$result->initializers = new stdClass();
 		
 		foreach ($configs as $config) {
-			foreach ($config->getServices() as $id => $service) {
-				if (! $this->override && isset($services->$id)) {
-					throw new Exceptions\ServiceOverride('Service "' . $id . '" is already been set and cannot be overridden');
-				}
-
-				$services->$id = $service;
+			$this->mergeConfigsPart($config->getServices(), $result->services);
+			$this->mergeConfigsPart($config->getInitializers(), $result->initializers);
+		}
+		
+		return $result;
+	}
+	
+	/**
+	 * Merge part of config
+	 * 
+	 * @param  stdClass $config
+	 * @param  stdClass $destination
+	 * @throws Exceptions\ServiceOverride
+	 */
+	protected function mergeConfigsPart(stdClass $config, stdClass $destination) {
+		foreach ($config as $id => $value) {
+			if (! $this->override && isset($destination->$id)) {
+				throw new Exceptions\ServiceOverride('ID "' . $id . '" is already been set and cannot be overridden');
 			}
-			
-			foreach ($config->getInitializers() as $id => $initializer) {
-				if (! $this->override && isset($initializer->$id)) {
-					throw new Exceptions\ServiceOverride('Initializer "' . $id . '" is already been set and cannot be overridden');
-				}
 
-				$initializers->$id = $initializer;
-			}
+			$destination->$id = $value;
 		}
-		
-		$merged = new stdClass();
-		
-		if (! empty($services)) {
-			$merged->services = $services;
-		}
-		
-		if (! empty($initializers)) {
-			$merged->initializers = $initializers;
-		}
-		
-		return $merged;
 	}
 	
 }
