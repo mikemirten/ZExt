@@ -64,13 +64,13 @@ class Directory implements DirectoryInterface {
 	 * @throws InvalidPath
 	 */
 	public function getFile($path) {
-		$path = realpath($path);
+		$dirPath = realpath($this->path);
 		
-		if ($path === false) {
-			throw new InvalidPath('Path "' . $path . '" doesn\'t exists or inaccsessible', null, null, func_get_arg(0));
+		if ($dirPath === false) {
+			throw new InvalidPath('Path "' . $this->path . '" doesn\'t exists or inaccsessible', null, null, $this->path);
 		}
 		
-		return new File($this->path . DIRECTORY_SEPARATOR . $path);
+		return new File($dirPath . DIRECTORY_SEPARATOR . $path);
 	}
 	
 }
