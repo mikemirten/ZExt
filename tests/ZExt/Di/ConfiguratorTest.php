@@ -6,13 +6,13 @@ use ZExt\Di\Container;
 class ConfiguratorTest extends PHPUnit_Framework_TestCase {
 	
 	public function testSetService() {
-		$config = $this->getMock('ZExt\Di\Config\ReaderInterface');
+		$reader = $this->getMock('ZExt\Di\Config\ReaderInterface');
 		
-		$config->expects($this->any())
+		$reader->expects($this->any())
 		       ->method('getIncludes')
 		       ->will($this->returnValue([]));
 		
-		$config->expects($this->any())
+		$reader->expects($this->any())
 		       ->method('getServices')
 		       ->will($this->returnValue((object) [
 				   'service' => (object) [
@@ -36,14 +36,14 @@ class ConfiguratorTest extends PHPUnit_Framework_TestCase {
 				   ]
 			   ]));
 		
-		$config->expects($this->any())
+		$reader->expects($this->any())
 		       ->method('getInitializers')
 		       ->will($this->returnValue(new stdClass()));
 		
 		$container = new Container();
 		
 		$configurator = new Configurator($container);
-		$configurator->addConfig($config)->configure();
+		$configurator->addConfigReader($reader)->configure();
 		
 		$descriptor = $container->getDefinition('service');
 		
@@ -62,6 +62,5 @@ class ConfiguratorTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame('localhost', $serviceArgs[0]);
 		$this->assertInstanceOf('ZExt\Di\Definition\Argument\ArgumentInterface', $serviceArgs[1]);
 	}
-	
 	
 }

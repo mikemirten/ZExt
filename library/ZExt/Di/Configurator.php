@@ -105,13 +105,32 @@ class Configurator {
 	/**
 	 * Add configuration reader
 	 * 
-	 * @param  Config\ReaderInterface $config
+	 * @param  Config\ReaderInterface $reader
 	 * @return Configurator
 	 */
-	public function addConfig(Config\ReaderInterface $config) {
-		$this->configReaders[] = $config;
+	public function addConfigReader(Config\ReaderInterface $reader) {
+		$id = $reader->getId();
+		
+		if (isset($this->configReaders[$id])) {
+			throw new Exceptions\InvalidConfig('Configuration reader with ID "' . $id . '" already exists');
+		}
+		
+		$this->configReaders[] = $reader;
+		
+		foreach ($reader->getIncludes() as $include) {
+			$this->load($include);
+		}
 		
 		return $this;
+	}
+	
+	/**
+	 * Get config readers
+	 * 
+	 * @return Config\ReaderInterface[]
+	 */
+	public function getConfigReaders() {
+		return $this->configReaders;
 	}
 	
 	/**
@@ -122,17 +141,13 @@ class Configurator {
 	 * @throws Exceptions\InvalidConfig
 	 */
 	public function load($config) {
-		if (isset($this->configReaders[$config])) {
-			throw new Exceptions\InvalidConfig('Configuration file "' . $config . '" already been loaded');
-		}
-		
 		if ($this->configsDir === null) {
 			new Exceptions\ConfiguratorError('Directory of configuration files did not been set');
 		}
 		
 		$file = $this->configsDir->getFile($config);
 		
-		$this->configReaders[$config] = $this->initReader($file);
+		$this->addConfigReader($this->initReader($file));
 		
 		return $this;
 	}
