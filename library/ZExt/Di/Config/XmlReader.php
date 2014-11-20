@@ -468,4 +468,13 @@ class XmlReader implements ReaderInterface {
 		return $array;
 	}
 	
+	/**
+	 * Get unique ID of reader
+	 * 
+	 * @return string
+	 */
+	public function getId() {
+		return $this->file->getRealpath();
+	}
+	
 }

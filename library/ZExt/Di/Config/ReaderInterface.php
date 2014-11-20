@@ -88,4 +88,11 @@ interface ReaderInterface {
 	 */
 	public function getInitializers();
 	
+	/**
+	 * Get unique ID of reader
+	 * 
+	 * @return string
+	 */
+	public function getId();
+	
 }
