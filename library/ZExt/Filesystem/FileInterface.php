@@ -52,4 +52,12 @@ interface FileInterface {
 	 */
 	public function getExtension();
 	
+	/**
+	 * Get full path to file
+	 * 
+	 * @return string
+	 * @throws ZExt\Filesystem\Exceptions\InvalidPath
+	 */
+	public function getRealpath();
+	
 }

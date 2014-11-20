@@ -45,6 +45,13 @@ class File implements FileInterface {
 	protected $path;
 	
 	/**
+	 * Processed by realpath() path to file
+	 *
+	 * @var string 
+	 */
+	protected $realpath;
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param string $path
@@ -60,19 +67,31 @@ class File implements FileInterface {
 	 * @throws Exceptions\InvalidPath
 	 */
 	public function getContent() {
-		$path = realpath($this->path);
-		
-		if ($path === false) {
-			throw new Exceptions\InvalidPath('Path "' . $this->path . '" doesn\'t exists or inaccsessible', null, null, $this->path);
-		}
-		
-		$content = file_get_contents($path);
+		$content = file_get_contents($this->getRealpath());
 		
 		if ($content === false) {
 			throw new Exceptions\InvalidPath('File "' . $path . '" is unreadable', null, null, $this->path);
 		}
 		
 		return $content;
+	}
+	
+	/**
+	 * Get full path to file
+	 * 
+	 * @return string
+	 * @throws Exceptions\InvalidPath
+	 */
+	public function getRealpath() {
+		if ($this->realpath === null) {
+			$this->realpath = realpath($this->path);
+		
+			if ($this->realpath === false) {
+				throw new Exceptions\InvalidPath('Path "' . $this->path . '" doesn\'t exists or inaccsessible', null, null, $this->path);
+			}
+		}
+		
+		return $this->realpath;
 	}
 	
 	/**
