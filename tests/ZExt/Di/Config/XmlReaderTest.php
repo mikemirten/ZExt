@@ -6,62 +6,78 @@ use ZExt\Filesystem\File;
 class XmlReaderTest extends PHPUnit_Framework_TestCase {
 	
 	/**
-	 * Test config
+	 * Includes
+	 *
+	 * @var array
+	 */
+	protected static $includes;
+	
+	/**
+	 * Services
 	 *
 	 * @var object
 	 */
-	protected static $config;
+	protected static $services;
+	
+	/**
+	 * Initializers
+	 *
+	 * @var object
+	 */
+	protected static $initializers;
 	
 	public static function setUpBeforeClass() {
 		$reader = new XmlReader(new File(__DIR__ . DIRECTORY_SEPARATOR . 'config.xml'));
 		
-		self::$config = $reader->getConfiguration();
+		self::$includes     = $reader->getIncludes();
+		self::$services     = $reader->getServices();
+		self::$initializers = $reader->getInitializers();
 	}
 	
 	public function testService() {
 		$this->assertEquals((object) [
 			'type'  => 'class',
 			'class' => 'TestClass'
-		], self::$config->services->service);
+		], self::$services->service);
 	}
 	
 	public function testServiceNamespace() {
 		$this->assertEquals((object) [
 			'type'  => 'class',
 			'class' => 'Library\TestClass'
-		], self::$config->services->serviceNamespace);
+		], self::$services->serviceNamespace);
 	}
 	
 	public function testServiceFactory() {
-		$this->assertTrue(self::$config->services->serviceFactory->factory);
+		$this->assertTrue(self::$services->serviceFactory->factory);
 	}
 	
 	public function testServiceArgBoolean() {
 		$this->assertEquals([
 			(object) ['type' => 'value', 'value' => true],
 			(object) ['type' => 'value', 'value' => false]
-		], self::$config->services->serviceArgBoolean->arguments);
+		], self::$services->serviceArgBoolean->arguments);
 	}
 	
 	public function testServiceArgInteger() {
 		$this->assertEquals([
 			(object) ['type' => 'value', 'value' => 65535],
 			(object) ['type' => 'value', 'value' => 255]
-		], self::$config->services->serviceArgInteger->arguments);
+		], self::$services->serviceArgInteger->arguments);
 	}
 	
 	public function testServiceArgString() {
 		$this->assertEquals([
 			(object) ['type' => 'value', 'value' => 'qwerty'],
 			(object) ['type' => 'value', 'value' => 'asdfgh']
-		], self::$config->services->serviceArgString->arguments);
+		], self::$services->serviceArgString->arguments);
 	}
 	
 	public function testServiceArgNull() {
 		$this->assertEquals([
 			(object) ['type' => 'value', 'value' => null],
 			(object) ['type' => 'value', 'value' => null]
-		], self::$config->services->serviceArgNull->arguments);
+		], self::$services->serviceArgNull->arguments);
 	}
 	
 	public function testServiceArgArray() {
@@ -84,7 +100,7 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 				'a' => (object) ['type' => 'value', 'value' => 3],
 				'b' => (object) ['type' => 'value', 'value' => 6]
 			]]
-		], self::$config->services->serviceArgArray->arguments);
+		], self::$services->serviceArgArray->arguments);
 	}
 	
 	public function testServiceArgArrayRecursive() {
@@ -96,14 +112,14 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 					(object) ['type' => 'value', 'value' => 8]
 				]]
 			]]
-		], self::$config->services->serviceArgArrayRecursive->arguments);
+		], self::$services->serviceArgArrayRecursive->arguments);
 	}
 	
 	public function testServiceArgService() {
 		$this->assertEquals([
 			(object) ['type' => 'service', 'id' => 'service1'],
 			(object) ['type' => 'service', 'id' => 'service2']
-		], self::$config->services->serviceArgService->arguments);
+		], self::$services->serviceArgService->arguments);
 	}
 	
 	public function testServiceArgArrayService() {
@@ -112,7 +128,7 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 				(object) ['type' => 'service', 'id' => 'service1'],
 				(object) ['type' => 'service', 'id' => 'service2']
 			]]
-		], self::$config->services->serviceArgArrayService->arguments);
+		], self::$services->serviceArgArrayService->arguments);
 	}
 	
 	public function testServiceArgServiceWithArgs() {
@@ -125,7 +141,7 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 					(object) ['type' => 'value', 'value' => 'qwerty']
 				]
 			]
-		], self::$config->services->serviceArgServiceWithArgs->arguments);
+		], self::$services->serviceArgServiceWithArgs->arguments);
 	}
 	
 	public function testServiceArgArrayServiceWithArgs() {
@@ -140,36 +156,36 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 					]
 				]
 			]]
-		], self::$config->services->serviceArgArrayServiceWithArgs->arguments);
+		], self::$services->serviceArgArrayServiceWithArgs->arguments);
 	}
 	
 	public function testInitializerNamespace() {
 		$this->assertEquals((object) [
 			'type'      => 'namespace',
 			'namespace' => 'Forms'
-		], self::$config->initializers->forms);
+		], self::$initializers->forms);
 	}
 	
 	public function testInitializerObject() {
 		$this->assertEquals((object) [
 			'type'  => 'object',
 			'class' => 'AppInitializer'
-		], self::$config->initializers->app);
+		], self::$initializers->app);
 	}
 	
 	public function testInitializerFactory() {
-		$this->assertTrue(self::$config->initializers->tags->factory);
+		$this->assertTrue(self::$initializers->tags->factory);
 	}
 	
 	public function testInitializerWithArgs() {
 		$this->assertEquals([
 			(object) ['type' => 'service', 'id' => 'adapter'],
 			(object) ['type' => 'value', 'value' => 'qwerty']
-		], self::$config->initializers->models->arguments);
+		], self::$initializers->models->arguments);
 	}
 	
 	public function testIncludes() {
-		$this->assertEquals(['acl.xml', 'config.xml'], self::$config->includes);
+		$this->assertEquals(['acl.xml', 'config.xml'], self::$includes);
 	}
 	
 }

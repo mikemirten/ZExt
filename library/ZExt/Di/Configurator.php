@@ -132,7 +132,7 @@ class Configurator {
 		
 		$file = $this->configsDir->getFile($config);
 		
-		$this->configReaders[$config] = $this->loadReader($file);
+		$this->configReaders[$config] = $this->initReader($file);
 		
 		return $this;
 	}
@@ -144,7 +144,7 @@ class Configurator {
 	 * @return Config\ReaderInterface;
 	 * @throws Exceptions\InvalidConfig
 	 */
-	protected function loadReader(FileInterface $file) {
+	protected function initReader(FileInterface $file) {
 		$extension = $file->getExtension();
 		
 		if ($extension === 'xml') {
@@ -176,9 +176,10 @@ class Configurator {
 	}
 	
 	/**
-	 * Apply config to container
+	 * Apply services config to container
 	 * 
-	 * @param array $config
+	 * @param  object $config
+	 * @throws Exceptions\InvalidConfig
 	 */
 	protected function applyServices(stdClass $config) {
 		foreach ($config as $id => $definitionConf) {
@@ -211,6 +212,12 @@ class Configurator {
 		}
 	}
 	
+	/**
+	 * Apply initializers config to container
+	 * 
+	 * @param  object $config
+	 * @throws Exceptions\InvalidConfig
+	 */
 	protected function applyInitializers(stdClass $config) {
 		foreach ($config as $id => $definitionConf) {
 			if (! isset($definitionConf->type)) {
@@ -307,33 +314,26 @@ class Configurator {
 	 * @param  array $configs
 	 * @return object
 	 * @throws Exceptions\ServiceOverride
-	 * @throws Exceptions\InvalidConfig
 	 */
 	protected function mergeConfigs(array $configs) {
 		$services     = new stdClass();
 		$initializers = new stdClass();
 		
 		foreach ($configs as $config) {
-			$config = $config->getConfiguration();
-			
-			if (isset($config->services)) {
-				foreach ($config->services as $id => $service) {
-					if (! $this->override && isset($services->$id)) {
-						throw new Exceptions\ServiceOverride('Service "' . $id . '" is already been set and cannot be overridden');
-					}
-
-					$services->$id = $service;
+			foreach ($config->getServices() as $id => $service) {
+				if (! $this->override && isset($services->$id)) {
+					throw new Exceptions\ServiceOverride('Service "' . $id . '" is already been set and cannot be overridden');
 				}
+
+				$services->$id = $service;
 			}
 			
-			if (isset($config->initializers)) {
-				foreach ($config->initializers as $id => $initializer) {
-					if (! $this->override && isset($initializer->$id)) {
-						throw new Exceptions\ServiceOverride('Initializer "' . $id . '" is already been set and cannot be overridden');
-					}
-					
-					$initializers->$id = $initializer;
+			foreach ($config->getInitializers() as $id => $initializer) {
+				if (! $this->override && isset($initializer->$id)) {
+					throw new Exceptions\ServiceOverride('Initializer "' . $id . '" is already been set and cannot be overridden');
 				}
+
+				$initializers->$id = $initializer;
 			}
 		}
 		

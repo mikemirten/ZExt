@@ -56,11 +56,25 @@ class XmlReader implements ReaderInterface {
 	protected $file;
 	
 	/**
-	 * Parts of configuration
+	 * Includes definition
+	 *
+	 * @var array
+	 */
+	protected $includes;
+	
+	/**
+	 * Services definitions
 	 *
 	 * @var object
 	 */
-	protected $config;
+	protected $services;
+	
+	/**
+	 * Initializers definitions
+	 *
+	 * @var object
+	 */
+	protected $initializers;
 	
 	/**
 	 * Override enabled
@@ -92,36 +106,25 @@ class XmlReader implements ReaderInterface {
 
 		$this->override = ($config->override === 'true');
 		
-		$this->config = new stdClass();
-		
-		$this->config->includes     = [];
-		$this->config->services     = new stdClass();
-		$this->config->initializers = new stdClass();
+		$this->includes     = [];
+		$this->services     = new stdClass();
+		$this->initializers = new stdClass();
 		
 		foreach ($config->getContent() as $element) {
 			$name = $element->getName();
 			
 			if ($name === 'includes') {
-				$this->config->includes = array_merge(
-					$this->config->includes,
-					$this->processIncludes($element)
-				);
+				$this->includes = array_merge($this->includes, $this->processIncludes($element));
 				continue;
 			}
 			
 			if ($name === 'services') {
-				$this->config->services = Std::objectMerge(
-					$this->config->services,
-					$this->processServices($element)
-				);
+				$this->services = Std::objectMerge($this->services, $this->processServices($element));
 				continue;
 			}
 			
 			if ($name === 'initializers') {
-				$this->config->initializers = Std::objectMerge(
-					$this->config->initializers,
-					$this->processInitializers($element)
-				);
+				$this->initializers = Std::objectMerge($this->initializers, $this->processInitializers($element));
 				continue;
 			}
 			
@@ -130,17 +133,45 @@ class XmlReader implements ReaderInterface {
 	}
 	
 	/**
+	 * Gets includes
+	 * 
+	 * @return array
+	 * @throws InvalidConfig
+	 */
+	public function getIncludes() {
+		if ($this->includes === null) {
+			$this->initConfig();
+		}
+		
+		return $this->includes;
+	}
+	
+	/**
 	 * Gets definitions of services
 	 * 
 	 * @return object
 	 * @throws InvalidConfig
 	 */
-	public function getConfiguration() {
-		if ($this->config === null) {
+	public function getServices() {
+		if ($this->services === null) {
 			$this->initConfig();
 		}
 		
-		return $this->config;
+		return $this->services;
+	}
+	
+	/**
+	 * Gets definitions of initializers
+	 * 
+	 * @return object
+	 * @throws InvalidConfig
+	 */
+	public function getInitializers() {
+		if ($this->initializers === null) {
+			$this->initConfig();
+		}
+		
+		return $this->initializers;
 	}
 	
 	/**

@@ -40,30 +40,52 @@ interface ReaderInterface {
 	/**
 	 * Get configuration of service's definitions
 	 * 
+	 * [
+	 *     "include1.xml",
+	 *     "include2.xml",
+	 *     "includeN.xml"
+	 * ]
+	 * 
+	 * @return array
+	 * @throws \ZExt\Di\Exceptions\InvalidConfig
+	 */
+	public function getIncludes();
+	
+	/**
+	 * Get service's definitions
+	 * 
 	 * {
-	 *     "services": {
-	 *         "serviceId": {
-	 *             "type": "serviceType",
-	 *             ...
-	 *             "arguments": [
-	 *                 {
-	 *                     "type": "argumentType",
-	 *                     ...
-	 *                 }
-	 *             ]
-	 *         }
-	 *     },
-	 *     "initializers": {
-	 *         "initializerId": {
-	 *             "type": "initializerType",
-	 *             ...
-	 *         }
+	 *     "serviceId": {
+	 *         "type": "serviceType",
+	 *         ...
+	 *         "arguments": [
+	 *             {
+	 *                 "type": "argumentType",
+	 *                 ...
+	 *             }
+	 *         ]
+	 *     }
+	 * }
+	 * 
+	 * 
+	 * @return object
+	 * @throws \ZExt\Di\Exceptions\InvalidConfig
+	 */
+	public function getServices();
+	
+	/**
+	 * Get initializers's definitions
+	 * 
+	 * {
+	 *     "initializerId": {
+	 *         "type": "initializerType",
+	 *         ...
 	 *     }
 	 * }
 	 * 
 	 * @return object
 	 * @throws \ZExt\Di\Exceptions\InvalidConfig
 	 */
-	public function getConfiguration();
+	public function getInitializers();
 	
 }

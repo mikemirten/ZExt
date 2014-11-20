@@ -9,9 +9,13 @@ class ConfiguratorTest extends PHPUnit_Framework_TestCase {
 		$config = $this->getMock('ZExt\Di\Config\ReaderInterface');
 		
 		$config->expects($this->any())
-		       ->method('getConfiguration')
+		       ->method('getIncludes')
+		       ->will($this->returnValue([]));
+		
+		$config->expects($this->any())
+		       ->method('getServices')
 		       ->will($this->returnValue((object) [
-				   'services' => [ 'service' => (object) [
+				   'service' => (object) [
 						'type'      => 'class',
 						'class'     => 'TestClass',
 						'factory'   => true,
@@ -29,8 +33,12 @@ class ConfiguratorTest extends PHPUnit_Framework_TestCase {
 								]
 							]]
 						]
-				   ]]
+				   ]
 			   ]));
+		
+		$config->expects($this->any())
+		       ->method('getInitializers')
+		       ->will($this->returnValue(new stdClass()));
 		
 		$container = new Container();
 		
