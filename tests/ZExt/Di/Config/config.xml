@@ -5,6 +5,12 @@
 		<include>config.xml</include>
 	</includes>
 	
+	<parameters>
+		<parameter name="param1" value="1000" />
+		<parameter name="param2" type="service" id="cache" />
+		<parameter name="param3">qwerty</parameter>
+	</parameters>
+	
 	<services>
 		<service id="service" class="TestClass" />
 		

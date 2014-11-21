@@ -13,6 +13,13 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 	protected static $includes;
 	
 	/**
+	 * Parameters
+	 *
+	 * @var array
+	 */
+	protected static $parameters;
+	
+	/**
 	 * Services
 	 *
 	 * @var object
@@ -30,6 +37,7 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 		$reader = new XmlReader(new File(__DIR__ . DIRECTORY_SEPARATOR . 'config.xml'));
 		
 		self::$includes     = $reader->getIncludes();
+		self::$parameters   = $reader->getParameters();
 		self::$services     = $reader->getServices();
 		self::$initializers = $reader->getInitializers();
 	}
@@ -186,6 +194,23 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 	
 	public function testIncludes() {
 		$this->assertEquals(['acl.xml', 'config.xml'], self::$includes);
+	}
+	
+	public function testParameters() {
+		$this->assertEquals((object) [
+			'type'  => 'value',
+			'value' => 1000
+		], self::$parameters->param1);
+		
+		$this->assertEquals((object) [
+			'type'  => 'service',
+			'id'    => 'cache'
+		], self::$parameters->param2);
+		
+		$this->assertEquals((object) [
+			'type'  => 'value',
+			'value' => 'qwerty'
+		], self::$parameters->param3);
 	}
 	
 }

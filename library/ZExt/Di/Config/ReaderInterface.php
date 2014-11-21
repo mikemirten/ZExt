@@ -52,6 +52,20 @@ interface ReaderInterface {
 	public function getIncludes();
 	
 	/**
+	 * Get parameters
+	 * 
+	 * {
+	 *     "param1": value1,
+	 *     "param2": value2,
+	 *     "paramN": valueN
+	 * }
+	 * 
+	 * @return object
+	 * @throws \ZExt\Di\Exceptions\InvalidConfig
+	 */
+	public function getParameters();
+	
+	/**
 	 * Get service's definitions
 	 * 
 	 * {

@@ -70,6 +70,13 @@ class XmlReader implements ReaderInterface {
 	protected $services;
 	
 	/**
+	 * Parameters
+	 *
+	 * @var object
+	 */
+	protected $parameters;
+	
+	/**
 	 * Initializers definitions
 	 *
 	 * @var object
@@ -107,6 +114,7 @@ class XmlReader implements ReaderInterface {
 		$this->override = ($config->override === 'true');
 		
 		$this->includes     = [];
+		$this->parameters   = new stdClass();
 		$this->services     = new stdClass();
 		$this->initializers = new stdClass();
 		
@@ -115,6 +123,11 @@ class XmlReader implements ReaderInterface {
 			
 			if ($name === 'includes') {
 				$this->includes = array_merge($this->includes, $this->processIncludes($element));
+				continue;
+			}
+			
+			if ($name === 'parameters') {
+				$this->parameters = Std::objectMerge($this->parameters, $this->processParameters($element));
 				continue;
 			}
 			
@@ -144,6 +157,20 @@ class XmlReader implements ReaderInterface {
 		}
 		
 		return $this->includes;
+	}
+	
+	/**
+	 * Gets parameters
+	 * 
+	 * @return object
+	 * @throws InvalidConfig
+	 */
+	public function getParameters() {
+		if ($this->parameters === null) {
+			$this->initConfig();
+		}
+		
+		return $this->parameters;
 	}
 	
 	/**
@@ -179,8 +206,9 @@ class XmlReader implements ReaderInterface {
 	 * 
 	 * @param  Element $includes
 	 * @return array
+	 * @throws InvalidConfig
 	 */
-	protected function ProcessIncludes(Element $includes) {
+	protected function processIncludes(Element $includes) {
 		$definitions = [];
 		
 		foreach ($includes->getContent() as $include) {
@@ -207,10 +235,39 @@ class XmlReader implements ReaderInterface {
 	}
 	
 	/**
+	 * Process parameters
+	 * 
+	 * @param  Element $parameters
+	 * @return object
+	 */
+	protected function processParameters(Element $parameters) {
+		$definitions = new stdClass();
+		
+		foreach ($parameters as $parameter) {
+			if ($parameter->getName() !== 'parameter') {
+				throw new InvalidConfig('Unknown element "' . $parameter->getName() . ' in parameters section"', null, null, $parameter);
+			}
+			
+			if (! isset($parameter->name)) {
+				throw new InvalidConfig('Definition of parameter must contain the "name" attribute', null, null, $parameter);
+			}
+			
+			if (! $this->override && isset($definitions->{$parameter->name})) {
+				throw new InvalidConfig('Parameter "' . $parameter->name . '" is already been set and cannot be overridden', null, null, $parameter);
+			}
+			
+			$definitions->{$parameter->name} = $this->processArgument($parameter);
+		}
+		
+		return $definitions;
+	}
+	
+	/**
 	 * Process services
 	 * 
 	 * @param  Element $services
 	 * @return object
+	 * @throws InvalidConfig
 	 */
 	protected function processServices(Element $services) {
 		$definitions = new stdClass();
@@ -218,20 +275,19 @@ class XmlReader implements ReaderInterface {
 		$namespace = isset($services->namespace) ? $services->namespace : null;
 		
 		foreach ($services->getContent() as $service) {
-			if ($service->getName() === 'service') {
-				if (! isset($service->id)) {
-					throw new InvalidConfig('Service definition must contain an ID of service', null, null, $service);
-				}
-				
-				if (! $this->override && isset($definitions->{$service->id})) {
-					throw new InvalidConfig('Service "' . $service->id . '" is already been set and cannot be overridden', null, null, $service);
-				}
-				
-				$definitions->{$service->id} = $this->processService($service, $namespace);
-				continue;
+			if ($service->getName() !== 'service') {
+				throw new InvalidConfig('Unknown element "' . $service->getName() . '" in services section', null, null, $service);
 			}
 			
-			throw new InvalidConfig('Unknown element "' . $service->getName() . '" in services', null, null, $service);
+			if (! isset($service->id)) {
+				throw new InvalidConfig('Service definition must contain an ID of service', null, null, $service);
+			}
+
+			if (! $this->override && isset($definitions->{$service->id})) {
+				throw new InvalidConfig('Service "' . $service->id . '" is already been set and cannot be overridden', null, null, $service);
+			}
+
+			$definitions->{$service->id} = $this->processService($service, $namespace);
 		}
 		
 		return $definitions;
@@ -262,7 +318,7 @@ class XmlReader implements ReaderInterface {
 		$content = $service->getContent();
 		
 		if (! empty($content)) {
-			$this->processParameters($content, $definition);
+			$this->processDefinitionParameters($content, $definition);
 		}
 		
 		return $definition;
@@ -279,22 +335,21 @@ class XmlReader implements ReaderInterface {
 		$definitions = new stdClass();
 		
 		foreach ($initializers->getContent() as $initializer) {
-			if ($initializer->getName() === 'initializer') {
-				$initializerDefinition = $this->processInitializer($initializer);
-				
-				$id = isset($initializer->id)
-					? $initializer->id
-					: substr(md5(json_encode($initializerDefinition)), 24);
-				
-				if (! $this->override && isset($definitions->$id)) {
-					throw new InvalidConfig('Initializer "' . $id . '" is already been set and cannot be overridden');
-				}
-				
-				$definitions->$id = $initializerDefinition;
-				continue;
+			if ($initializer->getName() !== 'initializer') {
+				throw new InvalidConfig('Unknown element "' . $initializers->getName() . '" in initializers', null, null, $initializer);
 			}
-			
-			throw new InvalidConfig('Unknown element "' . $initializers->getName() . '" in initializers', null, null, $initializer);
+				
+			$initializerDefinition = $this->processInitializer($initializer);
+
+			$id = isset($initializer->id)
+				? $initializer->id
+				: substr(md5(json_encode($initializerDefinition)), 24);
+
+			if (! $this->override && isset($definitions->$id)) {
+				throw new InvalidConfig('Initializer "' . $id . '" is already been set and cannot be overridden');
+			}
+
+			$definitions->$id = $initializerDefinition;
 		}
 		
 		return $definitions;
@@ -326,7 +381,7 @@ class XmlReader implements ReaderInterface {
 		$content = $initializer->getContent();
 		
 		if (! empty($content)) {
-			$this->processParameters($content, $definition);
+			$this->processDefinitionParameters($content, $definition);
 		}
 		
 		return $definition;
@@ -335,10 +390,11 @@ class XmlReader implements ReaderInterface {
 	/**
 	 * Process parameters
 	 * 
-	 * @param array    $params
-	 * @param stdClass $definition
+	 * @param  array    $params
+	 * @param  stdClass $definition
+	 * @throws InvalidConfig
 	 */
-	protected function processParameters(array $params, stdClass $definition) {
+	protected function processDefinitionParameters(array $params, stdClass $definition) {
 		foreach ($params as $param) {
 			if ($param->getName() === 'arguments') {
 				$content = $param->getContent();
@@ -356,21 +412,21 @@ class XmlReader implements ReaderInterface {
 	/**
 	 * Process arguments
 	 * 
-	 * @param array    $args
-	 * @param stdClass $definition
+	 * @param  array    $args
+	 * @param  stdClass $definition
+	 * @throws InvalidConfig
 	 */
 	protected function processArguments(array $args, stdClass $definition) {
 		foreach ($args as $arg) {
-			if ($arg->getName() === 'argument') {
-				if (! isset($definition->arguments)) {
-					$definition->arguments = [];
-				}
-				
-				$definition->arguments[] = $this->processArgument($arg);
-				continue;
+			if ($arg->getName() !== 'argument') {
+				throw new InvalidConfig('Unknown element "' . $arg->getName() . '" in arguments definition', null, null, $arg);
 			}
 			
-			throw new InvalidConfig('Unknown element "' . $arg->getName() . '" in service devinition', null, null, $arg);
+			if (! isset($definition->arguments)) {
+				$definition->arguments = [];
+			}
+
+			$definition->arguments[] = $this->processArgument($arg);
 		}
 	}
 	
@@ -446,7 +502,7 @@ class XmlReader implements ReaderInterface {
 		$content = $arg->getContent();
 			
 		if (! empty($content)) {
-			$this->processParameters($content, $definition);
+			$this->processDefinitionParameters($content, $definition);
 		}
 		
 		return $definition;
