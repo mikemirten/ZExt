@@ -33,7 +33,7 @@ use ZExt\Components\Std;
 
 use ZExt\Filesystem\FileInterface;
 
-use ZExt\Di\Exceptions\InvalidConfig;
+use ZExt\Di\Config\Exceptions\InvalidConfigXml as InvalidConfig;
 
 use stdClass;
 
@@ -101,7 +101,7 @@ class XmlReader implements ReaderInterface {
 		$config = Xml::read($this->file);
 
 		if ($config->getName() !== 'container') {
-			throw new InvalidConfig('Root element of a config must be a "container"');
+			throw new InvalidConfig('Root element of a config must be a "container"', null, null, $config);
 		}
 
 		$this->override = ($config->override === 'true');
@@ -128,7 +128,7 @@ class XmlReader implements ReaderInterface {
 				continue;
 			}
 			
-			throw new InvalidConfig('Unknown element "' . $element->getName() . '" in container');
+			throw new InvalidConfig('Unknown element "' . $element->getName() . '" in container', null, null, $element->getName());
 		}
 	}
 	
@@ -197,10 +197,10 @@ class XmlReader implements ReaderInterface {
 					continue;
 				}
 				
-				throw new InvalidConfig('Include must contain value or "load" attribute');
+				throw new InvalidConfig('Include must contain value or "load" attribute', null, null, $include);
 			}
 			
-			throw new InvalidConfig('Unknown element "' . $include->getName() . '" in includes');
+			throw new InvalidConfig('Unknown element "' . $include->getName() . '" in includes', null, null, $include);
 		}
 		
 		return $definitions;
@@ -220,18 +220,18 @@ class XmlReader implements ReaderInterface {
 		foreach ($services->getContent() as $service) {
 			if ($service->getName() === 'service') {
 				if (! isset($service->id)) {
-					throw new InvalidConfig('Service definition must contain an ID of service');
+					throw new InvalidConfig('Service definition must contain an ID of service', null, null, $service);
 				}
 				
 				if (! $this->override && isset($definitions->{$service->id})) {
-					throw new InvalidConfig('Service "' . $service->id . '" is already been set and cannot be overridden');
+					throw new InvalidConfig('Service "' . $service->id . '" is already been set and cannot be overridden', null, null, $service);
 				}
 				
 				$definitions->{$service->id} = $this->processService($service, $namespace);
 				continue;
 			}
 			
-			throw new InvalidConfig('Unknown element "' . $service->getName() . '" in services');
+			throw new InvalidConfig('Unknown element "' . $service->getName() . '" in services', null, null, $service);
 		}
 		
 		return $definitions;
@@ -294,7 +294,7 @@ class XmlReader implements ReaderInterface {
 				continue;
 			}
 			
-			throw new InvalidConfig('Unknown element "' . $initializers->getName() . '" in initializers');
+			throw new InvalidConfig('Unknown element "' . $initializers->getName() . '" in initializers', null, null, $initializer);
 		}
 		
 		return $definitions;
@@ -349,7 +349,7 @@ class XmlReader implements ReaderInterface {
 				continue;
 			}
 			
-			throw new InvalidConfig('Unknown element "' . $arg->getName() . '" in service devinition');
+			throw new InvalidConfig('Unknown element "' . $param->getName() . '" in service devinition', null, null, $param);
 		}
 	}
 	
@@ -370,7 +370,7 @@ class XmlReader implements ReaderInterface {
 				continue;
 			}
 			
-			throw new InvalidConfig('Unknown element "' . $arg->getName() . '" in service devinition');
+			throw new InvalidConfig('Unknown element "' . $arg->getName() . '" in service devinition', null, null, $arg);
 		}
 	}
 	
@@ -382,90 +382,144 @@ class XmlReader implements ReaderInterface {
 	 * @throws InvalidConfig
 	 */
 	protected function processArgument(Element $arg) {
-		$definition = new stdClass();
-		
-		if (isset($arg->id)) {
-			$definition->type = 'service';
-			$definition->id   = $arg->id;
+		// Value of the special types:
+		if (isset($arg->type)) {
+			$type = strtolower(trim($arg->type));
 			
-			$content = $arg->getContent();
-			
-			if (! empty($content)) {
-				$this->processParameters($content, $definition);
+			switch ($type) {
+				case 'bool':
+				case 'boolean':
+					return $this->processArgumentBoolean($arg);
+					
+				case 'service':
+					return $this->processArgumentService($arg);
+					
+				case 'null':
+					return $this->processArgumentNull($arg);
+					
+				case 'array':
+					return $this->processArgumentArray($arg);
 			}
 			
-			return $definition;
+			throw new InvalidConfig('Invalid type of argument: "' . $type . '"', null, null, $arg);
 		}
 		
-		if ($arg->type === 'boolean') {
-			$definition->type  = 'value';
-			$definition->value = (trim($arg->value) === 'true');
-			return $definition;
-		}
+		// Scalar value: string, int, float
+		$definition = new stdClass();
 		
 		if (isset($arg->value)) {
 			$definition->type  = 'value';
 			$definition->value = Std::parseValue($arg->value);
+			
 			return $definition;
 		}
 		
-		if ($arg->type === 'array') {
+		$value = $arg->getValue();
+		
+		if (! empty($value)) {
 			$definition->type  = 'value';
-			$definition->value = $this->processArray($arg);
+			$definition->value = Std::parseValue($value);
+			
 			return $definition;
 		}
-		
-		if ($arg->type === 'null') {
-			$definition->type  = 'value';
-			$definition->value = null;
-			return $definition;
-		}
-		
-		throw new InvalidConfig('Invalid definition of argument');
+		var_dump($arg->toXML()); die;
+		throw new InvalidConfig('Invalid definition of argument', null, null, $arg);
 	}
 	
 	/**
-	 * Process array
+	 * Process "Service" type argument
 	 * 
-	 * @param  Element $source
-	 * @return array
+	 * @param  Element $arg
+	 * @return stdClass
 	 * @throws InvalidConfig
 	 */
-	protected function processArray(Element $source) {
-		$array = [];
+	protected function processArgumentService(Element $arg) {
+		$definition = new stdClass();
+		$definition->type = 'service';
 		
-		foreach ($source->getContent() as $element) {
-			$name = $element->getName();
-			
-			if ($name === 'element') {
-				if (isset($element->key)) {
-					$array[$element->key] = $this->processArgument($element);
-				} else {
-					$array[] = $this->processArgument($element);
-				}
-				
-				continue;
-			}
-			
-			if ($name === 'value') {
-				$definition = new stdClass();
-				
-				$definition->type  = 'value';
-				$definition->value = Std::parseValue($element->getValue());
-				
-				if (isset($element->key)) {
-					$array[$element->key] = $definition;
-				} else {
-					$array[] = $definition;
-				}
-				
-				continue;
-			}
-			
-			throw new InvalidConfig('Array definition must contain only "element" or "value" elements');
+		if (! isset($arg->id)) {
+			throw new InvalidConfig('Definition of an argument type "service" must contain the "id" attribute', null, null, $arg);
 		}
 		
-		return $array;
+		$definition->id = trim($arg->id);
+		
+		$content = $arg->getContent();
+			
+		if (! empty($content)) {
+			$this->processParameters($content, $definition);
+		}
+		
+		return $definition;
+	}
+	
+	/**
+	 * Process "Boolean" type argument
+	 * 
+	 * @param  Element $arg
+	 * @return stdClass
+	 * @throws InvalidConfig
+	 */
+	protected function processArgumentBoolean(Element $arg) {
+		$definition = new stdClass();
+		$definition->type = 'value';
+		
+		if (isset($arg->value)) {
+			$definition->value = (trim($arg->value) === 'true');
+			return $definition;
+		}
+		
+		$value = $arg->getValue();
+		
+		if (! empty($value)) {
+			$definition->value = (trim($value) === 'true');
+			return $definition;
+		}
+		
+		throw new InvalidConfig('Definition of an argument type "boolean" must contain a value as content or the "value" attribute', null, null, $arg);
+	}
+	
+	/**
+	 * Process "Null" type argument
+	 * 
+	 * @param  Element $arg
+	 * @return stdClass
+	 * @throws InvalidConfig
+	 */
+	protected function processArgumentNull(Element $arg) {
+		$definition = new stdClass();
+		
+		$definition->type  = 'value';
+		$definition->value = null;
+		
+		return $definition;
+	}
+	
+	/**
+	 * Process "Null" type argument
+	 * 
+	 * @param  Element $arg
+	 * @return stdClass
+	 * @throws InvalidConfig
+	 */
+	protected function processArgumentArray(Element $arg) {
+		$definition = new stdClass();
+		
+		$definition->type  = 'value';
+		$definition->value = [];
+				
+		foreach ($arg->getContent() as $element) {
+			if ($element->getName() !== 'element') {
+				throw new InvalidConfig('Array definition must contain only "element" elements', null, null, $arg);
+			}
+			
+			if (isset($element->key)) {
+				$definition->value[$element->key] = $this->processArgument($element);
+			} else {
+				$definition->value[] = $this->processArgument($element);
+			}
+		}
+		
+		return $definition;
 	}
 	
 	/**

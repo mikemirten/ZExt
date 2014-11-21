@@ -12,21 +12,21 @@
 		
 		<service id="serviceArgBoolean" class="TestClass">
 			<arguments>
-				<argument type="boolean" value="true" />
+				<argument type="boolean">true</argument>
 				<argument type="boolean" value="false" />
 			</arguments>
 		</service>
 		
 		<service id="serviceArgInteger" class="TestClass">
 			<arguments>
-				<argument value="65535" />
+				<argument>65535</argument>
 				<argument value="255" />
 			</arguments>
 		</service>
 		
 		<service id="serviceArgString" class="TestClass">
 			<arguments>
-				<argument value="qwerty" />
+				<argument>qwerty</argument>
 				<argument value="asdfgh" />
 			</arguments>
 		</service>
@@ -52,14 +52,14 @@
 				</argument>
 				
 				<argument type="array">
-					<value>3</value>
-					<value>6</value>
-					<value>9</value>
+					<element>3</element>
+					<element>6</element>
+					<element>9</element>
 				</argument>
 				
 				<argument type="array">
-					<value key="a">3</value>
-					<value key="b">6</value>
+					<element key="a">3</element>
+					<element key="b">6</element>
 				</argument>
 			</arguments>
 		</service>
@@ -86,8 +86,8 @@
 		<service id="serviceArgArrayService" class="TestClass">
 			<arguments>
 				<argument type="array">
-					<element id="service1" />
-					<element id="service2" />
+					<element type="service" id="service1" />
+					<element type="service" id="service2" />
 				</argument>
 			</arguments>
 		</service>
@@ -106,9 +106,9 @@
 		<service id="serviceArgArrayServiceWithArgs" class="TestClass">
 			<arguments>
 				<argument type="array">
-					<element id="service1">
+					<element type="service" id="service1">
 						<arguments>
-							<argument value="255" />
+							<argument>255</argument>
 							<argument value="qwerty" />
 						</arguments>
 					</element>
@@ -127,7 +127,7 @@
 		
 		<initializer id="models" namespace="Models">
 			<arguments>
-				<argument id="adapter" />
+				<argument type="service" id="adapter" />
 				<argument value="qwerty" />
 			</arguments>
 		</initializer>
