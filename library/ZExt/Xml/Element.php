@@ -192,6 +192,15 @@ class Element implements IteratorAggregate {
 	}
 	
 	/**
+	 * Get element as XML
+	 * 
+	 * @return string
+	 */
+	public function toXML() {
+		return $this->_xml->asXML();
+	}
+	
+	/**
 	 * Get iterator
 	 * 
 	 * @return \Traversable
