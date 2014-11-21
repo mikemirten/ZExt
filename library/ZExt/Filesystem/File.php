@@ -70,7 +70,7 @@ class File implements FileInterface {
 		$content = file_get_contents($this->getRealpath());
 		
 		if ($content === false) {
-			throw new Exceptions\InvalidPath('File "' . $path . '" is unreadable', null, null, $this->path);
+			throw new Exceptions\InvalidPath('File "' . $this->path . '" is unreadable', null, null, $this->path);
 		}
 		
 		return $content;
