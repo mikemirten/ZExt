@@ -26,6 +26,8 @@
 
 namespace ZExt\Di;
 
+use ZExt\Config\ConfigInterface;
+
 /**
  * Services' container interface
  * 
@@ -57,6 +59,37 @@ interface ContainerInterface extends LocatorInterface, DefinitionAwareInterface 
 	 * @throws Exceptions\ServiceOverride
 	 */
 	public function setAlias($existsId, $newId);
+	
+	/**
+	 * Set parameter
+	 * 
+	 * @param string $name
+	 * @param mixed  $value
+	 */
+	public function setParameter($name, $value);
+	
+	/**
+	 * Get parameter
+	 * 
+	 * @param string $name
+	 */
+	public function getParameter($name);
+	
+	/**
+	 * Set config with parameters
+	 * 
+	 * @param  ConfigInterface $config
+	 * @param  bool            $lockExchange Forbid set config in future
+	 * @throws Exceptions\ForbiddenAction
+	 */
+	public function setParemetersConfig(ConfigInterface $config, $lockExchange = false);
+	
+	/**
+	 * Get config with parameters
+	 * 
+	 * @return ConfigInterface
+	 */
+	public function getParametersConfig();
 	
 	/**
 	 * Remove service

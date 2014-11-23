@@ -27,6 +27,10 @@
 namespace ZExt\Di;
 
 use ZExt\Di\Definition\DefinitionInterface;
+
+use ZExt\Config\ConfigInterface,
+    ZExt\Config\Config;
+
 use Closure;
 
 /**
@@ -46,6 +50,20 @@ class Container implements ContainerInterface {
 	 * @var DefinitionInterface[]
 	 */
 	protected $_definitions = [];
+	
+	/**
+	 * Parameters
+	 *
+	 * @var ConfigInterface
+	 */
+	protected $_parametersConfig;
+	
+	/**
+	 * PArameters config exchange lock
+	 *
+	 * @var bool
+	 */
+	protected $_parametersConfigLock = false;
 	
 	/**
 	 * Locators
@@ -104,6 +122,61 @@ class Container implements ContainerInterface {
 		}
 		
 		$this->_definitions[$newId] = $this->getDefinition($existsId);
+	}
+	
+	/**
+	 * Set parameter
+	 * 
+	 * @param  string $name
+	 * @param  mixed  $value
+	 * @return Container
+	 */
+	public function setParameter($name, $value) {
+		$this->getParametersConfig()->set($name, $value);
+		
+		return $this;
+	}
+	
+	/**
+	 * Get parameter
+	 * 
+	 * @param  string $name
+	 * @return mixed
+	 */
+	public function getParameter($name) {
+		return $this->getParametersConfig()->get($name);
+	}
+	
+	/**
+	 * Set config with parameters
+	 * 
+	 * @param  ConfigInterface $config
+	 * @param  bool            $lockExchange Forbid set config in future
+	 * @throws Exceptions\ForbiddenAction
+	 * @return Container
+	 */
+	public function setParemetersConfig(ConfigInterface $config, $lockExchange = true) {
+		if ($this->_parametersConfigLock) {
+			throw new Exceptions\ForbiddenAction('Config is locked and cannot be exchanged');
+		}
+		
+		$this->_parametersConfig     = $config;
+		$this->_parametersConfigLock = $lockExchange;
+		
+		return $this;
+	}
+	
+	/**
+	 * Get config with parameters
+	 * 
+	 * @return ConfigInterface
+	 */
+	public function getParametersConfig() {
+		if ($this->_parametersConfig === null) {
+			$this->_parametersConfig = new Config();
+		}
+		
+		return $this->_parametersConfig;
 	}
 	
 	/**
