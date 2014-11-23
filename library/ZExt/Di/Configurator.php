@@ -26,9 +26,11 @@
 
 namespace ZExt\Di;
 
-use ZExt\Di\Definition\Argument\ServiceReferenceArgument;
-use ZExt\Filesystem\DirectoryInterface;
-use ZExt\Filesystem\FileInterface;
+use ZExt\Di\Definition\Argument\ServiceReferenceArgument as ServiceReference,
+    ZExt\Di\Definition\Argument\ConfigReferenceArgument as ConfigReference;
+
+use ZExt\Filesystem\DirectoryInterface,
+    ZExt\Filesystem\FileInterface;
 
 use stdClass;
 
@@ -179,6 +181,10 @@ class Configurator {
 	public function configure() {
 		$config = $this->mergeConfigs($this->configReaders);
 		
+		if (isset($config->parameters)) {
+			$this->applyParameters($config->parameters);
+		}
+		
 		if (isset($config->services)) {
 			$this->applyServices($config->services);
 		}
@@ -190,6 +196,20 @@ class Configurator {
 		return $this->container;
 	}
 	
+	/**
+	 * Apply parameters to container
+	 * 
+	 * @param stdClass $definitions
+	 */
+	protected function applyParameters(stdClass $definitions) {
+		$parameters = $this->processArguments($definitions);
+		$config     = $this->container->getParametersConfig();
+		
+		foreach ($parameters as $name => $value) {
+			$config->set($name, $value);
+		}
+	}
+
 	/**
 	 * Apply services config to container
 	 * 
@@ -274,53 +294,107 @@ class Configurator {
 	/**
 	 * Process arguments
 	 * 
-	 * @param  array $arguments
+	 * @param  array | object $arguments
 	 * @return array
 	 * @throws Exceptions\InvalidConfig
 	 */
-	protected function processArguments(array $arguments) {
+	protected function processArguments($arguments) {
 		$processedArgs = [];
 		
-		foreach ($arguments as $argument) {
+		foreach ($arguments as $key => $argument) {
 			if (! isset($argument->type)) {
 				throw new Exceptions\InvalidConfig('Argument definition must contain a "type" property"');
 			}
 			
-			if ($argument->type === 'value') {
-				if (! isset($argument->value)) {
-					throw new Exceptions\InvalidConfig('Argument of type "value" must contain a "value" property');
-				}
-				
-				if (is_array($argument->value)) {
-					$processedArgs[] = $this->processArguments($argument->value);
-					continue;
-				}
-				
-				$processedArgs[] = $argument->value;
+			$type = strtolower(trim($argument->type));
+			
+			if ($type === 'value') {
+				$processedArgs[$key] = $this->processArgumentValue($argument);
 				continue;
 			}
 			
-			if ($argument->type === 'service') {
-				if (! isset($argument->id)) {
-					throw new Exceptions\InvalidConfig('Argument of type "service" must contain an "id" property');
-				}
-				
-				$reference = new ServiceReferenceArgument($this->container, $argument->id);
-				
-				if (isset($argument->arguments)) {
-					$args = $this->processArguments($argument->arguments);
-					
-					$reference->setArguments($args);
-				}
-				
-				$processedArgs[] = $reference;
+			if ($type === 'service') {
+				$processedArgs[$key] = $this->processArgumentService($argument);
 				continue;
 			}
 			
-			throw new Exceptions\InvalidConfig('Unknown type of argument: "' . $argument->type . '"');
+			if ($type === 'parameter') {
+				$processedArgs[$key] = $this->processArgumentParameter($argument);
+				continue;
+			}
+			
+			throw new Exceptions\InvalidConfig('Unknown type of argument: "' . $type . '"');
 		}
 		
 		return $processedArgs;
+	}
+	
+	/**
+	 * Process argument of the type "value"
+	 * 
+	 * @param  stdClass $argument
+	 * @return mixed
+	 * @throws Exceptions\InvalidConfig
+	 */
+	protected function processArgumentValue(stdClass $argument) {
+		if (! isset($argument->value)) {
+			throw new Exceptions\InvalidConfig('Argument of type "value" must contain a "value" property');
+		}
+
+		if (is_array($argument->value)) {
+			return $this->processArguments($argument->value);
+		}
+
+		return $argument->value;
+	}
+	
+	/**
+	 * Process argument of the type "service"
+	 * 
+	 * @param  stdClass $argument
+	 * @return mixed
+	 * @throws Exceptions\InvalidConfig
+	 */
+	protected function processArgumentService(stdClass $argument) {
+		if (! isset($argument->id)) {
+			throw new Exceptions\InvalidConfig('Argument of type "service" must contain an "id" property');
+		}
+
+		$reference = new ServiceReference($this->container, $argument->id);
+
+		if (isset($argument->arguments)) {
+			$args = $this->processArguments($argument->arguments);
+
+			$reference->setArguments($args);
+		}
+
+		return $reference;
+	}
+	
+	/**
+	 * Process argument of the type "service"
+	 * 
+	 * @param  stdClass $argument
+	 * @return mixed
+	 * @throws Exceptions\InvalidConfig
+	 */
+	protected function processArgumentParameter(stdClass $argument) {
+		if (! isset($argument->name)) {
+			throw new Exceptions\InvalidConfig('Argument of type "parameter" must contain a "name" property');
+		}
+		
+		$config = $this->container->getParametersConfig();
+		$name   = trim($argument->name);
+		
+		if (! empty($argument->deferred)) {
+			return new ConfigReference($config, $name);
+		}
+		
+		if (! $config->has($name)) {
+			throw new Exceptions\InvalidConfig('Config contains no "' . $name . '" parameter');
+		}
+		
+		return $config->get($name);
 	}
 	
 	/**
@@ -333,10 +407,12 @@ class Configurator {
 	protected function mergeConfigs(array $configs) {
 		$result = new stdClass();
 		
+		$result->parameters   = new stdClass();
 		$result->services     = new stdClass();
 		$result->initializers = new stdClass();
 		
 		foreach ($configs as $config) {
+			$this->mergeConfigsPart($config->getParameters(), $result->parameters);
 			$this->mergeConfigsPart($config->getServices(), $result->services);
 			$this->mergeConfigsPart($config->getInitializers(), $result->initializers);
 		}

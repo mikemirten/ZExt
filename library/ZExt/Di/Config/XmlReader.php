@@ -450,6 +450,9 @@ class XmlReader implements ReaderInterface {
 				case 'service':
 					return $this->processArgumentService($arg);
 					
+				case 'parameter':
+					return $this->processArgumentParameter($arg);
+					
 				case 'null':
 					return $this->processArgumentNull($arg);
 					
@@ -478,12 +481,12 @@ class XmlReader implements ReaderInterface {
 			
 			return $definition;
 		}
-		var_dump($arg->toXML()); die;
+		
 		throw new InvalidConfig('Invalid definition of argument', null, null, $arg);
 	}
 	
 	/**
-	 * Process "Service" type argument
+	 * Process "service" type argument
 	 * 
 	 * @param  Element $arg
 	 * @return stdClass
@@ -509,7 +512,31 @@ class XmlReader implements ReaderInterface {
 	}
 	
 	/**
-	 * Process "Boolean" type argument
+	 * Process "parameter" type argument
+	 * 
+	 * @param  Element $arg
+	 * @return stdClass
+	 * @throws InvalidConfig
+	 */
+	protected function processArgumentParameter(Element $arg) {
+		$definition = new stdClass();
+		$definition->type = 'parameter';
+		
+		if (! isset($arg->name)) {
+			throw new InvalidConfig('Definition of an argument type "paramater" must contain the "name" attribute', null, null, $arg);
+		}
+		
+		$definition->name = trim($arg->name);
+		
+		if ($arg->deferred === 'true') {
+			$definition->deferred = true;
+		}
+		
+		return $definition;
+	}
+	
+	/**
+	 * Process "boolean" type argument
 	 * 
 	 * @param  Element $arg
 	 * @return stdClass
@@ -535,7 +562,7 @@ class XmlReader implements ReaderInterface {
 	}
 	
 	/**
-	 * Process "Null" type argument
+	 * Process "null" type argument
 	 * 
 	 * @param  Element $arg
 	 * @return stdClass
@@ -551,7 +578,7 @@ class XmlReader implements ReaderInterface {
 	}
 	
 	/**
-	 * Process "Null" type argument
+	 * Process "array" type argument
 	 * 
 	 * @param  Element $arg
 	 * @return stdClass
