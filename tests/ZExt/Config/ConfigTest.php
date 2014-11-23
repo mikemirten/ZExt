@@ -10,6 +10,21 @@ class ConfigTest extends PHPUnit_Framework_TestCase {
 	public function testConfigGet($source) {
 		$config = new Config($source);
 		
+		$this->assertSame(1, $config->get('item1'));
+		$this->assertSame(2, $config->get('item2'));
+		
+		$this->assertSame(3, $config->get('section.item3'));
+		$this->assertSame(4, $config->get('section.item4'));
+		
+		$this->assertNull($config->nonExists);
+	}
+	
+	/**
+	 * @dataProvider configSourceProvider
+	 */
+	public function testConfigGetMagic($source) {
+		$config = new Config($source);
+		
 		$this->assertSame(1, $config->item1);
 		$this->assertSame(2, $config->item2);
 		
@@ -17,6 +32,19 @@ class ConfigTest extends PHPUnit_Framework_TestCase {
 		$this->assertSame(4, $config->section->item4);
 		
 		$this->assertNull($config->nonExists);
+	}
+	
+	/**
+	 * @dataProvider configSourceProvider
+	 */
+	public function testConfigHas($source) {
+		$config = new Config($source);
+		
+		$this->assertFalse($config->has('item0'));
+		$this->assertFalse($config->has('section.item0'));
+		
+		$this->assertTrue($config->has('item1'));
+		$this->assertTrue($config->has('section.item3'));
 	}
 	
 	/**
@@ -34,17 +62,17 @@ class ConfigTest extends PHPUnit_Framework_TestCase {
 	
 	public function testConfigReadOnly() {
 		$config = new Config();
-		$this->assertFalse($config->isReadOnly());
+		$this->assertFalse($config->isLocked());
 		
 		$config = new Config();
-		$config->setReadOnly();
-		$this->assertTrue($config->isReadOnly());
+		$config->lock();
+		$this->assertTrue($config->isLocked());
 		
 		$config = new Config(['item' => 1], false);
-		$this->assertFalse($config->isReadOnly());
+		$this->assertFalse($config->isLocked());
 		
 		$config = new Config(['item' => 1]);
-		$this->assertTrue($config->isReadOnly());
+		$this->assertTrue($config->isLocked());
 	}
 	
 	/**
@@ -56,6 +84,27 @@ class ConfigTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testConfigSet() {
+		$config = new Config();
+		
+		$config->set('item1', 1);
+		$config->set('item2', 2);
+		
+		$this->assertSame(1, $config->item1);
+		$this->assertSame(2, $config->item2);
+		
+		$config->set('section', [
+			'item3' => 3,
+			'item4' => 4
+		]);
+		
+		$config->set('section.item5', 5);
+		
+		$this->assertSame(3, $config->section->item3);
+		$this->assertSame(4, $config->section->item4);
+		$this->assertSame(5, $config->section->item5);
+	}
+	
+	public function testConfigSetMagic() {
 		$config = new Config();
 		
 		$config->item1 = 1;
@@ -71,6 +120,23 @@ class ConfigTest extends PHPUnit_Framework_TestCase {
 				
 		$this->assertSame(3, $config->section->item3);
 		$this->assertSame(4, $config->section->item4);
+	}
+	
+	/**
+	 * @dataProvider configSourceProvider
+	 */
+	public function testConfigRemove($source) {
+		$config = new Config($source, false);
+		
+		$config->remove('item1');
+		$config->remove('item2');
+		$config->remove('section.item3');
+		
+		$this->assertFalse(isset($config->item1));
+		$this->assertFalse(isset($config->item2));
+		
+		$this->assertFalse(isset($config->section->item3));
+		$this->assertTrue(isset($config->section->item4));
 	}
 	
 	/**
@@ -147,7 +213,7 @@ class ConfigTest extends PHPUnit_Framework_TestCase {
 		$clonedConfig->section->item3 = 300;
 		$clonedConfig->section->item5 = 500;
 		
-		$this->assertFalse($clonedConfig->isReadOnly());
+		$this->assertFalse($clonedConfig->isLocked());
 		
 		$this->assertSame(1, $config->item1);
 		$this->assertSame(3, $config->section->item3);

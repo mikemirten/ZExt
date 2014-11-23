@@ -36,7 +36,7 @@ use ArrayIterator;
  * @package    Config
  * @subpackage Config
  * @author     Mike.Mirten
- * @version    1.0rc1
+ * @version    2.0
  */
 class Config implements ConfigInterface {
 	
@@ -52,22 +52,124 @@ class Config implements ConfigInterface {
 	 *
 	 * @var bool
 	 */
-	protected $_readOnly = false;
+	protected $_locked = false;
 	
 	/**
 	 * Constructor
 	 * 
 	 * @param array $source
-	 * @param bool  $readOnly
+	 * @param bool  $lock
 	 */
-	public function __construct(array $source = null, $readOnly = true) {
+	public function __construct(array $source = null, $lock = true) {
 		if ($source !== null) {
 			$this->setSourceData($source);
 			
-			if ($readOnly) {
-				$this->setReadOnly();
+			if ($lock) {
+				$this->lock();
 			}
 		}
+	}
+	
+	/**
+	 * Get parameter
+	 * 
+	 * @param  string $name      Parameter's name
+	 * @param  string $delimiter Nesting delimiter
+	 * @return mixed
+	 */
+	public function get($name, $delimiter = self::DELIMITER) {
+		if (strpos($name, $delimiter) === false) {
+			return isset($this->_data[$name])
+				? $this->_data[$name]
+				: null;
+		}
+		
+		list ($first, $rest) = explode($delimiter, $name, 2);
+		
+		if (isset($this->_data[$first]) && $this->_data[$first] instanceof self) {
+			return $this->_data[$first]->get($rest, $delimiter);
+		}
+	}
+	
+	/**
+	 * Set parameter
+	 * 
+	 * @param  string $name      Parameter's name
+	 * @param  mixed  $value     Parameters value
+	 * @param  string $delimiter Nesting delimiter
+	 * @return Config
+	 * @throws ReadOnly
+	 */
+	public function set($name, $value, $delimiter = self::DELIMITER) {
+		if ($this->_locked) {
+			throw new ReadOnly('Config is read only');
+		}
+		
+		if (strpos($name, $delimiter) === false) {
+			$this->_data[$name] = is_array($value)
+				? new static($value, false)
+				: $value;
+			
+			return $this;
+		}
+		
+		list ($first, $rest) = explode($delimiter, $name, 2);
+		
+		if (! isset($this->_data[$first]) || ! $this->_data[$first] instanceof self) {
+			$this->_data[$first] = new static();
+		}
+		
+		$this->_data[$first]->set($rest, $value, $delimiter);
+		
+		return $this;
+	}
+	
+	/**
+	 * Has parameter ?
+	 * 
+	 * @param type $name      Parameter's name
+	 * @param type $delimiter Nesting delimiter
+	 */
+	public function has($name, $delimiter = self::DELIMITER) {
+		if (strpos($name, $delimiter) === false) {
+			return isset($this->_data[$name]);
+		}
+		
+		list ($first, $rest) = explode($delimiter, $name, 2);
+		
+		if (isset($this->_data[$first]) && $this->_data[$first] instanceof self) {
+			return $this->_data[$first]->has($rest, $delimiter);
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Remove parameter
+	 * 
+	 * @param  string $name      Parameter's name
+	 * @param  string $delimiter Nesting delimiter
+	 * @return Config
+	 * @throws ReadOnly
+	 */
+	public function remove($name, $delimiter = self::DELIMITER) {
+		if ($this->_locked) {
+			throw new ReadOnly('Config is read only');
+		}
+		
+		if (strpos($name, $delimiter) === false) {
+			unset($this->_data[$name]);
+			
+			return $this;
+		}
+		
+		list ($first, $rest) = explode($delimiter, $name, 2);
+		
+		if (isset($this->_data[$first]) && $this->_data[$first] instanceof self) {
+			$this->_data[$first]->remove($rest, $delimiter);
+		}
+		
+		return $this;
 	}
 	
 	/**
@@ -87,11 +189,16 @@ class Config implements ConfigInterface {
 	 * 
 	 * @param  array $source
 	 * @return Config
+	 * @throws ReadOnly
 	 */
 	public function setSourceData(array $source) {
+		if ($this->_locked) {
+			throw new ReadOnly('Config is read only');
+		}
+		
 		foreach ($source as $key => $part) {
 			if (is_array($part)) {
-				$this->_data[$key] = new static($part);
+				$this->_data[$key] = new static($part, false);
 			} else {
 				$this->_data[$key] = $part;
 			}
@@ -101,16 +208,16 @@ class Config implements ConfigInterface {
 	}
 	
 	/**
-	 * Lock the config to read only mode
+	 * Lock the config to the read only mode
 	 * 
 	 * @return Config
 	 */
-	public function setReadOnly() {
-		$this->_readOnly = true;
+	public function lock() {
+		$this->_locked = true;
 		
 		foreach ($this->_data as $part) {
 			if ($part instanceof Config) {
-				$part->setReadOnly();
+				$part->lock();
 			}
 		}
 		
@@ -122,8 +229,8 @@ class Config implements ConfigInterface {
 	 * 
 	 * @return bool
 	 */
-	public function isReadOnly() {
-		return $this->_readOnly;
+	public function isLocked() {
+		return $this->_locked;
 	}
 	
 	/**
@@ -134,8 +241,8 @@ class Config implements ConfigInterface {
 	 * @throws ReadOnly
 	 */
 	public function merge(ConfigInterface $config) {
-		if ($this->_readOnly) {
-			throw new ReadOnly('The config are in the read only mode');
+		if ($this->_locked) {
+			throw new ReadOnly('Config is read only');
 		}
 		
 		$source = array_replace_recursive($this->toArray(), $config->toArray());
@@ -169,7 +276,7 @@ class Config implements ConfigInterface {
 	 * @param  string $delimiter
 	 * @return array
 	 */
-	public function toFlatArray($delimiter = '.') {
+	public function toFlatArray($delimiter = self::DELIMITER) {
 		$result = [];
 		
 		foreach ($this->_data as $key => $part) {
@@ -220,15 +327,7 @@ class Config implements ConfigInterface {
 	 * @throws ReadOnly
 	 */
 	public function __set($name, $value) {
-		if ($this->_readOnly) {
-			throw new ReadOnly('The config are in the read only mode');
-		}
-		
-		if (is_array($value)) {
-			$this->_data[$name] = new static($value);
-		} else {
-			$this->_data[$name] = $value;
-		}
+		$this->set($name, $value);
 	}
 	
 	/**
@@ -238,9 +337,7 @@ class Config implements ConfigInterface {
 	 * @return mixed
 	 */
 	public function __get($name) {
-		if (isset($this->_data[$name])) {
-			return $this->_data[$name];
-		}
+		return $this->get($name);
 	}
 	
 	/**
@@ -250,7 +347,7 @@ class Config implements ConfigInterface {
 	 * @return bool
 	 */
 	public function __isset($name) {
-		return isset($this->_data[$name]);
+		return $this->has($name);
 	}
 	
 	/**
@@ -260,18 +357,14 @@ class Config implements ConfigInterface {
 	 * @throws ReadOnly
 	 */
 	public function __unset($name) {
-		if ($this->_readOnly) {
-			throw new ReadOnly('The config are in the read only mode');
-		}
-		
-		unset($this->_data[$name]);
+		return $this->remove($name);
 	}
 	
 	/**
 	 * Recursive cloning of the config
 	 */
 	public function __clone() {
-		$this->_readOnly = false;
+		$this->_locked = false;
 		
 		foreach ($this->_data as $key => $part) {
 			if ($part instanceof Config) {

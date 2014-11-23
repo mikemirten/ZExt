@@ -35,21 +35,60 @@ use IteratorAggregate, Countable;
  * @package    Config
  * @subpackage Config
  * @author     Mike.Mirten
- * @version    1.0
+ * @version    1.1
  */
 interface ConfigInterface extends IteratorAggregate, Countable {
+	
+	const DELIMITER = '.';
+	
+	/**
+	 * Get parameter
+	 * 
+	 * @param  string $name      Parameter's name
+	 * @param  string $delimiter Nesting delimiter
+	 * @return mixed
+	 */
+	public function get($name, $delimiter = self::DELIMITER);
+	
+	/**
+	 * Set parameter
+	 * 
+	 * @param  string $name      Parameter's name
+	 * @param  mixed  $value     Parameters value
+	 * @param  string $delimiter Nesting delimiter
+	 * @throws ReadOnly
+	 */
+	public function set($name, $value, $delimiter = self::DELIMITER);
+	
+	/**
+	 * Has parameter ?
+	 * 
+	 * @param type $name      Parameter's name
+	 * @param type $delimiter Nesting delimiter
+	 */
+	public function has($name, $delimiter = self::DELIMITER);
+	
+	/**
+	 * Remove parameter
+	 * 
+	 * @param  string $name      Parameter's name
+	 * @param  string $delimiter Nesting delimiter
+	 * @throws ReadOnly
+	 */
+	public function remove($name, $delimiter = self::DELIMITER);
 	
 	/**
 	 * Is the config in the read only mode
 	 * 
 	 * @return bool
 	 */
-	public function isReadOnly();
+	public function isLocked();
 	
 	/**
 	 * Merge a config into this config
 	 * 
-	 * @param ConfigInterface $config
+	 * @param  ConfigInterface $config
+	 * @throws ReadOnly
 	 */
 	public function merge(ConfigInterface $config);
 	
@@ -65,6 +104,7 @@ interface ConfigInterface extends IteratorAggregate, Countable {
 	 * 
 	 * @param  string | int $name
 	 * @param  mixed        $value
+	 * @throws ReadOnly
 	 */
 	public function __set($name, $value);
 	
@@ -88,6 +128,7 @@ interface ConfigInterface extends IteratorAggregate, Countable {
 	 * Remove a config's property
 	 * 
 	 * @param  string | int $name
+	 * @throws ReadOnly
 	 */
 	public function __unset($name);
 	
