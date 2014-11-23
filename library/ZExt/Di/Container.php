@@ -28,6 +28,10 @@ namespace ZExt\Di;
 
 use ZExt\Di\Definition\DefinitionInterface;
 
+use ZExt\Di\Definition\Argument\ConfigReferenceArgument as ConfigReference,
+    ZExt\Di\Definition\Argument\ServiceReferenceArgument as ServiceReference;
+
+
 use ZExt\Config\ConfigInterface,
     ZExt\Config\Config;
 
@@ -80,6 +84,17 @@ class Container implements ContainerInterface {
 	protected $_locatorsResolved = [];
 	
 	/**
+	 * Constructor
+	 * 
+	 * @param ConfigInterface $parametersConfig
+	 */
+	public function __construct(ConfigInterface $parametersConfig = null) {
+		if ($parametersConfig !== null) {
+			$this->setParemetersConfig($parametersConfig);
+		}
+	}
+	
+	/**
 	 * Set service definition
 	 * 
 	 * @param  string $id         ID of service
@@ -97,6 +112,7 @@ class Container implements ContainerInterface {
 		$definition = $this->normalizeDefinition($definition);
 		
 		if ($args !== null) {
+			$args = $this->processArguments($args);
 			$definition->setArguments($args);
 		}
 		
@@ -173,7 +189,8 @@ class Container implements ContainerInterface {
 	 */
 	public function getParametersConfig() {
 		if ($this->_parametersConfig === null) {
-			$this->_parametersConfig = new Config();
+			$this->_parametersConfig     = new Config();
+			$this->_parametersConfigLock = true;
 		}
 		
 		return $this->_parametersConfig;
@@ -345,6 +362,35 @@ class Container implements ContainerInterface {
 	}
 	
 	/**
+	 * Process arguments
+	 * 
+	 * @param  mixed $args
+	 * @return mixed
+	 */
+	protected function processArguments($args) {
+		if (is_array($args)) {
+			foreach ($args as &$arg) {
+				$arg = $this->processArguments($arg);
+			}
+			unset($arg);
+			
+			return $args;
+		}
+		
+		if (is_string($args)) {
+			if (preg_match('~^\[\[([a-z0-9_]+)\]\]$~i', $args, $matches)) {
+				return new ServiceReference($this, $matches[1]);
+			}
+			
+			if (preg_match('~^\{\{([a-z0-9_]+)\}\}$~i', $args, $matches)) {
+				return new ConfigReference($this->getParametersConfig(), $matches[1]);
+			}
+		}
+		
+		return $args;
+	}
+	
+	/**
 	 * Set service definition
 	 * 
 	 * @param string $id ID of service
@@ -397,7 +443,18 @@ class Container implements ContainerInterface {
 	}
 	
 	public function __sleep() {
-		return ['_definitions', '_locators'];
+		return [
+			'_definitions',
+			'_locators',
+			'_parametersConfig'
+		];
+	}
+	
+	public function __clone() {
+		if ($this->_parametersConfig !== null) {
+			$this->_parametersConfig     = clone $this->_parametersConfig;
+			$this->_parametersConfigLock = false;
+		}
 	}
 	
 }

@@ -199,4 +199,56 @@ class ContainerTest extends PHPUnit_Framework_TestCase {
 		$this->assertInstanceOf('ZExt\Di\Definition\DefinitionInterface', $container->getDefinition('service'));
 	}
 	
+	public function testSetWithServiceInArg() {
+		$container = new Container();
+		
+		$container->set('dependency', function() {
+			return 100;
+		});
+		
+		$container->set('service', function($arg) {
+			return $arg;
+		}, '[[dependency]]');
+		
+		$this->assertSame(100, $container->get('service'));
+	}
+	
+	public function testSetWithServiceInArgsArray() {
+		$container = new Container();
+		
+		$container->set('dependency', function() {
+			return 100;
+		});
+		
+		$container->set('service', function($arg1, $arg2) {
+			return func_get_args();
+		}, [200, '[[dependency]]']);
+		
+		$this->assertSame([200, 100], $container->get('service'));
+	}
+	
+	public function testSetWithParamInArg() {
+		$container = new Container();
+		
+		$container->setParameter('param', 100);
+		
+		$container->set('service', function($arg) {
+			return $arg;
+		}, '{{param}}');
+		
+		$this->assertSame(100, $container->get('service'));
+	}
+	
+	public function testSetWithParamInArgsArray() {
+		$container = new Container();
+		
+		$container->setParameter('param', 100);
+		
+		$container->set('service', function($arg) {
+			return func_get_args();
+		}, [200, '{{param}}']);
+		
+		$this->assertSame([200, 100], $container->get('service'));
+	}
+	
 }
