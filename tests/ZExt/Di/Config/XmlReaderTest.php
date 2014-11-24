@@ -213,4 +213,24 @@ class XmlReaderTest extends PHPUnit_Framework_TestCase {
 		], self::$parameters->param3);
 	}
 	
+	public function testCalls() {
+		$this->assertEquals([
+			(object) ['method' => 'reset']
+		], self::$services->serviceCall->calls);
+	}
+	
+	public function testCallsWithArgs() {
+		$this->assertEquals([
+			(object) [
+				'method'    => 'reset',
+				'arguments' => [
+					(object) [
+						'type'  => 'value',
+						'value' => true
+					]
+				]
+			]
+		], self::$services->serviceCallWithArgs->calls);
+	}
+	
 }

@@ -396,11 +396,22 @@ class XmlReader implements ReaderInterface {
 	 */
 	protected function processDefinitionParameters(array $params, stdClass $definition) {
 		foreach ($params as $param) {
-			if ($param->getName() === 'arguments') {
+			$name = $param->getName();
+			
+			if ($name === 'arguments') {
 				$content = $param->getContent();
 				
 				if (! empty($content)) {
-					$this->processArguments($content, $definition);
+					$definition->arguments = $this->processArguments($content);
+				}
+				continue;
+			}
+			
+			if ($name === 'calls') {
+				$content = $param->getContent();
+				
+				if (! empty($content)) {
+					$definition->calls = $this->processCalls($content);
 				}
 				continue;
 			}
@@ -415,19 +426,20 @@ class XmlReader implements ReaderInterface {
 	 * @param  array    $args
 	 * @param  stdClass $definition
 	 * @throws InvalidConfig
+	 * @return array
 	 */
-	protected function processArguments(array $args, stdClass $definition) {
+	protected function processArguments(array $args) {
+		$definition = [];
+		
 		foreach ($args as $arg) {
 			if ($arg->getName() !== 'argument') {
 				throw new InvalidConfig('Unknown element "' . $arg->getName() . '" in arguments definition', null, null, $arg);
 			}
-			
-			if (! isset($definition->arguments)) {
-				$definition->arguments = [];
-			}
 
-			$definition->arguments[] = $this->processArgument($arg);
+			$definition[] = $this->processArgument($arg);
 		}
+		
+		return $definition;
 	}
 	
 	/**
@@ -600,6 +612,51 @@ class XmlReader implements ReaderInterface {
 			} else {
 				$definition->value[] = $this->processArgument($element);
 			}
+		}
+		
+		return $definition;
+	}
+	
+	/**
+	 * Process calls
+	 * 
+	 * @param  array    $calls
+	 * @param  stdClass $definition
+	 * @throws InvalidConfig
+	 */
+	protected function processCalls(array $calls) {
+		$definition = [];
+		
+		foreach ($calls as $call) {
+			if ($call->getName() !== 'call') {
+				throw new InvalidConfig('Unknown element "' . $call->getName() . '" in calls definition', null, null, $call);
+			}
+
+			$definition[] = $this->processCall($call);
+		}
+		
+		return $definition;
+	}
+	
+	/**
+	 * Process call
+	 * 
+	 * @param  Element $call
+	 * @return stdClass
+	 * @throws InvalidConfig
+	 */
+	protected function processCall(Element $call) {
+		if (! isset($call->method)) {
+			throw new InvalidConfig('Definition of a call must contain the "method" attribute', null, null, $call);
+		}
+		
+		$definition = new stdClass();
+		$definition->method = trim($call->method);
+		
+		$content = $call->getContent();
+		
+		if (! empty($content)) {
+			$this->processDefinitionParameters($content, $definition);
 		}
 		
 		return $definition;

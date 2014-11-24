@@ -121,6 +121,22 @@
 				</argument>
 			</arguments>
 		</service>
+		
+		<service id="serviceCall">
+			<calls>
+				<call method="reset" />
+			</calls>
+		</service>
+		
+		<service id="serviceCallWithArgs">
+			<calls>
+				<call method="reset">
+					<arguments>
+						<argument type="boolean" value="true" />
+					</arguments>
+				</call>
+			</calls>
+		</service>
 	</services>
 	
 	<services namespace="Library">
