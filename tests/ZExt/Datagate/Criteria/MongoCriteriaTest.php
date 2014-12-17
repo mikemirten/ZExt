@@ -13,6 +13,11 @@ class CriteriaTest extends PHPUnit_Framework_TestCase {
 	protected $datagate;
 	
 	public function setUp() {
+		if (! extension_loaded('mongo')) {
+			$this->markTestSkipped('The mongodb php extension is not loaded');
+			return;
+		}
+		
 		$this->datagate = new MongoCollection();
 	}
 	

@@ -20,7 +20,7 @@ class MongoAdapterTest extends PHPUnit_Framework_TestCase {
 	
 	public function setUp() {
 		if (! extension_loaded('mongo')) {
-			$this->markTestSkipped('The memcache php extension is not loaded');
+			$this->markTestSkipped('The mongodb php extension is not loaded');
 			return;
 		}
 		
@@ -151,6 +151,10 @@ class MongoAdapterTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	public function testCollectionProvider() {
+		if (! extension_loaded('mongo')) {
+			return;
+		}
+		
 		return [[[
 			'_id'  => new MongoId('000000000000000000000001'),
 			'id'   => 1,

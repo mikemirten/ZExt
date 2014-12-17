@@ -22,6 +22,11 @@ class MongoCollectionTest extends PHPUnit_Framework_TestCase {
 	 * @dataProvider dbdataProvider
 	 */
 	public function setUp() {
+		if (! extension_loaded('mongo')) {
+			$this->markTestSkipped('The mongodb php extension is not loaded');
+			return;
+		}
+		
 		$this->mongoAdapter = $this->getMock('ZExt\NoSql\Adapter\MongoAdapter');
 		
 		$this->mongoCollection = new MongoCollection($this->mongoAdapter);
