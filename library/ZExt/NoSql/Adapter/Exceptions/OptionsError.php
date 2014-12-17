@@ -1,7 +1,7 @@
 <?php
 namespace ZExt\NoSql\Adapter\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class OptionsError extends ExceptionAbstract {
 	

@@ -1,7 +1,7 @@
 <?php
 namespace ZExt\Filesystem\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class InvalidPath extends ExceptionAbstract {
 	

@@ -1,6 +1,6 @@
 <?php
 namespace ZExt\Cache\Exceptions;
-use ZExt\Exceptions\ExceptionAbstract as ExceptionOrigin;
+use ZExt\Exception\ExceptionAbstract as ExceptionOrigin;
 
 abstract class ExceptionAbstract extends ExceptionOrigin {
 	

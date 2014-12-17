@@ -1,7 +1,7 @@
 <?php
 namespace ZExt\Debug\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class GcError extends ExceptionAbstract {
 	

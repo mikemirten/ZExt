@@ -1,7 +1,7 @@
 <?php
 namespace ZExt\Validator\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class ValidationFailure extends ExceptionAbstract {
 	

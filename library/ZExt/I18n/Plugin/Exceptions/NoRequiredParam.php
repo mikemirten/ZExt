@@ -1,7 +1,7 @@
 <?php
 namespace ZExt\I18n\Plugin\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class NoRequiredParam extends ExceptionAbstract {
 	

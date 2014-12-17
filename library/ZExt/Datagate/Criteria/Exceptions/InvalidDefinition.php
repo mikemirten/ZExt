@@ -1,7 +1,7 @@
 <?php
 namespace ZExt\Datagate\Criteria\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class InvalidDefinition extends ExceptionAbstract {
 	

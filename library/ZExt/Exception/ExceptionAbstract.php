@@ -1,5 +1,5 @@
 <?php
-namespace ZExt\Exceptions;
+namespace ZExt\Exception;
 use Exception;
 
 abstract class ExceptionAbstract extends Exception {

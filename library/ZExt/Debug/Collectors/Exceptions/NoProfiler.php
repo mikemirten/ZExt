@@ -1,7 +1,7 @@
 <?php
 namespace ZExt\Debug\Collectors\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class NoProfiler extends ExceptionAbstract {
 	

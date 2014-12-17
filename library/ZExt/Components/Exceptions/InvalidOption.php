@@ -1,7 +1,7 @@
 <?php
 namespace ZExt\Components\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class InvalidOption extends ExceptionAbstract {
 	

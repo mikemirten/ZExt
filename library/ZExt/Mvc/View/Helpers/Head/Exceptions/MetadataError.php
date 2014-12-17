@@ -26,7 +26,7 @@
 
 namespace ZExt\Mvc\View\Helpers\Head\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class MetadataError extends ExceptionAbstract {
 	

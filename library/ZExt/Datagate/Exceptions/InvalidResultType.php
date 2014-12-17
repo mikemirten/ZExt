@@ -1,7 +1,7 @@
 <?php
 namespace ZExt\Datagate\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class InvalidResultType extends ExceptionAbstract {
 	

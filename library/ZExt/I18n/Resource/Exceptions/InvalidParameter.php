@@ -1,7 +1,7 @@
 <?php
 namespace ZExt\I18n\Resource\Exceptions;
 
-use ZExt\Exceptions\ExceptionAbstract;
+use ZExt\Exception\ExceptionAbstract;
 
 class InvalidParameter extends ExceptionAbstract {
 	
