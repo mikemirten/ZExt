@@ -1,3 +1,5 @@
+**This is a legacy project. It is not supported anymore and is not recomended to use.**
+
 # ZExt framework 1.0
 
 [![Build Status](https://travis-ci.org/mikemirten/ZExt.png?branch=master)](https://travis-ci.org/mikemirten/ZExt)
